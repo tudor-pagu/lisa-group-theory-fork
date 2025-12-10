@@ -31,15 +31,33 @@ object Example extends lisa.Main:
 object Groups extends lisa.Main:
   val x = variable[Ind]
   val y = variable[Ind]
+  val z = variable[Ind]
 
   val G = variable[Ind]
   val op = variable[Ind >>: Ind >>: Ind]
 
   val binaryOperation = DEF(λ(G, λ(op, ∀(x, ∀(y, x ∈ G /\ y ∈ G ==> op(x)(y) ∈ G)))))
 
-  val identityElement = DEF(λ(G, λ(op, ∃(x ∈ G, ∀(y ∈ G, ( ( op(x)(y) === x ) /\ ( op(y)(x) === x ) )  ) ))))
+  val isIdentityElement = DEF(λ(G, λ(op, λ(x, ∀(y ∈ G, ((op(x)(y) === x) /\ (op(y)(x) === x)))))))
 
-  val group = DEF(λ(G, λ(op, binaryOperation(G)(op))))
+  val identityElement = DEF(λ(G, λ(op, ∃(x ∈ G, isIdentityElement(G)(op)(x)))))
+
+  val associativity = DEF(λ(G, λ(op, ∀(x ∈ G, ∀(y ∈ G, ∀(z ∈ G, op(x)(op(y)(z)) === op(op(x)(y))(z)))))))
+
+  val inverseElement = DEF(λ(G, λ(op, ∀(x ∈ G, ∃(y ∈ G, isIdentityElement(G)(op)(op(x)(y)))))))
+
+  val group = DEF(
+    λ(
+      G,
+      λ(
+        op,
+        (binaryOperation(G)(op) /\
+          identityElement(G)(op)) /\
+          associativity(G)(op) /\
+          inverseElement(G)(op)
+      )
+    )
+  )
 
   /*
    * The most simple group:
@@ -74,5 +92,5 @@ object TrivialGroup extends lisa.Main:
   val trivialGroupIsGroup = Theorem(
     () |- Groups.group(G)(star)
   ) {
-    have(Groups.group(G)(star)) by Tautology.from(trivialGroupHasBinaryOperation , Groups.group.definition of (Groups.G := G, Groups.op := star))
+    have(Groups.group(G)(star)) by Tautology.from(trivialGroupHasBinaryOperation, Groups.group.definition of (Groups.G := G, Groups.op := star))
   }
