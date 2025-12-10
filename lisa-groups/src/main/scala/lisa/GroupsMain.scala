@@ -15,6 +15,15 @@ import lisa.maths.GroupTheory.Groups.binaryOperation
 import lisa.maths.GroupTheory.Groups.binaryOperation
 import lisa.maths.GroupTheory.Groups.isIdentityElement
 
+object Utils extends lisa.Main:
+  val x = variable[Ind]
+  val y = variable[Ind]
+  val z = variable[Ind]
+
+  val equalityTransitivity = Lemma((x === y, y === z) |- x === z) {
+    have(thesis) by Congruence
+  }
+
 object Example extends lisa.Main:
 
   // first-order variables
@@ -39,9 +48,9 @@ object Groups extends lisa.Main:
 
   val binaryOperation = DEF(λ(G, λ(op, ∀(x, ∀(y, x ∈ G /\ y ∈ G ==> op(x)(y) ∈ G)))))
 
-  val isIdentityElement = DEF(λ(G, λ(op, λ(x, ∀(y ∈ G, ((op(x)(y) === y) /\ (op(y)(x) === y)))))))
+  val isIdentityElement = DEF(λ(G, λ(op, λ(x, x ∈ G /\ ∀(y ∈ G, ((op(x)(y) === y) /\ (op(y)(x) === y)))))))
 
-  val identityElement = DEF(λ(G, λ(op, ∃(x ∈ G, isIdentityElement(G)(op)(x)))))
+  val identityElement = DEF(λ(G, λ(op, ∃(x, isIdentityElement(G)(op)(x)))))
 
   val associativity = DEF(λ(G, λ(op, ∀(x ∈ G, ∀(y ∈ G, ∀(z ∈ G, op(x)(op(y)(z)) === op(op(x)(y))(z)))))))
 
@@ -90,20 +99,33 @@ object TrivialGroup extends lisa.Main:
     val thm6 = have(binaryOperation(G)(star)) by Tautology.from(thm5, binaryOperation.definition of (Groups.G := G, Groups.op := star))
   }
 
-  val everythingIsE = Theorem(
+  val everyPairIsE = Theorem(
     star(x)(e) === e
-    ) {
-      have(star(x)(e) === e) by Tautology
-    }
+  ) {
+    have(star(x)(e) === e) by Tautology.from(star.definition of (y := e))
+  }
 
-  // val trivialGroupHasIdentityElement = Theorem(
-  //   () |- Groups.identityElement(G)(star)
-  // ) {
-  //   val thm1 = have(star(x)(e) === e) by Tautology.from(star.definition)
-  //   // val thm1 = have(Groups.isIdentityElement(G)(star)(e)) by Tautology
-  //
-  //
-  // }
+  val trivialGroupHasIdentityElement = Theorem(
+    () |- Groups.identityElement(G)(star)
+  ) {
+    val sub1 = have((x ∈ G) |- (star(x)(e) === x) /\ (star(e)(x) === x)) subproof {
+      assume(x ∈ G)
+      val thm1 = have(star(x)(e) === e) by Tautology.from(star.definition of (y := e))
+      val thm2 = have(star(e)(x) === e) by Tautology.from(star.definition of (x := e, y := x))
+      val thm3 = have(e === x) by Tautology.from(Singleton.membership of (x := e, y := x))
+      val thm4 = have((star(x)(e) === e) /\ (e === x)) by Tautology.from(thm3, thm1)
+      val thm5 = have((star(x)(e) === x)) by Tautology.from(thm4, Utils.equalityTransitivity of (Utils.x := star(x)(e) , Utils.y := e, Utils.z := x))
+      val thm6 = have(star(e)(x) === x) by Tautology.from(thm2, thm3, Utils.equalityTransitivity of (Utils.x := star(e)(x), Utils.y := e, Utils.z := x ))
+      val thm7 = have( (star(e)(x) === x) /\ (star(x)(e) === x)) by Tautology.from(thm5, thm6)
+    }
+    val thm1 = have((x ∈ G) ==> ( (star(x)(e) === x) /\ (star(e)(x) === x) ) ) by Tautology.from(sub1)
+    val thm2 = thenHave(∀(x, (x ∈ G) ==> ( (star(x)(e) === x) /\ (star(e)(x) === x) ) ) ) by RightForall
+    val thm3 = have( ∀(x ∈ G, ( (star(x)(e) === x) /\ (star(e)(x) === x) ) )) by Tautology.from(thm2)
+    val thm4 = have( e ∈ G /\ ∀(x ∈ G, ( (star(x)(e) === x) /\ (star(e)(x) === x) ) )) by Tautology.from(thm2, Singleton.membership of (x := e, y := e))
+    val thm5 = have( Groups.isIdentityElement(G)(star)(e) ) by Tautology.from(thm4, Groups.isIdentityElement.definition of (Groups.G := G, Groups.op := star, Groups.x := e))
+    val thm6 = thenHave( ∃(x, Groups.isIdentityElement(G)(star)(x)) ) by RightExists
+    val thm7 = have(Groups.identityElement(G)(star)) by Tautology.from(thm6, Groups.identityElement.definition of (Groups.G := G, Groups.op := star))
+  }
 
   // val trivialGroupIsGroup = Theorem(
   //   () |- Groups.group(G)(star)
