@@ -13,6 +13,7 @@ import lisa.automation.Tableau
 import lisa.utils.prooflib.BasicStepTactic.RightForall
 import lisa.maths.GroupTheory.Groups.binaryOperation
 import lisa.maths.GroupTheory.Groups.binaryOperation
+import lisa.maths.GroupTheory.Groups.isIdentityElement
 
 object Example extends lisa.Main:
 
@@ -38,7 +39,7 @@ object Groups extends lisa.Main:
 
   val binaryOperation = DEF(λ(G, λ(op, ∀(x, ∀(y, x ∈ G /\ y ∈ G ==> op(x)(y) ∈ G)))))
 
-  val isIdentityElement = DEF(λ(G, λ(op, λ(x, ∀(y ∈ G, ((op(x)(y) === x) /\ (op(y)(x) === x)))))))
+  val isIdentityElement = DEF(λ(G, λ(op, λ(x, ∀(y ∈ G, ((op(x)(y) === y) /\ (op(y)(x) === y)))))))
 
   val identityElement = DEF(λ(G, λ(op, ∃(x ∈ G, isIdentityElement(G)(op)(x)))))
 
@@ -89,8 +90,23 @@ object TrivialGroup extends lisa.Main:
     val thm6 = have(binaryOperation(G)(star)) by Tautology.from(thm5, binaryOperation.definition of (Groups.G := G, Groups.op := star))
   }
 
-  val trivialGroupIsGroup = Theorem(
-    () |- Groups.group(G)(star)
-  ) {
-    have(Groups.group(G)(star)) by Tautology.from(trivialGroupHasBinaryOperation, Groups.group.definition of (Groups.G := G, Groups.op := star))
-  }
+  val everythingIsE = Theorem(
+    star(x)(e) === e
+    ) {
+      have(star(x)(e) === e) by Tautology
+    }
+
+  // val trivialGroupHasIdentityElement = Theorem(
+  //   () |- Groups.identityElement(G)(star)
+  // ) {
+  //   val thm1 = have(star(x)(e) === e) by Tautology.from(star.definition)
+  //   // val thm1 = have(Groups.isIdentityElement(G)(star)(e)) by Tautology
+  //
+  //
+  // }
+
+  // val trivialGroupIsGroup = Theorem(
+  //   () |- Groups.group(G)(star)
+  // ) {
+  //   have(Groups.group(G)(star)) by Tautology.from(trivialGroupHasBinaryOperation, Groups.group.definition of (Groups.G := G, Groups.op := star))
+  // }
