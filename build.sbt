@@ -53,7 +53,7 @@ lazy val root = Project(
   base = file(".")
 )
   .settings(commonSettings3)
-  .dependsOn(kernel, withTests(utils), withTests(sets)) // Everything but `examples`
+  .dependsOn(kernel, withTests(utils), withTests(sets), groups) // Everything but `examples`
   .aggregate(utils) // To run tests on all modules
 
 Compile / run := (sets / Compile / run).evaluated
@@ -66,6 +66,13 @@ lazy val kernel = Project(
   .settings(
     crossScalaVersions := Seq(scala3)
   )
+
+lazy val groups = Project(
+  id = "lisa-groups",
+  base = file("lisa-groups")
+)
+  .settings(commonSettings3)
+  .dependsOn(kernel, withTests(utils), withTests(sets))
 
 lazy val sets = Project(
   id = "lisa-sets",
