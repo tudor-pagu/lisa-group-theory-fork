@@ -37,6 +37,8 @@ object Groups extends lisa.Main:
 
   val binaryOperation = DEF(λ(G, λ(op, ∀(x, ∀(y, x ∈ G /\ y ∈ G ==> op(x)(y) ∈ G)))))
 
+  val identityElement = DEF(λ(G, λ(op, ∃(x ∈ G, ∀(y ∈ G, ( ( op(x)(y) === x ) /\ ( op(y)(x) === x ) )  ) ))))
+
   val group = DEF(λ(G, λ(op, binaryOperation(G)(op))))
 
   /*
