@@ -7,6 +7,7 @@ import lisa.maths.SetTheory.Base.Singleton.*
 import lisa.maths.SetTheory.Base.Singleton
 import lisa.maths.SetTheory.Base.Subset.*
 import lisa.maths.SetTheory.Base.Comprehension.*
+import lisa.maths.SetTheory.Base.Comprehension
 import lisa.maths.SetTheory.Base.Replacement.*
 import lisa.Main
 
@@ -19,6 +20,7 @@ import lisa.maths.GroupTheory.Groups.binaryOperation
 import lisa.maths.GroupTheory.Groups.isIdentityElement
 import lisa.maths.GroupTheory.Groups.isIdentityElement
 import lisa.maths.GroupTheory.Utils.equalityTransitivity
+import lisa.SetTheoryLibrary.{extensionalityAxiom,subsetAxiom}
 
 object Utils extends lisa.Main:
   val x = variable[Ind]
@@ -159,6 +161,23 @@ object Groups extends lisa.Main:
     )
   )
 
+  //If H is a normal subgroup of G , and C is a subgroup of G containing H , then H is a normal subgroup of C
+  val normalSubgroupOfSubgroup = Theorem(
+    (normalSubgroup(H)(G)(op) /\ subgroup(C)(G)(op) /\ H ⊆ C) |- normalSubgroup(H)(C)(op)
+  ) {
+    assume(normalSubgroup(H)(G)(op), subgroup(C)(G)(op), H ⊆ C)
+
+    //H is a subgroup of C
+    val thm1 = have(subgroup(H)(G)(op)) by Tautology.from(normalSubgroup.definition)
+    val thm2 = have(group(H)(op)) by Tautology.from(thm1, subgroup.definition)
+    val thm3 = have(group(C)(op)) by Tautology.from(subgroup.definition of (H := C))
+    val thm4 = have(subgroup(H)(C)(op)) by Tautology.from(thm1, thm2, thm3, subgroup.definition of (G := C))
+
+    //H is normal in C
+    val thm5 = have(∀(x ∈ G, x ∈ normalizer(H)(G)(op))) by Tautology.from(normalSubgroup.definition, extensionalityAxiom of (x := G, y:= normalizer(H)(G)(op), z := x))
+    val thm6 = have(∀(x ∈ G, leftCoset(x)(op)(H) === rightCoset(H)(op)(x))) by Tautology.from(normalizer.definition, thm5, Comprehension.membership of (y := normalizer(H)(G)(op), φ := λ(x,(leftCoset(x)(op)(H) === rightCoset(H)(op)(x)))))
+    val thm7 = have(C ⊆ G) by Tautology.from(subgroup.definition of (H := C))
+  }
   /*
   Functions on groups
    */
