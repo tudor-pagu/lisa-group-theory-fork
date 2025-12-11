@@ -143,22 +143,33 @@ object TrivialGroup extends lisa.Main:
     val thm7 = have(Groups.identityElement(G)(star)) by Tautology.from(thm6, Groups.identityElement.definition of (Groups.G := G, Groups.op := star))
   }
 
+  val trivialGroupIsNotEmpty = Theorem(
+    () |- ∃(x, x ∈ G)
+    ) {
+      have(e ∈ G) by Tautology.from(Singleton.membership of (x:= e, y:=e))
+      thenHave(∃(x,x ∈ G)) by RightExists
+  }
+
   val trivialGroupHasInverse = Theorem(
     () |- Groups.inverseElement(G)(star)
   ) {
     // val inverseElement = DEF(λ(G, λ(op, ∀(x ∈ G, ∃(y ∈ G, isIdentityElement(G)(op)(op(x)(y)))))))
-    val subthm1 = have( (x ∈ G, y ∈ G) |- Groups.inverseElement(G)(star)) subproof {
-      sorry
+    val subthm1 = have( y ∈ G |- Groups.inverseElement(G)(star)) subproof {
+      assume( y ∈ G )
+      val thm1 = have(e === star(x)(y)) by Tautology.from(star.definition)
+      val thm2 = have(isIdentityElement(G)(star)(star(x)(y))) by Tautology.from(eIsIdentity, Groups.identityGetsTransferredByCongruence of (Groups.G:=G, Groups.op:=star, Groups.x:=e, Groups.y:=star(x)(y)), thm1)
+      val thm3 = have(y ∈ G /\ isIdentityElement(G)(star)(star(x)(y))) by Tautology.from(thm2)
+      val thm4 = thenHave(∃(y ∈ G,  isIdentityElement(G)(star)(star(x)(y)))) by RightExists
+      val thm5 = have(x ∈ G ==> ∃(y ∈ G,  isIdentityElement(G)(star)(star(x)(y)))) by Tautology.from(thm4)
+      val thm6 = thenHave(∀(x, x ∈ G ==> ∃(y ∈ G,  isIdentityElement(G)(star)(star(x)(y))))) by RightForall
+      val thm7 = thenHave(∀(x ∈ G, ∃(y ∈ G,  isIdentityElement(G)(star)(star(x)(y))))) by Restate
+      val thm8 = have(Groups.inverseElement(G)(star)) by Tautology.from(thm7, Groups.inverseElement.definition of (Groups.G:=G, Groups.op:=star))
     }
 
-    val res = thenHave( ∃(x, (x ∈ G /\ y ∈ G) ) |- Groups.inverseElement(G)(star)) by LeftExists
-
-    // val thm1 = have(e === star(x)(y)) by Tautology.from(star.definition)
-    // val thm2 = have(isIdentityElement(G)(star)(star(x)(y))) by Tautology.from(eIsIdentity, Groups.identityGetsTransferredByCongruence of (Groups.G:=G, Groups.op:=star, Groups.x:=e, Groups.y:=star(x)(y)), thm1)
-    // val thm3 = thenHave(∃(y ∈ G, isIdentityElement(G)(star)(star(x)(y)))) by RightExists
-    // val thm4 = thenHave(∀(x ∈ G, ∃(y ∈ G, isIdentityElement(G)(star)(star(x)(y)))) by RightForall
-
-
+    val thm1 = thenHave( (y ∈ G) |- Groups.inverseElement(G)(star)) by Restate
+    val thm3 = thenHave( ∃(y, y ∈ G) |- Groups.inverseElement(G)(star)) by LeftExists
+    val thm4 = thenHave( (∃(x, x ∈ G)) |- Groups.inverseElement(G)(star)) by Restate
+    val thm6 = have(Groups.inverseElement(G)(star)) by Tautology.from(thm4, trivialGroupIsNotEmpty)
   }
   //
   // val trivialGroupIsGroup = Theorem(
