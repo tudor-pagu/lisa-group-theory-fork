@@ -6,6 +6,7 @@ import lisa.maths.SetTheory.*
 import lisa.maths.SetTheory.Base.Singleton.*
 import lisa.maths.SetTheory.Base.Singleton
 import lisa.maths.SetTheory.Base.Subset.*
+import lisa.maths.SetTheory.Base.Comprehension.*
 import lisa.Main
 
 import lisa.automation.Congruence
@@ -48,6 +49,7 @@ object Groups extends lisa.Main:
 
   val G = variable[Ind]
   val H = variable[Ind]
+  val C = variable[Ind]
   val op = variable[Ind >>: Ind >>: Ind]
 
   val binaryOperation = DEF(λ(G, λ(op, ∀(x, ∀(y, x ∈ G /\ y ∈ G ==> op(x)(y) ∈ G)))))
@@ -91,6 +93,78 @@ object Groups extends lisa.Main:
       )
     )
   )
+
+  /*
+  Cosets
+  */
+
+  val leftCoset = DEF(
+    λ(
+      z,
+      λ(
+        H,
+        λ(
+          G,
+          λ(
+            op,
+            {x ∈ G | ∃(y ∈ H, op(z)(y) === x)}
+          )
+        )
+      )
+    )
+  )
+
+   val rightCoset = DEF(
+    λ(
+      z,
+      λ(
+        H,
+        λ(
+          G,
+          λ(
+            op,
+            {x ∈ G | ∃(y ∈ H, op(y)(z) === x)}
+          )
+        )
+      )
+    )
+  )
+
+  /*
+  Normal
+  */
+
+  val normalizer = DEF(
+    λ(
+      H,
+      λ(
+        G,
+        λ(
+          op,
+          {x ∈ G | leftCoset(x)(H)(G)(op) === rightCoset(x)(H)(G)(op)}
+        )
+      )
+    )
+  )
+
+  val normalSubgroup = DEF(
+    λ(
+      H,
+      λ(
+        G,
+        λ(
+          op,
+          subgroup(H)(G)(op) /\
+          ∀(x ∈ G, x ∈ normalizer(H)(G)(op))
+        )
+      )
+    )
+  )
+
+  /*
+  Functions on groups
+  */
+
 
   /* Lemmas */
   val identityGetsTransferredByCongruence = Theorem(
