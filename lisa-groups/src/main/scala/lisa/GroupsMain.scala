@@ -7,6 +7,7 @@ import lisa.maths.SetTheory.Base.Singleton.*
 import lisa.maths.SetTheory.Base.Singleton
 import lisa.maths.SetTheory.Base.Subset.*
 import lisa.maths.SetTheory.Base.Comprehension.*
+import lisa.maths.SetTheory.Base.Replacement.*
 import lisa.Main
 
 import lisa.automation.Congruence
@@ -46,6 +47,8 @@ object Groups extends lisa.Main:
   val x = variable[Ind]
   val y = variable[Ind]
   val z = variable[Ind]
+  val h = variable[Ind]
+  val g = variable[Ind]
 
   val G = variable[Ind]
   val H = variable[Ind]
@@ -77,7 +80,7 @@ object Groups extends lisa.Main:
 
   /*
   Subgroup
-  */
+   */
 
   val subgroup = DEF(
     λ(
@@ -87,8 +90,8 @@ object Groups extends lisa.Main:
         λ(
           op,
           group(G)(op) /\
-          H ⊆ G /\
-          group(H)(op)
+            H ⊆ G /\
+            group(H)(op)
         )
       )
     )
@@ -96,43 +99,38 @@ object Groups extends lisa.Main:
 
   /*
   Cosets
-  */
+   */
 
   val leftCoset = DEF(
     λ(
-      z,
+      g,
       λ(
-        H,
+        op,
         λ(
-          G,
-          λ(
-            op,
-            {x ∈ G | ∃(y ∈ H, op(z)(y) === x)}
-          )
+            H,
+            (op(g)(h) | (h ∈ H))
         )
       )
     )
   )
 
-   val rightCoset = DEF(
+  val rightCoset = DEF(
     λ(
-      z,
+      H,
       λ(
-        H,
+        op,
         λ(
-          G,
-          λ(
-            op,
-            {x ∈ G | ∃(y ∈ H, op(y)(z) === x)}
-          )
+            g,
+            (op(h)(g) | (h ∈ H))
         )
       )
     )
   )
+
 
   /*
   Normal
-  */
+   */
 
   val normalizer = DEF(
     λ(
@@ -141,7 +139,7 @@ object Groups extends lisa.Main:
         G,
         λ(
           op,
-          {x ∈ G | leftCoset(x)(H)(G)(op) === rightCoset(x)(H)(G)(op)}
+          { g ∈ G | leftCoset(g)(op)(H) === rightCoset(H)(op)(g) }
         )
       )
     )
@@ -155,7 +153,7 @@ object Groups extends lisa.Main:
         λ(
           op,
           subgroup(H)(G)(op) /\
-          ∀(x ∈ G, x ∈ normalizer(H)(G)(op))
+            (G === normalizer(H)(G)(op))
         )
       )
     )
@@ -163,8 +161,7 @@ object Groups extends lisa.Main:
 
   /*
   Functions on groups
-  */
-
+   */
 
   /* Lemmas */
   val identityGetsTransferredByCongruence = Theorem(
@@ -219,85 +216,89 @@ object TrivialGroup extends lisa.Main:
       val thm2 = have(star(e)(x) === e) by Tautology.from(star.definition of (x := e, y := x))
       val thm3 = have(e === x) by Tautology.from(Singleton.membership of (x := e, y := x))
       val thm4 = have((star(x)(e) === e) /\ (e === x)) by Tautology.from(thm3, thm1)
-      val thm5 = have((star(x)(e) === x)) by Tautology.from(thm4, Utils.equalityTransitivity of (Utils.x := star(x)(e) , Utils.y := e, Utils.z := x))
-      val thm6 = have(star(e)(x) === x) by Tautology.from(thm2, thm3, Utils.equalityTransitivity of (Utils.x := star(e)(x), Utils.y := e, Utils.z := x ))
-      val thm7 = have( (star(e)(x) === x) /\ (star(x)(e) === x)) by Tautology.from(thm5, thm6)
+      val thm5 = have((star(x)(e) === x)) by Tautology.from(thm4, Utils.equalityTransitivity of (Utils.x := star(x)(e), Utils.y := e, Utils.z := x))
+      val thm6 = have(star(e)(x) === x) by Tautology.from(thm2, thm3, Utils.equalityTransitivity of (Utils.x := star(e)(x), Utils.y := e, Utils.z := x))
+      val thm7 = have((star(e)(x) === x) /\ (star(x)(e) === x)) by Tautology.from(thm5, thm6)
     }
-    val thm1 = have((x ∈ G) ==> ( (star(x)(e) === x) /\ (star(e)(x) === x) ) ) by Tautology.from(sub1)
-    val thm2 = thenHave(∀(x, (x ∈ G) ==> ( (star(x)(e) === x) /\ (star(e)(x) === x) ) ) ) by RightForall
-    val thm3 = have( ∀(x ∈ G, ( (star(x)(e) === x) /\ (star(e)(x) === x) ) )) by Tautology.from(thm2)
-    val thm4 = have( e ∈ G /\ ∀(x ∈ G, ( (star(x)(e) === x) /\ (star(e)(x) === x) ) )) by Tautology.from(thm2, Singleton.membership of (x := e, y := e))
-    val thm5 = have( Groups.isIdentityElement(G)(star)(e) ) by Tautology.from(thm4, Groups.isIdentityElement.definition of (Groups.G := G, Groups.op := star, Groups.x := e))
+    val thm1 = have((x ∈ G) ==> ((star(x)(e) === x) /\ (star(e)(x) === x))) by Tautology.from(sub1)
+    val thm2 = thenHave(∀(x, (x ∈ G) ==> ((star(x)(e) === x) /\ (star(e)(x) === x)))) by RightForall
+    val thm3 = have(∀(x ∈ G, ((star(x)(e) === x) /\ (star(e)(x) === x)))) by Tautology.from(thm2)
+    val thm4 = have(e ∈ G /\ ∀(x ∈ G, ((star(x)(e) === x) /\ (star(e)(x) === x)))) by Tautology.from(thm2, Singleton.membership of (x := e, y := e))
+    val thm5 = have(Groups.isIdentityElement(G)(star)(e)) by Tautology.from(thm4, Groups.isIdentityElement.definition of (Groups.G := G, Groups.op := star, Groups.x := e))
   }
 
   val trivialGroupHasIdentityElement = Theorem(
     () |- Groups.identityElement(G)(star)
   ) {
-    val thm5 = have( Groups.isIdentityElement(G)(star)(e) ) by Restate.from(eIsIdentity)
-    val thm6 = thenHave( ∃(x, Groups.isIdentityElement(G)(star)(x)) ) by RightExists
+    val thm5 = have(Groups.isIdentityElement(G)(star)(e)) by Restate.from(eIsIdentity)
+    val thm6 = thenHave(∃(x, Groups.isIdentityElement(G)(star)(x))) by RightExists
     val thm7 = have(Groups.identityElement(G)(star)) by Tautology.from(thm6, Groups.identityElement.definition of (Groups.G := G, Groups.op := star))
   }
 
   val trivialGroupIsNotEmpty = Theorem(
     () |- ∃(x, x ∈ G)
-    ) {
-      have(e ∈ G) by Tautology.from(Singleton.membership of (x:= e, y:=e))
-      thenHave(∃(x,x ∈ G)) by RightExists
+  ) {
+    have(e ∈ G) by Tautology.from(Singleton.membership of (x := e, y := e))
+    thenHave(∃(x, x ∈ G)) by RightExists
   }
 
   val trivialGroupHasInverse = Theorem(
     () |- Groups.inverseElement(G)(star)
   ) {
     // val inverseElement = DEF(λ(G, λ(op, ∀(x ∈ G, ∃(y ∈ G, isIdentityElement(G)(op)(op(x)(y)))))))
-    val subthm1 = have( y ∈ G |- Groups.inverseElement(G)(star)) subproof {
-      assume( y ∈ G )
+    val subthm1 = have(y ∈ G |- Groups.inverseElement(G)(star)) subproof {
+      assume(y ∈ G)
       val thm1 = have(e === star(x)(y)) by Tautology.from(star.definition)
-      val thm2 = have(isIdentityElement(G)(star)(star(x)(y))) by Tautology.from(eIsIdentity, Groups.identityGetsTransferredByCongruence of (Groups.G:=G, Groups.op:=star, Groups.x:=e, Groups.y:=star(x)(y)), thm1)
+      val thm2 = have(isIdentityElement(G)(star)(star(x)(y))) by Tautology.from(
+        eIsIdentity,
+        Groups.identityGetsTransferredByCongruence of (Groups.G := G, Groups.op := star, Groups.x := e, Groups.y := star(x)(y)),
+        thm1
+      )
       val thm3 = have(y ∈ G /\ isIdentityElement(G)(star)(star(x)(y))) by Tautology.from(thm2)
-      val thm4 = thenHave(∃(y ∈ G,  isIdentityElement(G)(star)(star(x)(y)))) by RightExists
-      val thm5 = have(x ∈ G ==> ∃(y ∈ G,  isIdentityElement(G)(star)(star(x)(y)))) by Tautology.from(thm4)
-      val thm6 = thenHave(∀(x, x ∈ G ==> ∃(y ∈ G,  isIdentityElement(G)(star)(star(x)(y))))) by RightForall
-      val thm7 = thenHave(∀(x ∈ G, ∃(y ∈ G,  isIdentityElement(G)(star)(star(x)(y))))) by Restate
-      val thm8 = have(Groups.inverseElement(G)(star)) by Tautology.from(thm7, Groups.inverseElement.definition of (Groups.G:=G, Groups.op:=star))
+      val thm4 = thenHave(∃(y ∈ G, isIdentityElement(G)(star)(star(x)(y)))) by RightExists
+      val thm5 = have(x ∈ G ==> ∃(y ∈ G, isIdentityElement(G)(star)(star(x)(y)))) by Tautology.from(thm4)
+      val thm6 = thenHave(∀(x, x ∈ G ==> ∃(y ∈ G, isIdentityElement(G)(star)(star(x)(y))))) by RightForall
+      val thm7 = thenHave(∀(x ∈ G, ∃(y ∈ G, isIdentityElement(G)(star)(star(x)(y))))) by Restate
+      val thm8 = have(Groups.inverseElement(G)(star)) by Tautology.from(thm7, Groups.inverseElement.definition of (Groups.G := G, Groups.op := star))
     }
 
-    val thm1 = thenHave( (y ∈ G) |- Groups.inverseElement(G)(star)) by Restate
-    val thm3 = thenHave( ∃(y, y ∈ G) |- Groups.inverseElement(G)(star)) by LeftExists
-    val thm4 = thenHave( (∃(x, x ∈ G)) |- Groups.inverseElement(G)(star)) by Restate
+    val thm1 = thenHave((y ∈ G) |- Groups.inverseElement(G)(star)) by Restate
+    val thm3 = thenHave(∃(y, y ∈ G) |- Groups.inverseElement(G)(star)) by LeftExists
+    val thm4 = thenHave((∃(x, x ∈ G)) |- Groups.inverseElement(G)(star)) by Restate
     val thm6 = have(Groups.inverseElement(G)(star)) by Tautology.from(thm4, trivialGroupIsNotEmpty)
   }
 
-
   val trivialGroupIsAssociative = Theorem(
     () |- Groups.associativity(G)(star)
-    ) {
-      // DEF(λ(G, λ(op, ∀(x ∈ G, ∀(y ∈ G, ∀(z ∈ G, op(x)(op(y)(z)) === op(op(x)(y))(z)))))))
-      val thm1 = have(star(x)(star(y)(z)) === e) by Tautology.from(star.definition of (x:=x, y:=star(y)(z)))
-      val thm2 = have(star(star(x)(y))(z) === e) by Tautology.from(star.definition of (x:=star(x)(y), y:=z))
-      val thm3 = have(star(x)(star(y)(z)) === star(star(x)(y))(z) ) by Tautology.from(thm1, thm2, Utils.equalityTransitivity of (x:=star(x)(star(y)(z)), y:=e,z:=star(star(x)(y))(z)))
+  ) {
+    // DEF(λ(G, λ(op, ∀(x ∈ G, ∀(y ∈ G, ∀(z ∈ G, op(x)(op(y)(z)) === op(op(x)(y))(z)))))))
+    val thm1 = have(star(x)(star(y)(z)) === e) by Tautology.from(star.definition of (x := x, y := star(y)(z)))
+    val thm2 = have(star(star(x)(y))(z) === e) by Tautology.from(star.definition of (x := star(x)(y), y := z))
+    val thm3 = have(star(x)(star(y)(z)) === star(star(x)(y))(z)) by Tautology.from(thm1, thm2, Utils.equalityTransitivity of (x := star(x)(star(y)(z)), y := e, z := star(star(x)(y))(z)))
 
-      val thm4 = have(z ∈ G ==> (star(x)(star(y)(z)) === star(star(x)(y))(z)) ) by Tautology.from(thm3)
-      val thm5 = thenHave(∀(z, z ∈ G ==> (star(x)(star(y)(z)) === star(star(x)(y))(z)) )) by RightForall
-      val thm6 = have(∀(z ∈ G, star(x)(star(y)(z)) === star(star(x)(y))(z) )) by Restate.from(thm5)
+    val thm4 = have(z ∈ G ==> (star(x)(star(y)(z)) === star(star(x)(y))(z))) by Tautology.from(thm3)
+    val thm5 = thenHave(∀(z, z ∈ G ==> (star(x)(star(y)(z)) === star(star(x)(y))(z)))) by RightForall
+    val thm6 = have(∀(z ∈ G, star(x)(star(y)(z)) === star(star(x)(y))(z))) by Restate.from(thm5)
 
-      val thm7 = have(y ∈ G ==> ∀(z ∈ G, star(x)(star(y)(z)) === star(star(x)(y))(z))) by Tautology.from(thm6)
-      val thm8 = thenHave(∀(y, y ∈ G ==> ∀(z ∈ G, star(x)(star(y)(z)) === star(star(x)(y))(z)))) by RightForall
-      val thm9 = have(∀(y ∈ G, ∀(z ∈ G, star(x)(star(y)(z)) === star(star(x)(y))(z)))) by Restate.from(thm8)
+    val thm7 = have(y ∈ G ==> ∀(z ∈ G, star(x)(star(y)(z)) === star(star(x)(y))(z))) by Tautology.from(thm6)
+    val thm8 = thenHave(∀(y, y ∈ G ==> ∀(z ∈ G, star(x)(star(y)(z)) === star(star(x)(y))(z)))) by RightForall
+    val thm9 = have(∀(y ∈ G, ∀(z ∈ G, star(x)(star(y)(z)) === star(star(x)(y))(z)))) by Restate.from(thm8)
 
-      val thm10 = have(x ∈ G ==> ∀(y ∈ G, ∀(z ∈ G, star(x)(star(y)(z)) === star(star(x)(y))(z)))) by Tautology.from(thm9)
-      val thm11 = thenHave(∀(x, x ∈ G ==> ∀(y ∈ G, ∀(z ∈ G, star(x)(star(y)(z)) === star(star(x)(y))(z))))) by RightForall
-      val thm12 = have(∀(x ∈ G, ∀(y ∈ G, ∀(z ∈ G, star(x)(star(y)(z)) === star(star(x)(y))(z))))) by Restate.from(thm11)
+    val thm10 = have(x ∈ G ==> ∀(y ∈ G, ∀(z ∈ G, star(x)(star(y)(z)) === star(star(x)(y))(z)))) by Tautology.from(thm9)
+    val thm11 = thenHave(∀(x, x ∈ G ==> ∀(y ∈ G, ∀(z ∈ G, star(x)(star(y)(z)) === star(star(x)(y))(z))))) by RightForall
+    val thm12 = have(∀(x ∈ G, ∀(y ∈ G, ∀(z ∈ G, star(x)(star(y)(z)) === star(star(x)(y))(z))))) by Restate.from(thm11)
 
-      val thm13 = have(Groups.associativity(G)(star)) by Tautology.from(thm12, Groups.associativity.definition of (Groups.G := G, Groups.op := star))
-    }
+    val thm13 = have(Groups.associativity(G)(star)) by Tautology.from(thm12, Groups.associativity.definition of (Groups.G := G, Groups.op := star))
+  }
 
   val trivialGroupIsGroup = Theorem(
     () |- Groups.group(G)(star)
   ) {
     have(Groups.group(G)(star)) by Tautology.from(
-      trivialGroupHasBinaryOperation, 
+      trivialGroupHasBinaryOperation,
       trivialGroupIsAssociative,
       trivialGroupHasInverse,
       trivialGroupHasIdentityElement,
-      Groups.group.definition of (Groups.G := G, Groups.op := star))
+      Groups.group.definition of (Groups.G := G, Groups.op := star)
+    )
   }
