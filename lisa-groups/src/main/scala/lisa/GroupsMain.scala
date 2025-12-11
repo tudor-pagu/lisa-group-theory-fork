@@ -14,6 +14,7 @@ import lisa.utils.prooflib.BasicStepTactic.RightForall
 import lisa.maths.GroupTheory.Groups.binaryOperation
 import lisa.maths.GroupTheory.Groups.binaryOperation
 import lisa.maths.GroupTheory.Groups.isIdentityElement
+import lisa.maths.GroupTheory.Groups.isIdentityElement
 
 object Utils extends lisa.Main:
   val x = variable[Ind]
@@ -68,6 +69,15 @@ object Groups extends lisa.Main:
       )
     )
   )
+
+
+  /* Lemmas */
+  val identityGetsTransferredByCongruence = Theorem(
+    (x === y, isIdentityElement(G)(op)(x)) |- isIdentityElement(G)(op)(y)
+  ) {
+    have(thesis) by Congruence
+  }
+
 
   /*
    * The most simple group:
@@ -133,12 +143,23 @@ object TrivialGroup extends lisa.Main:
     val thm7 = have(Groups.identityElement(G)(star)) by Tautology.from(thm6, Groups.identityElement.definition of (Groups.G := G, Groups.op := star))
   }
 
-  // val trivialGroupHasInverse = Theorem(
-  //   () |- Groups.inverseElement(G)(star)
-  // ) {
-  //   // val inverseElement = DEF(λ(G, λ(op, ∀(x ∈ G, ∃(y ∈ G, isIdentityElement(G)(op)(op(x)(y)))))))
-  //
-  // }
+  val trivialGroupHasInverse = Theorem(
+    () |- Groups.inverseElement(G)(star)
+  ) {
+    // val inverseElement = DEF(λ(G, λ(op, ∀(x ∈ G, ∃(y ∈ G, isIdentityElement(G)(op)(op(x)(y)))))))
+    val subthm1 = have( (x ∈ G, y ∈ G) |- Groups.inverseElement(G)(star)) subproof {
+      sorry
+    }
+
+    val res = thenHave( ∃(x, (x ∈ G /\ y ∈ G) ) |- Groups.inverseElement(G)(star)) by LeftExists
+
+    // val thm1 = have(e === star(x)(y)) by Tautology.from(star.definition)
+    // val thm2 = have(isIdentityElement(G)(star)(star(x)(y))) by Tautology.from(eIsIdentity, Groups.identityGetsTransferredByCongruence of (Groups.G:=G, Groups.op:=star, Groups.x:=e, Groups.y:=star(x)(y)), thm1)
+    // val thm3 = thenHave(∃(y ∈ G, isIdentityElement(G)(star)(star(x)(y)))) by RightExists
+    // val thm4 = thenHave(∀(x ∈ G, ∃(y ∈ G, isIdentityElement(G)(star)(star(x)(y)))) by RightForall
+
+
+  }
   //
   // val trivialGroupIsGroup = Theorem(
   //   () |- Groups.group(G)(star)
