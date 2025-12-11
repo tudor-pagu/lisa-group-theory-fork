@@ -3,6 +3,7 @@ package lisa.maths.GroupTheory
 import lisa.kernel.proof.*
 import lisa.kernel.proof.RunningTheoryJudgement._
 import lisa.maths.SetTheory.*
+import lisa.maths.SetTheory.Base.EmptySet
 import lisa.maths.SetTheory.Base.Singleton.*
 import lisa.maths.SetTheory.Base.Singleton
 import lisa.maths.SetTheory.Base.Subset.*
@@ -168,6 +169,57 @@ object Groups extends lisa.Main:
     (x === y, isIdentityElement(G)(op)(x)) |- isIdentityElement(G)(op)(y)
   ) {
     have(thesis) by Congruence
+  }
+
+
+  val subgroupTestTwoStep = Theorem(
+    (group(G)(op), H ≠ ∅, H ⊆ G, binaryOperation(H)(op), inverseElement(H)(op))
+    |- subgroup(H)(G)(op)
+  ) {
+    assume(group(G)(op), H ≠ ∅, H ⊆ G, binaryOperation(H)(op), inverseElement(H)(op))
+    val thm1 = have(binaryOperation(H)(op) /\ inverseElement(H)(op)) by Restate
+    val subthm1 = have(identityElement(H)(op)) subproof {
+      //  val identityElement = ∃(x, isIdentityElement(G)(op)(x)))
+
+      val obs1 = have(∃(h, h ∈ H)) by Tautology.from(EmptySet.nonEmptyHasElement of (x:=H, y:=h))
+      val obs2 = have( ∀(x, x ∈ H ==> ∃(y ∈ H, isIdentityElement(H)(op)(op(x)(y))) ) ) by Tautology.from(inverseElement.definition of (G:=H, op:=op))
+      val obs3 = thenHave( h ∈ H ==> ∃(y ∈ H, isIdentityElement(H)(op)(op(h)(y))) )  by InstantiateForall(h)
+      val obs4 = thenHave( h ∈ H |- ∃(y ∈ H, isIdentityElement(H)(op)(op(h)(y))) )  by Restate
+      val obs5 = have( h ∈ H |- h ∈ H /\ (∃(y ∈ H, isIdentityElement(H)(op)(op(h)(y))) ))  by Tautology.from(obs4)
+      val obs6 = thenHave( h ∈ H |- ∃(x,x∈H /\( ∃(y ∈ H, isIdentityElement(H)(op)(op(x)(y))) ) ) )  by RightExists
+      val obs7 = thenHave( h ∈ H |- ∃(x ∈H, ( ∃(y ∈ H, isIdentityElement(H)(op)(op(x)(y))) ) ) )  by Restate
+      val obs8 = thenHave(∃(h, h ∈ H) |- ∃(x ∈H, ( ∃(y ∈ H, isIdentityElement(H)(op)(op(x)(y))) ) ) )  by LeftExists
+      val obs9 = have(∃(x ∈H, ( ∃(y ∈ H, isIdentityElement(H)(op)(op(x)(y))) ) ) )  by Tautology.from(obs1, obs8)
+      val obs10 = have(∃(x, ( ∃(y, isIdentityElement(H)(op)(op(x)(y))) ) ) )  by Tautology.from(obs9)
+
+      val obs20 = have( isIdentityElement(H)(op)(op(x)(y))  |- isIdentityElement(H)(op)(op(x)(y)) )  by Tautology
+      val obs21 = thenHave( isIdentityElement(H)(op)(op(x)(y))  |- ∃(z, isIdentityElement(H)(op)(z) ) )  by RightExists
+      val obs22 = thenHave( ∃(y, isIdentityElement(H)(op)(op(x)(y))) |- ∃(z, isIdentityElement(H)(op)(z) ) )  by LeftExists
+      val obs23 = thenHave(∃(x, ∃(y, isIdentityElement(H)(op)(op(x)(y))) ) |- ∃(z, isIdentityElement(H)(op)(z) ) )  by LeftExists
+      val obs24 = have(∃(z, isIdentityElement(H)(op)(z) ) )  by Tautology.from(obs23, obs10)
+      val obs25 = have( identityElement(H)(op) )  by Tautology.from(obs24, identityElement.definition of (G:= H, op:=op))
+    }
+    val subthm2 = have(associativity(H)(op)) subproof {
+      // ∀(x ∈ H, ∀(y ∈ H, ∀(z ∈ H, op(x)(op(y)(z)) === op(op(x)(y))(z))))
+      val thm1 = have( associativity(G)(op)  ) by Tautology.from(group.definition)
+      val thm2 = have( ∀(x ∈ G, ∀(y ∈ G, ∀(z ∈ G, op(x)(op(y)(z)) === op(op(x)(y))(z)))) ) by Tautology.from(associativity.definition, thm1)
+      val thm7 = thenHave( ∀(x, x ∈ G ==> ( ∀(y, y ∈ G ==> (∀(z, (z∈G) ==> (op(x)(op(y)(z)) === op(op(x)(y))(z)))) ) ) )) by Restate
+      // val thm8 = have( ∀(x, ( ∀(y, (∀(z, ( (x∈G) /\ (y∈G) /\ (z∈G) ) ==> (op(x)(op(y)(z)) === op(op(x)(y))(z)))) ) ) )) by Tautology.from(thm7)
+
+      val thm3 = have( op(x)(op(y)(z)) === op(op(x)(y))(z) |- op(x)(op(y)(z)) === op(op(x)(y))(z)) by Restate
+      val thm4 = thenHave( (x ∈ G, y ∈ G, z ∈ G, op(x)(op(y)(z)) === op(op(x)(y))(z) ) |- op(x)(op(y)(z)) === op(op(x)(y))(z)) by Weakening
+      val thm5 = have( (x ∈ G, y ∈ G, z ∈ G, y∈G ==> ( op(x)(op(y)(z)) === op(op(x)(y))(z) ) ) |- op(x)(op(y)(z)) === op(op(x)(y))(z)) by Tautology.from(thm4)
+      val thm6 = thenHave( (x ∈ G, y ∈ G, z ∈ G, ∀(y∈G, ( op(x)(op(y)(z)) === op(op(x)(y))(z) ) ) ) |- op(x)(op(y)(z)) === op(op(x)(y))(z)) by LeftForall
+      // val thm5 = thenHave( (x ∈ G, y ∈ G, z ∈ G, ∀(y∈G, op(x)(op(y)(z)) === op(op(x)(y))(z) ) ) |- op(x)(op(y)(z)) === op(op(x)(y))(z)) by LeftForall
+      // val thm4 = have( (z ∈ G) /\ (op(x)(op(y)(z)) === op(op(x)(y))(z)) |- op(x)(op(y)(z)) === op(op(x)(y))(z)) by Tautology.from(thm3)
+      // val thm5 = thenHave( ∀(z,(z ∈ G) /\ (op(x)(op(y)(z)) === op(op(x)(y))(z)) ) |- op(x)(op(y)(z)) === op(op(x)(y))(z)) by LeftForall
+      // val thm6 = have( ∀(z ∈ G, op(x)(op(y)(z)) === op(op(x)(y))(z)) |- op(x)(op(y)(z)) === op(op(x)(y))(z)) by Tautology.from(thm5)
+      // val thm5 = thenHave(∀(y, ∀(z, op(x)(op(y)(z)) === op(op(x)(y))(z) ) ) |- op(x)(op(y)(z)) === op(op(x)(y))(z) ) by LeftForall
+      // val thm6 = thenHave(∀(z,∀(y, ∀(z, op(x)(op(y)(z)) === op(op(x)(y))(z) )) ) |- op(x)(op(y)(z)) === op(op(x)(y))(z) ) by LeftForall
+      sorry
+    }
+    val thm2 = have(group(H)(op)) by Tautology.from(group.definition of (G:= H, op:=op), subthm1, subthm2, thm1)
+    val thm3 = have(subgroup(H)(G)(op)) by Tautology.from(subgroup.definition of (G:=G, H:=H, op:=op), thm2)
   }
 
   /*
