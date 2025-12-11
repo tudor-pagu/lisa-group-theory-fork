@@ -5,6 +5,7 @@ import lisa.kernel.proof.RunningTheoryJudgement._
 import lisa.maths.SetTheory.*
 import lisa.maths.SetTheory.Base.Singleton.*
 import lisa.maths.SetTheory.Base.Singleton
+import lisa.maths.SetTheory.Base.Subset.*
 import lisa.Main
 
 import lisa.automation.Congruence
@@ -46,6 +47,7 @@ object Groups extends lisa.Main:
   val z = variable[Ind]
 
   val G = variable[Ind]
+  val H = variable[Ind]
   val op = variable[Ind >>: Ind >>: Ind]
 
   val binaryOperation = DEF(λ(G, λ(op, ∀(x, ∀(y, x ∈ G /\ y ∈ G ==> op(x)(y) ∈ G)))))
@@ -71,6 +73,24 @@ object Groups extends lisa.Main:
     )
   )
 
+  /*
+  Subgroup
+  */
+
+  val subgroup = DEF(
+    λ(
+      H,
+      λ(
+        G,
+        λ(
+          op,
+          group(G)(op) /\
+          H ⊆ G /\
+          group(H)(op)
+        )
+      )
+    )
+  )
 
   /* Lemmas */
   val identityGetsTransferredByCongruence = Theorem(
@@ -78,7 +98,6 @@ object Groups extends lisa.Main:
   ) {
     have(thesis) by Congruence
   }
-
 
   /*
    * The most simple group:
