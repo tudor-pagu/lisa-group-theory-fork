@@ -295,10 +295,14 @@ object Groups extends lisa.Main:
   ) {
     assume(group(G)(op), subgroup(H)(G)(op))
 
-    val subthm1 = have(∀(y ∈ (rightCoset(H)(op)(x) | x ∈ G), y ⊆ G)) subproof {
+    val subthm1 = have(y ∈ (rightCoset(H)(op)(x) | x ∈ G) |- y ⊆ G) subproof {
       // Prove every right coset is a subset of G
       sorry
     }
+
+    val thm1 = have(y ∈ (rightCoset(H)(op)(x) | x ∈ G) ==> y ⊆ G) by Restate.from(subthm1)
+    val thm2 = thenHave(∀ (y, y ∈ (rightCoset(H)(op)(x) | x ∈ G) ==> y ⊆ G)) by RightForall
+    val thm3 = thenHave(∀ (y ∈ (rightCoset(H)(op)(x) | x ∈ G), y ⊆ G)) by Restate
 
     val subthm2 = have(∀(y ∈ G, ∃(z ∈ (rightCoset(H)(op)(x) | x ∈ G), y ∈ z))) subproof {
       // Prove every element of G is in some right coset
@@ -311,7 +315,7 @@ object Groups extends lisa.Main:
     }
 
     have(partition(G)((rightCoset(H)(op)(x) | x ∈ G))) by Tautology.from(
-      subthm1,
+      thm3,
       subthm2,
       subthm3,
       partition.definition of (G := G, P := (rightCoset(H)(op)(x) | x ∈ G))
