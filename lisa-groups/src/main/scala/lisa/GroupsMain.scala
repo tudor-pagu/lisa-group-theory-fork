@@ -3,6 +3,7 @@ package lisa.maths.GroupTheory
 import lisa.maths.SetTheory.Base.Predef.{_, given}
 
 import lisa.kernel.proof.RunningTheoryJudgement._
+import lisa.automation.Substitution
 import lisa.maths.SetTheory.Functions.Function.bijective
 import lisa.maths.SetTheory.Base.EmptySet
 import lisa.maths.SetTheory.Base.Singleton
@@ -289,6 +290,13 @@ object Groups extends lisa.Main:
     )
   )
 
+  val rightCosetStaysInGroupLemma = Theorem(
+    (group(G)(op), subgroup(H)(G)(op), x ∈ G) |-
+      (rightCoset(H)(op)(x) ⊆ G)
+  ) {
+    sorry
+  }
+
   val lagrangesLemma1 = Theorem(
     (group(G)(op), subgroup(H)(G)(op))
       |- partition(G)((rightCoset(H)(op)(x) | x ∈ G))
@@ -296,13 +304,23 @@ object Groups extends lisa.Main:
     assume(group(G)(op), subgroup(H)(G)(op))
 
     val subthm1 = have(y ∈ (rightCoset(H)(op)(x) | x ∈ G) |- y ⊆ G) subproof {
-      // Prove every right coset is a subset of G
-      sorry
+      assume(y ∈ (rightCoset(H)(op)(x) | x ∈ G))
+      val obs1 = have(∃(x ∈ G, rightCoset(H)(op)(x) === y)) by Tautology.from(
+        Replacement.membership of (F := lambda(x, rightCoset(H)(op)(x)), A := G, y := y)
+      )
+      val obs2 = have((x ∈ G, rightCoset(H)(op)(x) === y) |- rightCoset(H)(op)(x) ⊆ G) by Tautology.from(
+        rightCosetStaysInGroupLemma
+      )
+      val obs3 = have((x ∈ G, rightCoset(H)(op)(x) === y) |- y ⊆ G) by Substitution.Apply(rightCoset(H)(op)(x) === y)(obs2)
+      val obs4 = thenHave(((x ∈ G) /\ (rightCoset(H)(op)(x) === y)) |- y ⊆ G) by Restate
+      val obs5 = thenHave(∃(x, (x ∈ G) /\ (rightCoset(H)(op)(x) === y)) |- y ⊆ G) by LeftExists
+      val obs6 = thenHave(∃(x ∈ G, rightCoset(H)(op)(x) === y) |- y ⊆ G) by Restate
+      have(y ⊆ G) by Tautology.from(obs1, obs6)
     }
 
     val thm1 = have(y ∈ (rightCoset(H)(op)(x) | x ∈ G) ==> y ⊆ G) by Restate.from(subthm1)
-    val thm2 = thenHave(∀ (y, y ∈ (rightCoset(H)(op)(x) | x ∈ G) ==> y ⊆ G)) by RightForall
-    val thm3 = thenHave(∀ (y ∈ (rightCoset(H)(op)(x) | x ∈ G), y ⊆ G)) by Restate
+    val thm2 = thenHave(∀(y, y ∈ (rightCoset(H)(op)(x) | x ∈ G) ==> y ⊆ G)) by RightForall
+    val thm3 = thenHave(∀(y ∈ (rightCoset(H)(op)(x) | x ∈ G), y ⊆ G)) by Restate
 
     val subthm2 = have(∀(y ∈ G, ∃(z ∈ (rightCoset(H)(op)(x) | x ∈ G), y ∈ z))) subproof {
       // Prove every element of G is in some right coset
