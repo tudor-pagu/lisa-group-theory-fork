@@ -284,7 +284,7 @@ object Groups extends lisa.Main:
         P,
         (∀(x ∈ P, x ⊆ G)) /\ // every set in P is a subset of G
           (∀(x ∈ G, ∃(y ∈ P, x ∈ y))) /\ // every element of G is found in some set in P
-          (∀(x ∈ P, ∀(y ∈ P, x ≠ y ==> (x ∩ y === ∅) ))) // the sets in P are disjoint
+          (∀(x ∈ P, ∀(y ∈ P, x ≠ y ==> (x ∩ y === ∅)))) // the sets in P are disjoint
       )
     )
   )
@@ -293,7 +293,29 @@ object Groups extends lisa.Main:
     (group(G)(op), subgroup(H)(G)(op))
       |- partition(G)((rightCoset(H)(op)(x) | x ∈ G))
   ) {
-    sorry
+    assume(group(G)(op), subgroup(H)(G)(op))
+
+    val subthm1 = have(∀(y ∈ (rightCoset(H)(op)(x) | x ∈ G), y ⊆ G)) subproof {
+      // Prove every right coset is a subset of G
+      sorry
+    }
+
+    val subthm2 = have(∀(y ∈ G, ∃(z ∈ (rightCoset(H)(op)(x) | x ∈ G), y ∈ z))) subproof {
+      // Prove every element of G is in some right coset
+      sorry
+    }
+
+    val subthm3 = have(∀(y ∈ (rightCoset(H)(op)(x) | x ∈ G), ∀(z ∈ (rightCoset(H)(op)(x) | x ∈ G), y ≠ z ==> (y ∩ z === ∅)))) subproof {
+      // Prove distinct right cosets are disjoint
+      sorry
+    }
+
+    have(partition(G)((rightCoset(H)(op)(x) | x ∈ G))) by Tautology.from(
+      subthm1,
+      subthm2,
+      subthm3,
+      partition.definition of (G := G, P := (rightCoset(H)(op)(x) | x ∈ G))
+    )
   }
 
   val lagrangesLemma2 = Theorem(
