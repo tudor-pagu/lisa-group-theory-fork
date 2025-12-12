@@ -284,7 +284,7 @@ object Groups extends lisa.Main:
         P,
         (∀(x ∈ P, x ⊆ G)) /\ // every set in P is a subset of G
           (∀(x ∈ G, ∃(y ∈ P, x ∈ y))) /\ // every element of G is found in some set in P
-          (∀(x ∈ P, ∀(y ∈ P, x ∩ y === ∅))) // the sets in P are disjoint
+          (∀(x ∈ P, ∀(y ∈ P, x ≠ y ==> (x ∩ y === ∅) ))) // the sets in P are disjoint
       )
     )
   )
