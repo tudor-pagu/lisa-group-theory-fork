@@ -1,15 +1,12 @@
 package lisa.maths.GroupTheory
 
-import lisa.kernel.proof.*
+import lisa.maths.SetTheory.Base.Predef.{_, given}
+
 import lisa.kernel.proof.RunningTheoryJudgement._
-import lisa.maths.SetTheory.*
+import lisa.maths.SetTheory.Functions.Function.bijective
 import lisa.maths.SetTheory.Base.EmptySet
-import lisa.maths.SetTheory.Base.Singleton.*
 import lisa.maths.SetTheory.Base.Singleton
-import lisa.maths.SetTheory.Base.Subset.*
 import lisa.maths.SetTheory.Base.Subset
-import lisa.maths.SetTheory.Base.Comprehension.*
-import lisa.maths.SetTheory.Base.Replacement.*
 import lisa.Main
 
 import lisa.automation.Congruence
@@ -52,7 +49,10 @@ object Groups extends lisa.Main:
   val h = variable[Ind]
   val g = variable[Ind]
 
+  val f = variable[Ind]
+
   val G = variable[Ind]
+  val P = variable[Ind]
   val H = variable[Ind]
   val C = variable[Ind]
   val op = variable[Ind >>: Ind >>: Ind]
@@ -176,28 +176,28 @@ object Groups extends lisa.Main:
       |- associativity(G)(op)
   ) {
     assume(∀(x, ∀(y, ∀(z, ((x ∈ G) /\ (y ∈ G) /\ (z ∈ G)) ==> (op(x)(op(y)(z)) === op(op(x)(y))(z))))))
-    
+
     val thm1 = have(∀(x, ∀(y, ∀(z, ((x ∈ G) /\ (y ∈ G) /\ (z ∈ G)) ==> (op(x)(op(y)(z)) === op(op(x)(y))(z)))))) by Restate
     val thm2 = have(∀(y, ∀(z, ((x ∈ G) /\ (y ∈ G) /\ (z ∈ G)) ==> (op(x)(op(y)(z)) === op(op(x)(y))(z))))) by InstantiateForall(x)(thm1)
     val thm3 = have(∀(z, ((x ∈ G) /\ (y ∈ G) /\ (z ∈ G)) ==> (op(x)(op(y)(z)) === op(op(x)(y))(z)))) by InstantiateForall(y)(thm2)
     val thm4 = have(((x ∈ G) /\ (y ∈ G) /\ (z ∈ G)) ==> (op(x)(op(y)(z)) === op(op(x)(y))(z))) by InstantiateForall(z)(thm3)
     val thm5 = thenHave(((x ∈ G), (y ∈ G), (z ∈ G)) |- (op(x)(op(y)(z)) === op(op(x)(y))(z))) by Restate
-    
+
     // Build up z quantifier first
     val thm6 = thenHave(((x ∈ G), (y ∈ G)) |- (z ∈ G) ==> (op(x)(op(y)(z)) === op(op(x)(y))(z))) by Restate
     val thm7 = thenHave(((x ∈ G), (y ∈ G)) |- ∀(z, (z ∈ G) ==> (op(x)(op(y)(z)) === op(op(x)(y))(z)))) by RightForall
     val thm8 = thenHave(((x ∈ G), (y ∈ G)) |- ∀(z ∈ G, (op(x)(op(y)(z)) === op(op(x)(y))(z)))) by Restate
-    
+
     // Build up y quantifier
     val thm9 = thenHave((x ∈ G) |- (y ∈ G) ==> ∀(z ∈ G, (op(x)(op(y)(z)) === op(op(x)(y))(z)))) by Restate
     val thm10 = thenHave((x ∈ G) |- ∀(y, (y ∈ G) ==> ∀(z ∈ G, (op(x)(op(y)(z)) === op(op(x)(y))(z))))) by RightForall
     val thm11 = thenHave((x ∈ G) |- ∀(y ∈ G, ∀(z ∈ G, (op(x)(op(y)(z)) === op(op(x)(y))(z))))) by Restate
-    
+
     // Build up x quantifier
     val thm12 = thenHave(() |- (x ∈ G) ==> ∀(y ∈ G, ∀(z ∈ G, (op(x)(op(y)(z)) === op(op(x)(y))(z))))) by Restate
     val thm13 = thenHave(() |- ∀(x, (x ∈ G) ==> ∀(y ∈ G, ∀(z ∈ G, (op(x)(op(y)(z)) === op(op(x)(y))(z)))))) by RightForall
     val thm14 = thenHave(() |- ∀(x ∈ G, ∀(y ∈ G, ∀(z ∈ G, (op(x)(op(y)(z)) === op(op(x)(y))(z)))))) by Restate
-    
+
     have(associativity(G)(op)) by Tautology.from(thm14, associativity.definition)
   }
 
@@ -206,18 +206,18 @@ object Groups extends lisa.Main:
       op(x)(op(y)(z)) === op(op(x)(y))(z)
   ) {
     assume(associativity(G)(op), x ∈ G, y ∈ G, z ∈ G)
-    
+
     // Unfold the definition of associativity
     val thm1 = have(∀(x ∈ G, ∀(y ∈ G, ∀(z ∈ G, op(x)(op(y)(z)) === op(op(x)(y))(z))))) by Tautology.from(associativity.definition)
-    
+
     // Instantiate x
     val thm2 = have((x ∈ G) ==> ∀(y ∈ G, ∀(z ∈ G, op(x)(op(y)(z)) === op(op(x)(y))(z)))) by InstantiateForall(x)(thm1)
     val thm3 = have(∀(y ∈ G, ∀(z ∈ G, op(x)(op(y)(z)) === op(op(x)(y))(z)))) by Tautology.from(thm2)
-    
+
     // Instantiate y
     val thm4 = have((y ∈ G) ==> ∀(z ∈ G, op(x)(op(y)(z)) === op(op(x)(y))(z))) by InstantiateForall(y)(thm3)
     val thm5 = have(∀(z ∈ G, op(x)(op(y)(z)) === op(op(x)(y))(z))) by Tautology.from(thm4)
-    
+
     // Instantiate z
     val thm6 = have((z ∈ G) ==> (op(x)(op(y)(z)) === op(op(x)(y))(z))) by InstantiateForall(z)(thm5)
     val thm7 = have(op(x)(op(y)(z)) === op(op(x)(y))(z)) by Tautology.from(thm6)
@@ -272,6 +272,35 @@ object Groups extends lisa.Main:
     }
     val thm2 = have(group(H)(op)) by Tautology.from(group.definition of (G := H, op := op), subthm1, subthm3, thm1)
     val thm3 = have(subgroup(H)(G)(op)) by Tautology.from(subgroup.definition of (G := G, H := H, op := op), thm2)
+  }
+
+  /* Lagrange's Theorem */
+
+  // P is a partition of G
+  val partition = DEF(
+    λ(
+      G,
+      λ(
+        P,
+        (∀(x ∈ P, x ⊆ G)) /\ // every set in P is a subset of G
+          (∀(x ∈ G, ∃(y ∈ P, x ∈ y))) /\ // every element of G is found in some set in P
+          (∀(x ∈ P, ∀(y ∈ P, x ∩ y === ∅))) // the sets in P are disjoint
+      )
+    )
+  )
+
+  val lagrangesLemma1 = Theorem(
+    (group(G)(op), subgroup(H)(G)(op))
+      |- partition(G)((rightCoset(H)(op)(x) | x ∈ G))
+  ) {
+    sorry
+  }
+
+  val lagrangesLemma2 = Theorem(
+    (group(G)(op), subgroup(H)(G)(op), x ∈ G) |-
+      ∃(f, bijective(f)(H)(rightCoset(H)(op)(x)))
+  ) {
+    sorry
   }
 
   /*
