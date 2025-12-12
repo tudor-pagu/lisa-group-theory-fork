@@ -49,6 +49,7 @@ object Groups extends lisa.Main:
   val z = variable[Ind]
   val h = variable[Ind]
   val g = variable[Ind]
+  val e = variable[Ind]
 
   val f = variable[Ind]
 
@@ -297,6 +298,12 @@ object Groups extends lisa.Main:
     sorry
   }
 
+  val subgroupHasTheSameIdentity = Theorem(
+    (group(G)(op), subgroup(H)(G)(op), isIdentityElement(G)(op)(e)) |- isIdentityElement(H)(op)(e)
+  ) {
+    sorry
+  }
+
   val lagrangesLemma1 = Theorem(
     (group(G)(op), subgroup(H)(G)(op))
       |- partition(G)((rightCoset(H)(op)(x) | x ∈ G))
@@ -322,10 +329,65 @@ object Groups extends lisa.Main:
     val thm2 = thenHave(∀(y, y ∈ (rightCoset(H)(op)(x) | x ∈ G) ==> y ⊆ G)) by RightForall
     val thm3 = thenHave(∀(y ∈ (rightCoset(H)(op)(x) | x ∈ G), y ⊆ G)) by Restate
 
-    val subthm2 = have(∀(y ∈ G, ∃(z ∈ (rightCoset(H)(op)(x) | x ∈ G), y ∈ z))) subproof {
+    val subthm2 = have(y ∈ G |- ∃(z ∈ (rightCoset(H)(op)(x) | x ∈ G), y ∈ z)) subproof {
       // Prove every element of G is in some right coset
-      sorry
+      assume(y ∈ G)
+      val obs1 = have(identityElement(G)(op)) by Tautology.from(group.definition)
+      val obs2 = have(∃(e, isIdentityElement(G)(op)(e))) by Tautology.from(obs1, identityElement.definition)
+
+      val obs3 = have(isIdentityElement(G)(op)(e) |- ∀(y ∈ G, ((op(e)(y) === y) /\ (op(y)(e) === y)))) by Tautology.from(isIdentityElement.definition of (G := G, op := op, x := e))
+      val obs4 = thenHave(isIdentityElement(G)(op)(e) |- (y ∈ G) ==> ((op(e)(y) === y) /\ (op(y)(e) === y))) by InstantiateForall(y)
+      val obs5 = have(isIdentityElement(G)(op)(e) |- (op(e)(y) === y)) by Tautology.from(obs4)
+
+      val cosetSet = (rightCoset(H)(op)(x) | x ∈ G)
+
+      // KEY OBSERVATION
+      val obs6 = have(rightCoset(H)(op)(y) ∈ cosetSet) by Tautology.from(Replacement.map of (F := lambda(x, rightCoset(H)(op)(x)), A := G, x := y))
+
+      val obs7 = have(isIdentityElement(G)(op)(e) |- isIdentityElement(H)(op)(e)) by Tautology.from(
+        subgroupHasTheSameIdentity
+      )
+      val obs8 = have(isIdentityElement(G)(op)(e) |- e ∈ H) by Tautology.from(
+        obs7,
+        isIdentityElement.definition of (G := H, op := op, x := e)
+      )
+
+      val obs9 = have(isIdentityElement(G)(op)(e) |- e ∈ H /\ (op(e)(y) === op(e)(y))) by Tautology.from(obs8)
+      val obs10 = have(isIdentityElement(G)(op)(e) |- e ∈ H /\ (op(e)(y) === op(e)(y))) by Tautology.from(obs8)
+      val obs11 = thenHave(isIdentityElement(G)(op)(e) |- ∃(h, h ∈ H /\ (op(h)(y) === op(e)(y)))) by RightExists
+      val obs12 = thenHave(isIdentityElement(G)(op)(e) |- ∃(h ∈ H, op(h)(y) === op(e)(y))) by Restate
+      val obs13 = have(isIdentityElement(G)(op)(e) |- op(e)(y) ∈ (op(h)(y) | h ∈ H)) by Tautology.from(
+        obs12,
+        Replacement.membership of (F := λ(h, op(h)(y)), A := H, y := op(e)(y))
+      )
+      val obs14 = have((op(h)(y) | h ∈ H) === rightCoset(H)(op)(y)) by Tautology.from(
+        rightCoset.definition of (H := H, op := op, g := y)
+      )
+      val obs15 = have( ((op(h)(y) | h ∈ H) === rightCoset(H)(op)(y), isIdentityElement(G)(op)(e) ) |- op(e)(y) ∈ rightCoset(H)(op)(y)) by Substitution.Apply(
+        (op(h)(y) | h ∈ H) === rightCoset(H)(op)(y)
+      )(obs13)
+
+      // KEY OBSERVATION
+      val obs16 = have(isIdentityElement(G)(op)(e) |- op(e)(y) ∈ rightCoset(H)(op)(y)) by Tautology.from(obs14, obs15)
+
+      val obs17 = have( ( y === op(e)(y) , isIdentityElement(G)(op)(e) ) |- y ∈ rightCoset(H)(op)(y)) by Substitution.Apply(y === op(e)(y))(obs16)
+      val obs18 = have( isIdentityElement(G)(op)(e) |- y ∈ rightCoset(H)(op)(y)) by Tautology.from(obs17, obs5)
+      val obs19 = have(isIdentityElement(G)(op)(e) |- y ∈ rightCoset(H)(op)(y) /\ rightCoset(H)(op)(y) ∈ cosetSet) by Tautology.from(obs18, obs6)
+      val obs20 = thenHave(isIdentityElement(G)(op)(e) |- ∃(z, y ∈ z /\ z ∈ cosetSet)) by RightExists
+      val obs21 = thenHave(isIdentityElement(G)(op)(e) |- ∃(z ∈ cosetSet, y ∈ z)) by Restate
+      val obs22 = thenHave(∃(e, isIdentityElement(G)(op)(e)) |- ∃(z ∈ cosetSet, y ∈ z)) by LeftExists
+
+      val obs23 = have(∃(e, isIdentityElement(G)(op)(e))) by Tautology.from(
+        group.definition,
+        identityElement.definition
+      )
+
+      val obs24 = have(∃(z ∈ cosetSet, y ∈ z)) by Tautology.from(obs22, obs23)
     }
+
+    val thm4 = have(y ∈ G ==> ∃(z ∈ (rightCoset(H)(op)(x) | x ∈ G), y ∈ z)) by Restate.from(subthm2)
+    val thm5 = thenHave(∀(y, y ∈ G ==> ∃(z ∈ (rightCoset(H)(op)(x) | x ∈ G), y ∈ z))) by RightForall
+    val thm6 = thenHave(∀(y ∈ G, ∃(z ∈ (rightCoset(H)(op)(x) | x ∈ G), y ∈ z))) by Restate
 
     val subthm3 = have(∀(y ∈ (rightCoset(H)(op)(x) | x ∈ G), ∀(z ∈ (rightCoset(H)(op)(x) | x ∈ G), y ≠ z ==> (y ∩ z === ∅)))) subproof {
       // Prove distinct right cosets are disjoint
@@ -334,7 +396,7 @@ object Groups extends lisa.Main:
 
     have(partition(G)((rightCoset(H)(op)(x) | x ∈ G))) by Tautology.from(
       thm3,
-      subthm2,
+      thm6,
       subthm3,
       partition.definition of (G := G, P := (rightCoset(H)(op)(x) | x ∈ G))
     )
