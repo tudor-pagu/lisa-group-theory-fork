@@ -188,7 +188,25 @@ object Groups extends lisa.Main:
   val inverseStaysInGroup = Theorem(
     (group(G)(op), x ∈ G) |- inverseOf(G)(op)(x) ∈ G
   ) {
-    sorry
+    assume(group(G)(op), x ∈ G)
+    val auxP = lambda(y,
+      (y ∈ G) /\ isIdentityElement(G)(op)(op(x)(y))
+    )
+
+    val inv = have(inverseElement(G)(op)) by Tautology.from(group.definition)
+
+    val _1 = have(∀(x, x ∈ G ==> ∃(y ∈ G, isIdentityElement(G)(op)(op(x)(y))))) by Tautology.from(inv, inverseElement.definition)
+    val _2 = thenHave(x ∈ G ==> ∃(y ∈ G, isIdentityElement(G)(op)(op(x)(y)))) by InstantiateForall(x)
+    val _3 = thenHave(∃(y ∈ G, isIdentityElement(G)(op)(op(x)(y)))) by Tautology
+    val _4 = thenHave(∃(y, auxP(y))) by Tautology
+    
+    val eps = have(auxP(ε(y, auxP(y)))) by Tautology.from(_4, Quantifiers.existsEpsilon of (P := auxP))
+
+    val _invDef = inverseOf(G)(op)(x) === ε(y, auxP(y))
+    val invDef = have(_invDef) by Tautology.from(inverseOf.definition)
+
+    val _5 = have(_invDef |- auxP(inverseOf(G)(op)(x))) by Substitution.Apply(_invDef)(eps)
+    have(thesis) by Tautology.from(invDef, _5)
   }
 
   val associativityAlternateForm = Theorem(
@@ -247,7 +265,11 @@ object Groups extends lisa.Main:
     (binaryOperation(G)(op), x ∈ G, y ∈ G) |-
       op(x)(y) ∈ G
   ) {
-    sorry
+    assume(binaryOperation(G)(op), x ∈ G, y ∈ G)
+    have(∀(x, ∀(y, x ∈ G /\ y ∈ G ==> op(x)(y) ∈ G))) by Tautology.from(binaryOperation.definition)
+    thenHave(∀(y, x ∈ G /\ y ∈ G ==> op(x)(y) ∈ G)) by InstantiateForall(x)
+    thenHave(x ∈ G /\ y ∈ G ==> op(x)(y) ∈ G) by InstantiateForall(y)
+    thenHave(thesis) by Tautology
   }
 
   val subgroupTestTwoStep = Theorem(
