@@ -319,7 +319,21 @@ object Groups extends lisa.Main:
   val elementInSubgroupMeansItsInGroup = Theorem(
     (group(G)(op), subgroup(H)(G)(op), x ∈ H) |- x ∈ G
   ) {
-    sorry
+    assume(group(G)(op), subgroup(H)(G)(op), x ∈ H)
+    
+    // From subgroup definition, we have H ⊆ G
+    val step1 = have(H ⊆ G) by Tautology.from(subgroup.definition)
+    
+    // Apply subset axiom: H ⊆ G means ∀(z, (z ∈ H) ==> (z ∈ G))
+    val step2 = have(∀(z, (z ∈ H) ==> (z ∈ G))) by Tautology.from(
+      step1,
+      Subset.subsetAxiom of (x := H, y := G)
+    )
+    
+    // Instantiate with x
+    val step3 = thenHave((x ∈ H) ==> (x ∈ G)) by InstantiateForall(x)
+    
+    have(x ∈ G) by Tautology.from(step3)
   }
 
   val rightCosetStaysInGroupLemma = Theorem(
