@@ -316,18 +316,53 @@ object Groups extends lisa.Main:
     )
   )
 
-  val rightCosetStaysInGroupLemma = Theorem(
-    (group(G)(op), subgroup(H)(G)(op), x ∈ G) |-
-      (rightCoset(H)(op)(x) ⊆ G)
-  ) {
-    sorry
-  }
-
   val elementInSubgroupMeansItsInGroup = Theorem(
     (group(G)(op), subgroup(H)(G)(op), x ∈ H) |- x ∈ G
   ) {
     sorry
   }
+
+  val rightCosetStaysInGroupLemma = Theorem(
+    (group(G)(op), subgroup(H)(G)(op), x ∈ G) |-
+      (rightCoset(H)(op)(x) ⊆ G)
+  ) {
+    assume(group(G)(op), subgroup(H)(G)(op), x ∈ G)
+    val rc = rightCoset(H)(op)(x) 
+    val thm1 = have(rc === (op(h)(x) | (h ∈ H))) by Tautology.from(rightCoset.definition of (g:=x))
+    val obs1 = have(h ∈ H |- h ∈ G) by Tautology.from(elementInSubgroupMeansItsInGroup of (x:=h))
+    val eq1 = rc === (op(h)(x) | (h ∈ H))
+
+    val step2a = have(y ∈ (op(h)(x) | (h ∈ H)) <=> ∃(h ∈ H, op(h)(x) === y) ) by Tautology.from(Replacement.membership of (F:=lambda(h, op(h)(x)), A:=H, y:=y))
+    val step2b = have(eq1 |- y ∈ rc <=> ∃(h ∈ H, op(h)(x) === y) ) by Substitution.Apply(eq1)(step2a)
+    val step2c = have(y ∈ rc <=> ∃(h ∈ H, op(h)(x) === y) ) by Tautology.from(step2b, thm1)
+    val step2 = have(y ∈ rc |- ∃(h ∈ H, op(h)(x) === y) ) by Tautology.from(step2b, thm1)
+
+    val goal = have(y ∈ rc |- y ∈ G) subproof {
+      assume(y ∈ rc)
+      val substep1 = have(∃(h ∈ H, op(h)(x) === y)) by Tautology.from(step2)
+      val auxP = lambda(z, (z ∈ H) /\ (op(z)(x) === y))
+
+      val h1 = ε(h, auxP(h))
+      val hThm = have(auxP(h1)) by Tautology.from(
+        substep1,
+        Quantifiers.existsEpsilon of (x := h, P := auxP)
+      )
+      val substep2 = have(op(h1)(x) ∈ G) by Tautology.from(
+        binaryOperationThm of (G := G, op := op, x := h1, y := x),
+        group.definition,
+        elementInSubgroupMeansItsInGroup of (x := h1),
+        hThm
+      )
+      val substep3Eq = op(h1)(x) === y
+      val substep3 = have(substep3Eq |- y ∈ G) by Substitution.Apply(substep3Eq)(substep2)
+      have(y ∈ G) by Tautology.from(substep3, hThm)
+    }
+
+    val goal1 = have( (y ∈ rc) ==> (y ∈ G)) by Tautology.from(goal)
+    val goal2 = thenHave( ∀(y, (y ∈ rc) ==> (y ∈ G))) by RightForall
+    have(thesis) by Tautology.from(subsetAxiom of (x:=rc, y:=G), goal2)
+  }
+
 
   val subgroupHasTheSameIdentity = Theorem(
     (group(G)(op), subgroup(H)(G)(op), isIdentityElement(G)(op)(e)) |- isIdentityElement(H)(op)(e)
