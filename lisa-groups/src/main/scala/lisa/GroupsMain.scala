@@ -387,7 +387,35 @@ object Groups extends lisa.Main:
   val identityIsUnique = Theorem(
     (group(G)(op), isIdentityElement(G)(op)(x) , isIdentityElement(G)(op)(y)) |- x === y
   ) {
-    sorry
+    assume(group(G)(op), isIdentityElement(G)(op)(x) , isIdentityElement(G)(op)(y))
+    val w = op(x)(y)
+    
+    // x is an identity, so op(x)(y) === y
+    val step1a = have(isIdentityElement(G)(op)(x) |- ∀(a ∈ G, (op(x)(a) === a) /\ (op(a)(x) === a))) by Tautology.from(
+      isIdentityElement.definition of (G := G, op := op, x := x)
+    )
+    val step1b = have(isIdentityElement(G)(op)(x) |- x ∈ G) by Tautology.from(
+      isIdentityElement.definition of (G := G, op := op, x := x)
+    )
+    val step1c = have(isIdentityElement(G)(op)(y) |- y ∈ G) by Tautology.from(
+      isIdentityElement.definition of (G := G, op := op, x := y)
+    )
+    val step1d = have(isIdentityElement(G)(op)(x) |- (y ∈ G) ==> ((op(x)(y) === y) /\ (op(y)(x) === y))) by InstantiateForall(y)(step1a)
+    val step1 = have(w === y) by Tautology.from(step1d, step1c)
+    
+    // y is an identity, so op(x)(y) === x
+    val step2a = have(isIdentityElement(G)(op)(y) |- ∀(a ∈ G, (op(y)(a) === a) /\ (op(a)(y) === a))) by Tautology.from(
+      isIdentityElement.definition of (G := G, op := op, x := y)
+    )
+    val step2b = have(isIdentityElement(G)(op)(y) |- (x ∈ G) ==> ((op(y)(x) === x) /\ (op(x)(y) === x))) by InstantiateForall(x)(step2a)
+    val step2 = have(w === x) by Tautology.from(step2b, step1b)
+    
+    // Transitivity: x === w === y
+    have(x === y) by Tautology.from(
+      equalityTransitivity of (x := x, y := w, z := y),
+      step2,
+      step1
+    )
   }
 
   val subgroupHasTheSameIdentity = Theorem(
