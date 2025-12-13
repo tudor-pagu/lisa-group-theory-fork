@@ -482,7 +482,10 @@ object Groups extends lisa.Main:
   val inverseProperty = Theorem(
     (group(G)(op), x ∈ G) |- isIdentityElement(G)(op)(op(inverseOf(G)(op)(x))(x))
   ) {
-    sorry
+    assume(group(G)(op), x ∈ G)
+    val thm1 = have(isIdentityElement(G)(op)(op(x)(inverseOf(G)(op)(x)))) by  Tautology.from(inverseProperty2)
+    val thm1a = have(inverseOf(G)(op)(x) ∈ G) by Tautology.from(inverseStaysInGroup)
+    val thm2 = have(isIdentityElement(G)(op)(op( inverseOf(G)(op)(x)) (x))) by Tautology.from(thm1a, inverseCommutability of (x:=x, y:=inverseOf(G)(op)(x)), thm1)
   }
 
   val lagrangesLemma1 = Theorem(
