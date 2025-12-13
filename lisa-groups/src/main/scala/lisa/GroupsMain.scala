@@ -386,7 +386,32 @@ object Groups extends lisa.Main:
   val inverseProperty = Theorem(
     (group(G)(op), x ∈ G) |- isIdentityElement(G)(op)(op(inverseOf(G)(op)(x))(x))
   ) {
-    sorry
+    assume(group(G)(op), x ∈ G)
+    val auxP = lambda(y, (y ∈ G) /\ (isIdentityElement(G)(op)(op(x)(y))))
+    val eps = have(∃(y, auxP(y)) |- auxP(ε(y, auxP(y)))) by Tautology.from(Quantifiers.existsEpsilon of (P:=auxP))
+    
+    val ex = have(inverseElement(G)(op) |- 
+      ∀(x ∈ G, ∃(y ∈ G, isIdentityElement(G)(op)(op(x)(y))))) by Tautology.from(
+      inverseElement.definition
+    )
+
+    val ex2 = thenHave(inverseElement(G)(op) |- 
+      ∀(x, x ∈ G ==>( ∃(y ∈ G, isIdentityElement(G)(op)(op(x)(y)))))) by Restate
+
+    val ex3 = have(∀(x, x ∈ G ==>( ∃(y ∈ G, isIdentityElement(G)(op)(op(x)(y)))))) by Tautology.from(ex2, group.definition)
+    val ex4 = thenHave(x ∈ G ==>( ∃(y ∈ G, isIdentityElement(G)(op)(op(x)(y))))) by InstantiateForall(x)
+    val ex5 = have( ∃(y ∈ G, isIdentityElement(G)(op)(op(x)(y)))) by Tautology.from(ex4)
+    val ex6 = have( ∃(y ∈ G, auxP(y))) by Tautology.from(ex5)
+    val ex7 = thenHave( ∃(y, (y ∈ G) /\ auxP(y))) by Restate
+    // val ex8 = have(∃(y, auxP(y)) ) by Tautology.from(ex7)
+    val ex9 = have( auxP(ε(y, auxP(y))) ) by Tautology.from(ex7 , eps)
+
+    val inv = inverseOf(G)(op)(x)
+    val i1 = have(inv === ε(y, auxP(y))) by Tautology.from(inverseOf.definition)
+    val eq1 = inv === ε(y, auxP(y))
+    val i2 = have(eq1 |- auxP(inv)) by Substitution.Apply(eq1)(ex9)
+    val i3 = have(auxP(inv)) by Tautology.from(i2, i1)
+    val i4 = have( (inv ∈ G) /\ (isIdentityElement(G)(op)(op(x)(inv))) )   by Tautology.from(i3)
   }
 
   val lagrangesLemma1 = Theorem(
