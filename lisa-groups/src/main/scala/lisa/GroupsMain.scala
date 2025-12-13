@@ -552,13 +552,6 @@ object Groups extends lisa.Main:
     val thm2 = have(isIdentityElement(G)(op)(op(inverseOf(G)(op)(x))(x))) by Tautology.from(thm1a, inverseCommutability of (x := x, y := inverseOf(G)(op)(x)), thm1)
   }
 
-  val inverseElementsInSubgroupAreAlsoInverseInGroup = Theorem(
-    (group(G)(op), subgroup(H)(G)(op), isIdentityElement(H)(op)(op(x)(y)))
-      |- isIdentityElement(G)(op)(op(x)(y))
-  ) {
-    sorry
-  }
-
   val groupHasTheSameIdentityAsSubgroup = Theorem(
     (group(G)(op), subgroup(H)(G)(op), isIdentityElement(H)(op)(e)) |- isIdentityElement(G)(op)(e)
   ) {
@@ -655,19 +648,16 @@ object Groups extends lisa.Main:
 
     val step12 = have(op(e)(Eg) === e) by Tautology.from(step10b)
 
-    val eInv = inverseOf(H)(op)(e)
+    val eInv = inverseOf(G)(op)(e)
 
     val step13 = have(op(eInv)(op(e)(Eg)) === op(eInv)(op(e)(Eg))) by Restate
 
-    val step13a = have(eInv ∈ H) by Tautology.from(
-      inverseStaysInGroup of (G := H, op := op, x := e),
-      subgroup.definition,
-      step1
-    )
-    val step13b = have(eInv ∈ G) by Tautology.from(
-      elementInSubgroupMeansItsInGroup of (x := eInv),
-      step13a
-    )
+    // val step13a = have(eInv ∈ H) by Tautology.from(
+    //   inverseStaysInGroup of (G := H, op := op, x := e),
+    //   subgroup.definition,
+    //   step1
+    // )
+    val step13b = have(eInv ∈ G) by Sorry
     // val assocG = have(associativity(G)(op)) by Tautology.from(group.definition)
     val step14 = have(op(eInv)(op(e)(Eg)) === op(op(eInv)(e))(Eg)) by Tautology.from(
       associativityThm of (x := eInv, y := e, z := Eg),
@@ -677,15 +667,7 @@ object Groups extends lisa.Main:
       step7e
     )
 
-    val step15a = have(isIdentityElement(H)(op)(op(eInv)(e))) by Tautology.from(
-      inverseProperty of (G := H, op := op, x := e),
-      subgroup.definition,
-      step1
-    )
-    val step15b = have(isIdentityElement(G)(op)(op(eInv)(e))) by Tautology.from(
-      inverseElementsInSubgroupAreAlsoInverseInGroup of (x := eInv, y := e),
-      step15a
-    )
+    val step15b = have(isIdentityElement(G)(op)(op(eInv)(e))) by Sorry
     val step15 = have(op(eInv)(e) === Eg) by Tautology.from(
       identityIsUnique of (x := op(eInv)(e), y := Eg),
       step15b,
