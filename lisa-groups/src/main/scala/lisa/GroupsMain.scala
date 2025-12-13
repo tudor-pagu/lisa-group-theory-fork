@@ -3,7 +3,8 @@ package lisa.maths.GroupTheory
 import lisa.maths.SetTheory.Base.Predef.{_, given}
 
 import lisa.kernel.proof.RunningTheoryJudgement._
-import lisa.maths.SetTheory.Functions.Function.bijective
+import lisa.maths.SetTheory.Functions.Function.{bijective, surjective, injective, functionBetween, ::}
+import lisa.maths.SetTheory.Base.Pair.{_, given}
 import lisa.maths.SetTheory.Base.EmptySet
 import lisa.maths.SetTheory.Base.Singleton
 import lisa.maths.SetTheory.Base.Subset
@@ -296,11 +297,36 @@ object Groups extends lisa.Main:
     sorry
   }
 
+  val functionF = Theorem(
+    (group(G)(op), subgroup(H)(G)(op), x ∈ G) |- (((h,op(h)(g)) | (h ∈ H)) :: H -> rightCoset(H)(op)(x))
+  ) {
+    sorry
+  }
+
+  val surjectiveF = Theorem(
+    (group(G)(op), subgroup(H)(G)(op), x ∈ G) |- surjective(((h,op(h)(g)) | (h ∈ H)))(rightCoset(H)(op)(x))
+  ) {
+    sorry
+  }
+
+  val injectiveF = Theorem(
+    (group(G)(op), subgroup(H)(G)(op), x ∈ G) |- injective(((h,op(h)(g)) | (h ∈ H)))(H)
+  ) {
+    sorry
+  }
+
+  val bijectiveF = Theorem(
+    (group(G)(op), subgroup(H)(G)(op), x ∈ G) |- bijective(((h,op(h)(g)) | (h ∈ H)))(H)(rightCoset(H)(op)(x))
+  ) {
+    sorry
+  }
+
   val lagrangesLemma2 = Theorem(
     (group(G)(op), subgroup(H)(G)(op), x ∈ G) |-
       ∃(f, bijective(f)(H)(rightCoset(H)(op)(x)))
   ) {
-    sorry
+    have((group(G)(op), subgroup(H)(G)(op), x ∈ G) |- bijective(((h,op(h)(g)) | (h ∈ H)))(H)(rightCoset(H)(op)(x))) by Restate.from(bijectiveF)
+    thenHave(thesis) by RightExists
   }
 
   /*
