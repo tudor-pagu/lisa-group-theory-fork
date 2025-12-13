@@ -74,6 +74,7 @@ object Groups extends lisa.Main:
   val isIdentityElement = DEF(λ(G, λ(op, λ(x, (x ∈ G) /\ (∀(y ∈ G, ((op(x)(y) === y) /\ (op(y)(x) === y))))))))
 
   val identityElement = DEF(λ(G, λ(op, ∃(x, isIdentityElement(G)(op)(x)))))
+  val identityOf = DEF(λ(G, λ(op, ε(e, isIdentityElement(G)(op)(e)))))
 
   val associativity = DEF(λ(G, λ(op, ∀(x ∈ G, ∀(y ∈ G, ∀(z ∈ G, op(x)(op(y)(z)) === op(op(x)(y))(z)))))))
 
@@ -320,19 +321,19 @@ object Groups extends lisa.Main:
     (group(G)(op), subgroup(H)(G)(op), x ∈ H) |- x ∈ G
   ) {
     assume(group(G)(op), subgroup(H)(G)(op), x ∈ H)
-    
+
     // From subgroup definition, we have H ⊆ G
     val step1 = have(H ⊆ G) by Tautology.from(subgroup.definition)
-    
+
     // Apply subset axiom: H ⊆ G means ∀(z, (z ∈ H) ==> (z ∈ G))
     val step2 = have(∀(z, (z ∈ H) ==> (z ∈ G))) by Tautology.from(
       step1,
       Subset.subsetAxiom of (x := H, y := G)
     )
-    
+
     // Instantiate with x
     val step3 = thenHave((x ∈ H) ==> (x ∈ G)) by InstantiateForall(x)
-    
+
     have(x ∈ G) by Tautology.from(step3)
   }
 
@@ -341,15 +342,15 @@ object Groups extends lisa.Main:
       (rightCoset(H)(op)(x) ⊆ G)
   ) {
     assume(group(G)(op), subgroup(H)(G)(op), x ∈ G)
-    val rc = rightCoset(H)(op)(x) 
-    val thm1 = have(rc === (op(h)(x) | (h ∈ H))) by Tautology.from(rightCoset.definition of (g:=x))
-    val obs1 = have(h ∈ H |- h ∈ G) by Tautology.from(elementInSubgroupMeansItsInGroup of (x:=h))
+    val rc = rightCoset(H)(op)(x)
+    val thm1 = have(rc === (op(h)(x) | (h ∈ H))) by Tautology.from(rightCoset.definition of (g := x))
+    val obs1 = have(h ∈ H |- h ∈ G) by Tautology.from(elementInSubgroupMeansItsInGroup of (x := h))
     val eq1 = rc === (op(h)(x) | (h ∈ H))
 
-    val step2a = have(y ∈ (op(h)(x) | (h ∈ H)) <=> ∃(h ∈ H, op(h)(x) === y) ) by Tautology.from(Replacement.membership of (F:=lambda(h, op(h)(x)), A:=H, y:=y))
-    val step2b = have(eq1 |- y ∈ rc <=> ∃(h ∈ H, op(h)(x) === y) ) by Substitution.Apply(eq1)(step2a)
-    val step2c = have(y ∈ rc <=> ∃(h ∈ H, op(h)(x) === y) ) by Tautology.from(step2b, thm1)
-    val step2 = have(y ∈ rc |- ∃(h ∈ H, op(h)(x) === y) ) by Tautology.from(step2b, thm1)
+    val step2a = have(y ∈ (op(h)(x) | (h ∈ H)) <=> ∃(h ∈ H, op(h)(x) === y)) by Tautology.from(Replacement.membership of (F := lambda(h, op(h)(x)), A := H, y := y))
+    val step2b = have(eq1 |- y ∈ rc <=> ∃(h ∈ H, op(h)(x) === y)) by Substitution.Apply(eq1)(step2a)
+    val step2c = have(y ∈ rc <=> ∃(h ∈ H, op(h)(x) === y)) by Tautology.from(step2b, thm1)
+    val step2 = have(y ∈ rc |- ∃(h ∈ H, op(h)(x) === y)) by Tautology.from(step2b, thm1)
 
     val goal = have(y ∈ rc |- y ∈ G) subproof {
       assume(y ∈ rc)
@@ -372,22 +373,64 @@ object Groups extends lisa.Main:
       have(y ∈ G) by Tautology.from(substep3, hThm)
     }
 
-    val goal1 = have( (y ∈ rc) ==> (y ∈ G)) by Tautology.from(goal)
-    val goal2 = thenHave( ∀(y, (y ∈ rc) ==> (y ∈ G))) by RightForall
-    have(thesis) by Tautology.from(subsetAxiom of (x:=rc, y:=G), goal2)
-  }
-
-
-  val subgroupHasTheSameIdentity = Theorem(
-    (group(G)(op), subgroup(H)(G)(op), isIdentityElement(G)(op)(e)) |- isIdentityElement(H)(op)(e)
-  ) {
-    sorry
+    val goal1 = have((y ∈ rc) ==> (y ∈ G)) by Tautology.from(goal)
+    val goal2 = thenHave(∀(y, (y ∈ rc) ==> (y ∈ G))) by RightForall
+    have(thesis) by Tautology.from(subsetAxiom of (x := rc, y := G), goal2)
   }
 
   val groupHasTheSameIdentityAsSubgroup = Theorem(
     (group(G)(op), subgroup(H)(G)(op), isIdentityElement(H)(op)(e)) |- isIdentityElement(G)(op)(e)
   ) {
     sorry
+  }
+
+  val identityIsUnique = Theorem(
+    (group(G)(op), isIdentityElement(G)(op)(x) , isIdentityElement(G)(op)(y)) |- x === y
+  ) {
+    sorry
+  }
+
+  val subgroupHasTheSameIdentity = Theorem(
+    (group(G)(op), subgroup(H)(G)(op), isIdentityElement(G)(op)(e)) |- isIdentityElement(H)(op)(e)
+  ) {
+    assume(group(G)(op), subgroup(H)(G)(op), isIdentityElement(G)(op)(e))
+    // T.P. (e ∈ H) /\ (∀(y ∈ H, ((op(e)(y) === y) /\ (op(y)(e) === y))))
+
+    // H is a group, so it has inverse elements
+    val step1 = have(group(H)(op)) by Tautology.from(subgroup.definition)
+    val step2 = have(inverseElement(H)(op)) by Tautology.from(step1, group.definition of (G := H))
+
+    // H is non-empty (has at least one element)
+    val step3 = have(identityElement(H)(op)) by Tautology.from(step1, group.definition of (G := H))
+
+    val step4 = have(∃(e, isIdentityElement(H)(op)(e))) by Tautology.from(
+      step3,
+      identityElement.definition of (G := H)
+    )
+    val eH = identityOf(H)(op)
+    val eHDef = have(eH === ε(e, isIdentityElement(H)(op)(e))) by Tautology.from(
+      identityOf.definition of (G := H, op := op)
+    )
+    val eHEps = have(isIdentityElement(H)(op)(ε(e, isIdentityElement(H)(op)(e)))) by Tautology.from(
+      step4,
+      Quantifiers.existsEpsilon of (x := e, P := lambda(e, isIdentityElement(H)(op)(e)))
+    )
+    val eHEq = eH === ε(e, isIdentityElement(H)(op)(e))
+    val eHThmA = have(eHEq |- isIdentityElement(H)(op)(eH)) by Substitution.Apply(eHEq)(eHEps)
+    val eHThm = have(isIdentityElement(H)(op)(eH)) by Tautology.from(eHThmA, eHDef)
+
+    val eHThm2 = have(isIdentityElement(G)(op)(eH)) by Tautology.from(
+      groupHasTheSameIdentityAsSubgroup of (e := eH),
+      eHThm
+    )
+
+    val step5 = have(eH === e) by Tautology.from(
+      identityIsUnique of (x := eH, y := e),
+      eHThm2
+    )
+    val step6Eq = eH === e
+    val step6 = have(step6Eq |- isIdentityElement(H)(op)(e)) by Substitution.Apply(step6Eq)(eHThm)
+    have(thesis) by Tautology.from(step6, step5)
   }
 
   val cosetEqualityTheorem = Theorem(
@@ -532,9 +575,9 @@ object Groups extends lisa.Main:
     (group(G)(op), x ∈ G) |- isIdentityElement(G)(op)(op(inverseOf(G)(op)(x))(x))
   ) {
     assume(group(G)(op), x ∈ G)
-    val thm1 = have(isIdentityElement(G)(op)(op(x)(inverseOf(G)(op)(x)))) by  Tautology.from(inverseProperty2)
+    val thm1 = have(isIdentityElement(G)(op)(op(x)(inverseOf(G)(op)(x)))) by Tautology.from(inverseProperty2)
     val thm1a = have(inverseOf(G)(op)(x) ∈ G) by Tautology.from(inverseStaysInGroup)
-    val thm2 = have(isIdentityElement(G)(op)(op( inverseOf(G)(op)(x)) (x))) by Tautology.from(thm1a, inverseCommutability of (x:=x, y:=inverseOf(G)(op)(x)), thm1)
+    val thm2 = have(isIdentityElement(G)(op)(op(inverseOf(G)(op)(x))(x))) by Tautology.from(thm1a, inverseCommutability of (x := x, y := inverseOf(G)(op)(x)), thm1)
   }
 
   val lagrangesLemma1 = Theorem(
