@@ -342,6 +342,12 @@ object Groups extends lisa.Main:
     sorry
   }
 
+  val groupHasTheSameIdentityAsSubgroup = Theorem(
+    (group(G)(op), subgroup(H)(G)(op), isIdentityElement(H)(op)(e)) |- isIdentityElement(G)(op)(e)
+  ) {
+    sorry
+  }
+
   val cosetEqualityTheorem = Theorem(
     (group(G)(op), subgroup(H)(G)(op), a ∈ G, b ∈ G, a ∈ rightCoset(H)(op)(b))
       |- rightCoset(H)(op)(a) === rightCoset(H)(op)(b)
@@ -587,7 +593,9 @@ object Groups extends lisa.Main:
         h1Thm
       )
 
-      val invProp2 = have(isIdentityElement(G)(op)(aux)) by Sorry
+      val invProp2 = have(isIdentityElement(G)(op)(aux)) by Tautology.from(
+        invProp, groupHasTheSameIdentityAsSubgroup of (e:=aux)
+        )
 
       val invH1 = have(isIdentityElement(G)(op)(x) |- (∀(y ∈ G, ((op(x)(y) === y) /\ (op(y)(x) === y))))) by Tautology.from(isIdentityElement.definition of (G := G))
       val invH2 = thenHave(isIdentityElement(G)(op)(x) |- ∀(y, (y ∈ G) ==> (((op(x)(y) === y) /\ (op(y)(x) === y))))) by Restate
