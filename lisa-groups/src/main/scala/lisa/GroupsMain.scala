@@ -323,13 +323,6 @@ object Groups extends lisa.Main:
     sorry
   }
 
-  val isIdentityElementThm = Theorem(
-    isIdentityElement(G)(op)(x) |-
-      (x ∈ G) /\ (∀(y ∈ G, ((op(x)(y) === y) /\ (op(y)(x) === y))))
-  ) {
-    sorry
-  }
-
   val elementInSubgroupMeansItsInGroup = Theorem(
     (group(G)(op), subgroup(H)(G)(op), x ∈ H) |- x ∈ G
   ) {
@@ -355,20 +348,6 @@ object Groups extends lisa.Main:
     sorry
   }
 
-  val inverseOfSubgroupIsTheSameAsInBroaderGroup = Theorem(
-    (group(G)(op), subgroup(H)(G)(op), x ∈ H) |-
-      inverseOf(G)(op)(x) === inverseOf(H)(op)(x)
-  ) {
-    sorry
-  }
-
-  val rightCosetMembership = Theorem(
-    (group(G)(op), subgroup(H)(G)(op), h ∈ H, x ∈ G)
-      |- op(h)(x) ∈ rightCoset(H)(op)(x)
-  ) {
-    sorry
-  }
-
   // we can multiply to both sides of an equality
   val congruence = Theorem(
     (group(G)(op), x === y) |-
@@ -377,14 +356,9 @@ object Groups extends lisa.Main:
     sorry
   }
 
-  val groupIsNotEmpty = Theorem(
-    (group(G)(op)) |- G ≠ ∅
-  ) {
-    sorry
-  }
 
-  val inverseProperty = Theorem(
-    (group(G)(op), x ∈ G) |- isIdentityElement(G)(op)(op(inverseOf(G)(op)(x))(x))
+  val inverseProperty2 = Theorem(
+    (group(G)(op), x ∈ G) |- isIdentityElement(G)(op)(op(x)(inverseOf(G)(op)(x)))
   ) {
     assume(group(G)(op), x ∈ G)
     val auxP = lambda(y, (y ∈ G) /\ (isIdentityElement(G)(op)(op(x)(y))))
@@ -412,6 +386,22 @@ object Groups extends lisa.Main:
     val i2 = have(eq1 |- auxP(inv)) by Substitution.Apply(eq1)(ex9)
     val i3 = have(auxP(inv)) by Tautology.from(i2, i1)
     val i4 = have( (inv ∈ G) /\ (isIdentityElement(G)(op)(op(x)(inv))) )   by Tautology.from(i3)
+    val i5 = have( (isIdentityElement(G)(op)(op(x)(inv))) )   by Tautology.from(i4)
+  }
+
+  val inverseProperty = Theorem(
+    (group(G)(op), x ∈ G) |- isIdentityElement(G)(op)(op(inverseOf(G)(op)(x))(x))
+  ) {
+    assume(group(G)(op), x ∈ G)
+    // val e = op(x)(inverseOf(G)(op)(x))
+    // val thm1 = have (isIdentityElement(G)(op)(e)) by Tautology.from(inverseProperty2)
+    // val thm2 = have ((e ∈ G) /\ (∀(y ∈ G, ((op(e)(y) === y) /\ (op(y)(e) === y))))) by Tautology.from(thm1, isIdentityElement.definition of (x:=e))
+    // val thm3 = have (∀(y ∈ G, ((op(e)(y) === y) /\ (op(y)(e) === y)))) by Tautology.from(thm2)
+    // val thm4 = have (∀(y, (y ∈ G) ==> ((op(e)(y) === y) /\ (op(y)(e) === y)))) by Restate.from(thm3)
+    // val thm5 =  thenHave((x ∈ G) ==> ((op(e)(x) === x) /\ (op(x)(e) === x))) by InstantiateForall(x)
+    // val thm6 = have(((op(e)(x) === x) /\ (op(x)(e) === x))) by Tautology.from(thm5)
+    // val thm7 = have((op(e)(x) === x) )
+    sorry
   }
 
   val lagrangesLemma1 = Theorem(
