@@ -353,14 +353,14 @@ object Groups extends lisa.Main:
     (group(G)(op), x === y) |-
       op(z)(x) === op(z)(y)
   ) {
-    sorry
+    have(thesis) by Congruence
   }
 
   val congruenceRight = Theorem(
     (group(G)(op), x === y) |-
       op(x)(z) === op(y)(z)
   ) {
-    sorry
+    have(thesis) by Congruence
   }
 
   val inverseProperty2 = Theorem(
