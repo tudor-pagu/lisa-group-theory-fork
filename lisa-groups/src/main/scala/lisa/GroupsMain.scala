@@ -297,34 +297,32 @@ object Groups extends lisa.Main:
     sorry
   }
 
-  val functionF = Theorem(
-    (group(G)(op), subgroup(H)(G)(op), x ∈ G) |- (((h,op(h)(g)) | (h ∈ H)) :: H -> rightCoset(H)(op)(x))
-  ) {
-    sorry
-  }
-
-  val surjectiveF = Theorem(
-    (group(G)(op), subgroup(H)(G)(op), x ∈ G) |- surjective(((h,op(h)(g)) | (h ∈ H)))(rightCoset(H)(op)(x))
-  ) {
-    sorry
-  }
-
-  val injectiveF = Theorem(
-    (group(G)(op), subgroup(H)(G)(op), x ∈ G) |- injective(((h,op(h)(g)) | (h ∈ H)))(H)
-  ) {
-    sorry
-  }
-
-  val bijectiveF = Theorem(
-    (group(G)(op), subgroup(H)(G)(op), x ∈ G) |- bijective(((h,op(h)(g)) | (h ∈ H)))(H)(rightCoset(H)(op)(x))
-  ) {
-    sorry
-  }
-
   val lagrangesLemma2 = Theorem(
     (group(G)(op), subgroup(H)(G)(op), x ∈ G) |-
       ∃(f, bijective(f)(H)(rightCoset(H)(op)(x)))
-  ) {
+  ) {  
+    val functionF = have(
+      (group(G)(op), subgroup(H)(G)(op), x ∈ G) |- (((h,op(h)(g)) | (h ∈ H)) :: H -> rightCoset(H)(op)(x))
+      ) subproof {
+        sorry
+      }
+
+    val surjectiveF = have(
+      (group(G)(op), subgroup(H)(G)(op), x ∈ G) |- surjective(((h,op(h)(g)) | (h ∈ H)))(rightCoset(H)(op)(x))
+      ) subproof {
+        sorry
+      }
+
+    val injectiveF = have(
+      (group(G)(op), subgroup(H)(G)(op), x ∈ G) |- injective(((h,op(h)(g)) | (h ∈ H)))(H)
+      ) subproof {
+        sorry
+      }
+    val bijectiveF = have(
+      (group(G)(op), subgroup(H)(G)(op), x ∈ G) |- bijective(((h,op(h)(g)) | (h ∈ H)))(H)(rightCoset(H)(op)(x))
+      ) subproof {
+        have(thesis) by Tautology.from(functionF, surjectiveF,injectiveF, bijective.definition of (f := ((h,op(h)(g)) | (h ∈ H)), A := H, B := rightCoset(H)(op)(x)))
+      }
     have((group(G)(op), subgroup(H)(G)(op), x ∈ G) |- bijective(((h,op(h)(g)) | (h ∈ H)))(H)(rightCoset(H)(op)(x))) by Restate.from(bijectiveF)
     thenHave(thesis) by RightExists
   }
