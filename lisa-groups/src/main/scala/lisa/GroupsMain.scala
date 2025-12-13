@@ -186,6 +186,12 @@ object Groups extends lisa.Main:
     have(thesis) by Congruence
   }
 
+  val inverseStaysInGroup = Theorem(
+    (group(G)(op), x ∈ G) |- inverseOf(G)(op)(x) ∈ G
+  ) {
+    sorry
+  }
+
   val associativityAlternateForm = Theorem(
     ∀(x, ∀(y, ∀(z, ((x ∈ G) /\ (y ∈ G) /\ (z ∈ G)) ==> (op(x)(op(y)(z)) === op(op(x)(y))(z)))))
       |- associativity(G)(op)
@@ -236,6 +242,13 @@ object Groups extends lisa.Main:
     // Instantiate z
     val thm6 = have((z ∈ G) ==> (op(x)(op(y)(z)) === op(op(x)(y))(z))) by InstantiateForall(z)(thm5)
     val thm7 = have(op(x)(op(y)(z)) === op(op(x)(y))(z)) by Tautology.from(thm6)
+  }
+
+  val binaryOperationThm = Theorem(
+    (binaryOperation(G)(op), x ∈ G, y ∈ G) |-
+      op(x)(y) ∈ G
+  ) {
+    sorry
   }
 
   val subgroupTestTwoStep = Theorem(
@@ -311,6 +324,12 @@ object Groups extends lisa.Main:
     sorry
   }
 
+  val elementInSubgroupMeansItsInGroup = Theorem(
+    (group(G)(op), subgroup(H)(G)(op), x ∈ H) |- x ∈ G
+  ) {
+    sorry
+  }
+
   val subgroupHasTheSameIdentity = Theorem(
     (group(G)(op), subgroup(H)(G)(op), isIdentityElement(G)(op)(e)) |- isIdentityElement(H)(op)(e)
   ) {
@@ -323,6 +342,26 @@ object Groups extends lisa.Main:
   ) {
     sorry
   }
+
+  val inverseOfSubgroupIsTheSameAsInBroaderGroup = Theorem(
+    (group(G)(op), subgroup(H)(G)(op), x ∈ H) |-
+      inverseOf(G)(op)(x) === inverseOf(H)(op)(x)
+  ) {
+    sorry
+  }
+
+  val rightCosetMembership = Theorem(
+    (group(G)(op), subgroup(H)(G)(op), h ∈ H, x ∈ G)
+      |- op(h)(x) ∈ rightCoset(H)(op)(x)
+  ) {
+    sorry
+  }
+
+  val groupIsNotEmpty = Theorem(
+    (group(G)(op)) |- G ≠ ∅
+    ) {
+      sorry
+    }
 
   val lagrangesLemma1 = Theorem(
     (group(G)(op), subgroup(H)(G)(op))
@@ -417,30 +456,36 @@ object Groups extends lisa.Main:
       assume(y ∈ rcSet, z ∈ rcSet, (y ∩ z) ≠ ∅)
       val obs1 = have(∃(x, x ∈ (y ∩ z))) by Tautology.from(EmptySet.nonEmptyHasElement of (x := (y ∩ z), y := x))
 
+      val x0 = ε(x, x ∈ (y ∩ z))
+      val xThm = have(x0 ∈ (y ∩ z)) by Tautology.from(obs1, Quantifiers.existsEpsilon of (x:=x, P := lambda(x, x ∈ (y ∩ z))))
+
+
       // we're gonna write our proof assuming
       // this, then we're gonna left exists it out
-      val assump = x ∈ (y ∩ z)
+      val assump = ( (x ∈ (y ∩ z)) /\ (h1 ∈ H) /\ (h2 ∈ H) )
 
-      val obs2 = have(assump |- x ∈ y) by Tautology.from(
-        Intersection.membership of (z := x, x := y, y := z)
+      val obs2 = have(x0 ∈ y) by Tautology.from(
+        Intersection.membership of (z := x0, x := y, y := z),
+        xThm
       )
 
-      val obs3 = have(assump |- x ∈ z) by Tautology.from(
-        Intersection.membership of (z := x, x := y, y := z)
+      val obs3 = have(x0 ∈ z) by Tautology.from(
+        Intersection.membership of (z := x0, x := y, y := z),
+        xThm
       )
 
       // val obs4 = have(∃(h1 ∈ H, x === op(h1)(a) )) by ...
-      val obs4 = have((x ∈ (y ∩ z), y ∈ rcSet) |- ∃(a ∈ G, y === rightCoset(H)(op)(a))) by Tautology.from(
+      val obs4 = have((assump, y ∈ rcSet) |- ∃(a ∈ G, y === rightCoset(H)(op)(a))) by Tautology.from(
         Replacement.membership of (F := lambda(x, rightCoset(H)(op)(x)), A := G, y := y)
       )
-      val obs5 = have((x ∈ (y ∩ z), y ∈ rcSet, y === rightCoset(H)(op)(a)) |- x ∈ rightCoset(H)(op)(a)) by Substitution.Apply(y === rightCoset(H)(op)(a))(obs2)
+      val obs5 = have((assump, y ∈ rcSet, y === rightCoset(H)(op)(a)) |- x ∈ rightCoset(H)(op)(a)) by Substitution.Apply(y === rightCoset(H)(op)(a))(obs2)
       val obs6 = have(rightCoset(H)(op)(a) === (op(h)(a) | h ∈ H)) by Tautology.from(
         rightCoset.definition of (H := H, op := op, g := a)
       )
-      val obs7 = have((rightCoset(H)(op)(a) === (op(h)(a) | h ∈ H), x ∈ (y ∩ z), y ∈ rcSet, y === rightCoset(H)(op)(a)) |- x ∈ (op(h)(a) | h ∈ H)) by Substitution.Apply(
+      val obs7 = have((rightCoset(H)(op)(a) === (op(h)(a) | h ∈ H), assump, y ∈ rcSet, y === rightCoset(H)(op)(a)) |- x ∈ (op(h)(a) | h ∈ H)) by Substitution.Apply(
         rightCoset(H)(op)(a) === (op(h)(a) | h ∈ H)
       )(obs5)
-      val obs8 = have((rightCoset(H)(op)(a) === (op(h)(a) | h ∈ H), x ∈ (y ∩ z), y ∈ rcSet, y === rightCoset(H)(op)(a)) |- ∃(h1 ∈ H, op(h1)(a) === x)) by Tautology.from(
+      val obs8 = have((rightCoset(H)(op)(a) === (op(h)(a) | h ∈ H), assump, y ∈ rcSet, y === rightCoset(H)(op)(a)) |- ∃(h1 ∈ H, op(h1)(a) === x)) by Tautology.from(
         obs7,
         Replacement.membership of (F := lambda(h, op(h)(a)), A := H, y := x)
       )
@@ -454,17 +499,17 @@ object Groups extends lisa.Main:
         obs8
       )
 
-      val obs11 = have((x ∈ (y ∩ z), z ∈ rcSet) |- ∃(b ∈ G, z === rightCoset(H)(op)(b))) by Tautology.from(
+      val obs11 = have((assump, z ∈ rcSet) |- ∃(b ∈ G, z === rightCoset(H)(op)(b))) by Tautology.from(
         Replacement.membership of (F := lambda(x, rightCoset(H)(op)(x)), A := G, y := z)
       )
-      val obs12 = have((x ∈ (y ∩ z), z ∈ rcSet, z === rightCoset(H)(op)(b)) |- x ∈ rightCoset(H)(op)(b)) by Substitution.Apply(z === rightCoset(H)(op)(b))(obs3)
+      val obs12 = have((assump, z ∈ rcSet, z === rightCoset(H)(op)(b)) |- x ∈ rightCoset(H)(op)(b)) by Substitution.Apply(z === rightCoset(H)(op)(b))(obs3)
       val obs13 = have(rightCoset(H)(op)(b) === (op(h)(b) | h ∈ H)) by Tautology.from(
         rightCoset.definition of (H := H, op := op, g := b)
       )
-      val obs14 = have((rightCoset(H)(op)(b) === (op(h)(b) | h ∈ H), x ∈ (y ∩ z), z ∈ rcSet, z === rightCoset(H)(op)(b)) |- x ∈ (op(h)(b) | h ∈ H)) by Substitution.Apply(
+      val obs14 = have((rightCoset(H)(op)(b) === (op(h)(b) | h ∈ H), assump, z ∈ rcSet, z === rightCoset(H)(op)(b)) |- x ∈ (op(h)(b) | h ∈ H)) by Substitution.Apply(
         rightCoset(H)(op)(b) === (op(h)(b) | h ∈ H)
       )(obs12)
-      val obs15 = have((rightCoset(H)(op)(b) === (op(h)(b) | h ∈ H), x ∈ (y ∩ z), z ∈ rcSet, z === rightCoset(H)(op)(b)) |- ∃(h2 ∈ H, op(h2)(b) === x)) by Tautology.from(
+      val obs15 = have((rightCoset(H)(op)(b) === (op(h)(b) | h ∈ H), assump, z ∈ rcSet, z === rightCoset(H)(op)(b)) |- ∃(h2 ∈ H, op(h2)(b) === x)) by Tautology.from(
         obs14,
         Replacement.membership of (F := lambda(h, op(h)(b)), A := H, y := x)
       )
@@ -476,7 +521,28 @@ object Groups extends lisa.Main:
         obs15
       )
 
-      val assump2 = (assump, y === rightCoset(H)(op)(a), z === rightCoset(H)(op)(b))
+      val assump2 = (assump, y === rightCoset(H)(op)(a), z === rightCoset(H)(op)(b), a ∈ G, b ∈ G)
+      val assump2Without = (y === rightCoset(H)(op)(a), z === rightCoset(H)(op)(b), a ∈ G, b ∈ G)
+
+      val assump2ExistentialWithout = ∃(a, ∃(b, ((y === rightCoset(H)(op)(a)) /\ (z === rightCoset(H)(op)(b)) /\(a ∈ G) /\ (b ∈ G))))
+
+      val interlude1a = have(assump |- ∃(a ∈ G, y === rightCoset(H)(op)(a))) by Tautology.from(
+        Replacement.membership of (F := lambda(x, rightCoset(H)(op)(x)), A := G, y := y)
+      )
+
+      val interlude1b = have(assump |- ∃(b ∈ G, z === rightCoset(H)(op)(b))) by Tautology.from(
+        Replacement.membership of (F := lambda(y, rightCoset(H)(op)(y)), A := G, y := z)
+      )
+
+      val interlude1c = have(assump |- ∃(a ∈ G, ∃(b ∈ G,  (y === rightCoset(H)(op)(a)) /\ (z === rightCoset(H)(op)(b))) ) ) by Tautology.from(interlude1a, interlude1b, 
+        Quantifiers.existentialConjunctionReverseDistributionOnSet of (x:=a, y:=b, P:= lambda(a, y === rightCoset(H)(op)(a)), Q:=lambda(b, z === rightCoset(H)(op)(b) ) ))
+      // val interlude1a = have(assump |- G ≠ ∅) by Tautology.from(groupIsNotEmpty)
+      // val interlude1b = have(assump |- ∃(a, a ∈ G)) by Tautology.from(EmptySet.nonEmptyHasElement of (x:=G, y:=a), interlude1a)
+      // val interlude1c = have(assump |- ∃(a, a ∈ G)) by Tautology.from(EmptySet.nonEmptyHasElement of (x:=G, y:=a), interlude1a)
+      //    val rcSet = (rightCoset(H)(op)(x) | x ∈ G)
+
+
+      // val interlude1 = have(assump |- assump2Existential) by Sorry
 
       val obs18 = have(assump2 |- ∃(h1 ∈ H, op(h1)(a) === x)) by Tautology.from(obs10)
       val obs19 = thenHave(assump2 |- ∃(h1, (h1 ∈ H) /\ (op(h1)(a) === x))) by Restate
@@ -485,7 +551,7 @@ object Groups extends lisa.Main:
 
       val obs22 = have(assump2 |- (∃(h1, (h1 ∈ H) /\ (op(h1)(a) === x))) /\ (∃(h2, (h2 ∈ H) /\ (op(h2)(b) === x)))) by Tautology.from(obs19, obs21)
 
-      val niceResult = (h1 ∈ H) /\ (op(h1)(a) === x) /\ (h2 ∈ H) /\ (op(h2)(b) === x)
+      val niceResult =  (op(h1)(a) === x) /\ (op(h2)(b) === x)
       val obs23 = have(assump2 |- ∃(h1, ∃(h2, niceResult))) by Tautology.from(
         obs22,
         Quantifiers.existentialConjunctionReverseDistribution of (
@@ -494,7 +560,7 @@ object Groups extends lisa.Main:
         )
       )
 
-      val nicerResult = (h1 ∈ H) /\ (h2 ∈ H) /\ (op(h1)(a) === op(h2)(b))
+      val nicerResult = (op(h1)(a) === op(h2)(b))
 
       val eq = ((op(h1)(a) === x) /\ (op(h2)(b) === x) ==> (op(h1)(a) === op(h2)(b)))
       val obs24 = have(eq) by Tautology.from(Utils.equalityTransitivity of (x := op(h1)(a), y := x, z := op(h2)(b)))
@@ -506,10 +572,62 @@ object Groups extends lisa.Main:
 
       // a = h1^{-1} * ( h2 * b )
       val goal1 = have((assump2, nicerResult) |- (a === op(inverseOf(G)(op)(h1))(op(h2)(b)))) by Sorry
-      val obs26 = have((assump2, nicerResult) |- op(inverseOf(G)(op)(h1))(op(h2)(b)) === op(op(inverseOf(G)(op)(h1))(h2))(b)) by Tautology.from(
+
+      val obs26 = have(associativity(G)(op)) by Tautology.from(group.definition of (G := G, op := op))
+      val obs33 = have(binaryOperation(G)(op)) by Tautology.from(group.definition of (G := G, op := op))
+      val obs27 = have( (assump2, nicerResult) |- h1 ∈ G) by Tautology.from(elementInSubgroupMeansItsInGroup of (H := H, G := G, op := op, x := h1))
+      val obs31 = have( (assump2, nicerResult) |- h2 ∈ G) by Tautology.from(elementInSubgroupMeansItsInGroup of (H := H, G := G, op := op, x := h2))
+      val obs28 = have( (assump2, nicerResult) |- inverseOf(G)(op)(h1) ∈ G) by Tautology.from(
+        inverseStaysInGroup of (G := G, op := op, x := h1),
+        obs27
+      )
+
+      val obs29 = have((assump2, nicerResult) |- (inverseOf(G)(op)(h1) ∈ G) /\ (h2 ∈ G) /\ (b ∈ G)) by Tautology.from(obs28, obs27, obs31)
+      // val obs30 = have((assump2, nicerResult) |- inverseOf(G)(op)(h1) ∈ G) by Tautology.from(inverseStaysInGroup of (G := G, op := op, x := h1), obs28)
+      // val obs27 = have(assump2 |- (inverseOf(G)(op)(h1) ∈ G) /\ (h2 ∈ G) /\ (b ∈ G)) by Tautology.from(
+      //   binaryOperation.definition of (G := G, op := op)
+      // )
+
+      val auxEq = op(inverseOf(G)(op)(h1))(op(h2)(b)) === op(op(inverseOf(G)(op)(h1))(h2))(b)
+      val obs30 = have((assump2, nicerResult) |- auxEq) by Tautology.from(
+        obs29,
         goal1,
+        obs26,
         associativityThm of (x := inverseOf(G)(op)(h1), y := h2, z := b)
       )
+
+      val goal2a = have((assump2, nicerResult, auxEq) |- (a === op(op(inverseOf(G)(op)(h1))(h2))(b))) by Substitution.Apply(auxEq)(goal1)
+
+      val goal2 = have((assump2, nicerResult) |- (a === op(op(inverseOf(G)(op)(h1))(h2))(b))) by Tautology.from(goal2a, obs30)
+
+      val obs32a = have(group(H)(op)) by Tautology.from(subgroup.definition)
+      val obs32b = have((assump2, nicerResult) |- inverseOf(H)(op)(h1) ∈ H) by Tautology.from(inverseStaysInGroup of (G := H, op := op, x := h1), obs32a)
+
+      val auxEq2 = inverseOf(H)(op)(h1) === inverseOf(G)(op)(h1)
+      val obs32c = have((assump2, nicerResult) |- auxEq2) by Tautology.from(inverseOfSubgroupIsTheSameAsInBroaderGroup of (x := h1))
+
+      val finalGoal = have((assump2, nicerResult) |- y === z) by Sorry
+
+      val final1a = have( (assump2, niceResult) |- y === z) by Tautology.from(finalGoal, obs25)
+      val final1b = have( (assump, assump2Without, niceResult) |- y === z) by Tautology.from(final1a)
+
+      // val final1c = thenHave( (assump,  ∃(b, ( (y === rightCoset(H)(op)(a) ) /\ ( z === rightCoset(H)(op)(b) ) /\ ( a ∈ G ) /\ ( b ∈ G ) ))  , niceResult) |- y === z) by LeftExists
+      // val final1d = thenHave( (assump,  ∃(a, )∃(b, (y === rightCoset(H)(op)(a), z === rightCoset(H)(op)(b), a ∈ G, b ∈ G))  , niceResult) |- y === z) by LeftExists
+      // val final1b = thenHave(∃(h2, niceResult) |- nicerResult) by LeftExists
+
+      // val obs23 = have(assump2 |- ∃(h1, ∃(h2, niceResult))) by Tautology.from(
+
+      // val obs25 = have(niceResult |- nicerResult) by Tautology.from(obs24)
+      // val final1 = have((x ∈ (y ∩ z), y === rightCoset(H)(op)(a), z === rightCoset(H)(op)(b), a ∈ G, b ∈ G, (h1 ∈ H), (h2 ∈ H), (op(h1)(a) === op(h2)(b))) |- y === z) by Tautology.from(finalGoal)
+      //
+      //
+      //
+      // val final2 = thenHave((x ∈ (y ∩ z), y === rightCoset(H)(op)(a), z === rightCoset(H)(op)(b), ∃(a, a ∈ G), b ∈ G, (h1 ∈ H), (h2 ∈ H), (op(h1)(a) === op(h2)(b))) |- y === z) by LeftExists
+
+      // val obs32 = have((assump2, nicerResult) |- op(inverseOf(G)(op)(h1))(h2) ∈ G) by Tautology.from(binaryOperationThm of (x := inverseOf(G)(op)(h1), y := h2), obs31, obs28, obs33)
+
+      // val obs34 = have( (assump2, nicerResult) |- a ∈ rightCoset(H)(op)(b) ) by Tautology.from
+      // val obs34 = have((assump2, nicerResult) |- group(G)(op) /\ (subgroup(H)(G)(op)) /\ (a ∈ G) /\ (b ∈ G) /\ (a ∈ rightCoset(H)(op)(b)) ) by Tautology.from(obs32)
 
       // do these later
       // val obs26 = thenHave(niceResult |- ∃(h2, nicerResult)) by RightExists

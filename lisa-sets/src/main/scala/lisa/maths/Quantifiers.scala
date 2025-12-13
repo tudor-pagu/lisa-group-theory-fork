@@ -173,6 +173,17 @@ object Quantifiers extends lisa.Main {
   }
 
   /**
+   * Theorem -- Existential quantification distributes conjunction.
+   * With some set
+   */
+  val G = variable[Ind]
+  val existentialConjunctionReverseDistributionOnSet = Theorem(
+    ( ∃(x ∈ G, P(x)) , ∃(y ∈ G, Q(y)) ) |- ∃(x∈ G, ∃(y∈ G, P(x) /\ Q(y)))
+  ) {
+    have(thesis) by Tableau
+  }
+
+  /**
    * Theorem -- Existential quantification fully distributes when the
    * conjunction involves one closed formula.
    */
