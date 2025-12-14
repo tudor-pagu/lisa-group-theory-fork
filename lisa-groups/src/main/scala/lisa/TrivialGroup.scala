@@ -16,10 +16,9 @@ import lisa.automation.Congruence
 import lisa.automation.Substitution.{Apply => Substitute}
 import lisa.automation.Tableau
 import lisa.utils.prooflib.BasicStepTactic.RightForall
-import lisa.maths.GroupTheory.Groups.binaryOperation
-import lisa.maths.GroupTheory.Groups.binaryOperation
-import lisa.maths.GroupTheory.Groups.isIdentityElement
-import lisa.maths.GroupTheory.Groups.isIdentityElement
+import lisa.maths.GroupTheory.Groups.*
+import lisa.maths.GroupTheory.Subgroups.*
+import lisa.maths.GroupTheory.Cosets.*
 import lisa.maths.GroupTheory.Utils.equalityTransitivity
 import lisa.utils.prooflib.SimpleDeducedSteps.InstantiateForall
 
