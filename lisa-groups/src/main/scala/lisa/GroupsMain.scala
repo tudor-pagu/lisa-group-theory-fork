@@ -74,6 +74,7 @@ object Groups extends lisa.Main:
   val isIdentityElement = DEF(λ(G, λ(op, λ(x, (x ∈ G) /\ (∀(y ∈ G, ((op(x)(y) === y) /\ (op(y)(x) === y))))))))
 
   val identityElement = DEF(λ(G, λ(op, ∃(x, isIdentityElement(G)(op)(x)))))
+  val identityOf = DEF(λ(G, λ(op, ε(e, isIdentityElement(G)(op)(e)))))
 
   val associativity = DEF(λ(G, λ(op, ∀(x ∈ G, ∀(y ∈ G, ∀(z ∈ G, op(x)(op(y)(z)) === op(op(x)(y))(z)))))))
 
@@ -338,44 +339,114 @@ object Groups extends lisa.Main:
     )
   )
 
+  val elementInSubgroupMeansItsInGroup = Theorem(
+    (group(G)(op), subgroup(H)(G)(op), x ∈ H) |- x ∈ G
+  ) {
+    assume(group(G)(op), subgroup(H)(G)(op), x ∈ H)
+
+    // From subgroup definition, we have H ⊆ G
+    val step1 = have(H ⊆ G) by Tautology.from(subgroup.definition)
+
+    // Apply subset axiom: H ⊆ G means ∀(z, (z ∈ H) ==> (z ∈ G))
+    val step2 = have(∀(z, (z ∈ H) ==> (z ∈ G))) by Tautology.from(
+      step1,
+      Subset.subsetAxiom of (x := H, y := G)
+    )
+
+    // Instantiate with x
+    val step3 = thenHave((x ∈ H) ==> (x ∈ G)) by InstantiateForall(x)
+
+    have(x ∈ G) by Tautology.from(step3)
+  }
+
   val rightCosetStaysInGroupLemma = Theorem(
     (group(G)(op), subgroup(H)(G)(op), x ∈ G) |-
       (rightCoset(H)(op)(x) ⊆ G)
   ) {
-    sorry
+    assume(group(G)(op), subgroup(H)(G)(op), x ∈ G)
+    val rc = rightCoset(H)(op)(x)
+    val thm1 = have(rc === (op(h)(x) | (h ∈ H))) by Tautology.from(rightCoset.definition of (g := x))
+    val obs1 = have(h ∈ H |- h ∈ G) by Tautology.from(elementInSubgroupMeansItsInGroup of (x := h))
+    val eq1 = rc === (op(h)(x) | (h ∈ H))
+
+    val step2a = have(y ∈ (op(h)(x) | (h ∈ H)) <=> ∃(h ∈ H, op(h)(x) === y)) by Tautology.from(Replacement.membership of (F := lambda(h, op(h)(x)), A := H, y := y))
+    val step2b = have(eq1 |- y ∈ rc <=> ∃(h ∈ H, op(h)(x) === y)) by Substitution.Apply(eq1)(step2a)
+    val step2c = have(y ∈ rc <=> ∃(h ∈ H, op(h)(x) === y)) by Tautology.from(step2b, thm1)
+    val step2 = have(y ∈ rc |- ∃(h ∈ H, op(h)(x) === y)) by Tautology.from(step2b, thm1)
+
+    val goal = have(y ∈ rc |- y ∈ G) subproof {
+      assume(y ∈ rc)
+      val substep1 = have(∃(h ∈ H, op(h)(x) === y)) by Tautology.from(step2)
+      val auxP = lambda(z, (z ∈ H) /\ (op(z)(x) === y))
+
+      val h1 = ε(h, auxP(h))
+      val hThm = have(auxP(h1)) by Tautology.from(
+        substep1,
+        Quantifiers.existsEpsilon of (x := h, P := auxP)
+      )
+      val substep2 = have(op(h1)(x) ∈ G) by Tautology.from(
+        binaryOperationThm of (G := G, op := op, x := h1, y := x),
+        group.definition,
+        elementInSubgroupMeansItsInGroup of (x := h1),
+        hThm
+      )
+      val substep3Eq = op(h1)(x) === y
+      val substep3 = have(substep3Eq |- y ∈ G) by Substitution.Apply(substep3Eq)(substep2)
+      have(y ∈ G) by Tautology.from(substep3, hThm)
+    }
+
+    val goal1 = have((y ∈ rc) ==> (y ∈ G)) by Tautology.from(goal)
+    val goal2 = thenHave(∀(y, (y ∈ rc) ==> (y ∈ G))) by RightForall
+    have(thesis) by Tautology.from(subsetAxiom of (x := rc, y := G), goal2)
   }
 
-  val elementInSubgroupMeansItsInGroup = Theorem(
-    (group(G)(op), subgroup(H)(G)(op), x ∈ H) |- x ∈ G
+  val identityIsUnique = Theorem(
+    (group(G)(op), isIdentityElement(G)(op)(x), isIdentityElement(G)(op)(y)) |- x === y
   ) {
-    sorry
-  }
+    assume(group(G)(op), isIdentityElement(G)(op)(x), isIdentityElement(G)(op)(y))
+    val w = op(x)(y)
 
-  val subgroupHasTheSameIdentity = Theorem(
-    (group(G)(op), subgroup(H)(G)(op), isIdentityElement(G)(op)(e)) |- isIdentityElement(H)(op)(e)
-  ) {
-    sorry
-  }
+    // x is an identity, so op(x)(y) === y
+    val step1a = have(isIdentityElement(G)(op)(x) |- ∀(a ∈ G, (op(x)(a) === a) /\ (op(a)(x) === a))) by Tautology.from(
+      isIdentityElement.definition of (G := G, op := op, x := x)
+    )
+    val step1b = have(isIdentityElement(G)(op)(x) |- x ∈ G) by Tautology.from(
+      isIdentityElement.definition of (G := G, op := op, x := x)
+    )
+    val step1c = have(isIdentityElement(G)(op)(y) |- y ∈ G) by Tautology.from(
+      isIdentityElement.definition of (G := G, op := op, x := y)
+    )
+    val step1d = have(isIdentityElement(G)(op)(x) |- (y ∈ G) ==> ((op(x)(y) === y) /\ (op(y)(x) === y))) by InstantiateForall(y)(step1a)
+    val step1 = have(w === y) by Tautology.from(step1d, step1c)
 
-  val groupHasTheSameIdentityAsSubgroup = Theorem(
-    (group(G)(op), subgroup(H)(G)(op), isIdentityElement(H)(op)(e)) |- isIdentityElement(G)(op)(e)
-  ) {
-    sorry
-  } 
+    // y is an identity, so op(x)(y) === x
+    val step2a = have(isIdentityElement(G)(op)(y) |- ∀(a ∈ G, (op(y)(a) === a) /\ (op(a)(y) === a))) by Tautology.from(
+      isIdentityElement.definition of (G := G, op := op, x := y)
+    )
+    val step2b = have(isIdentityElement(G)(op)(y) |- (x ∈ G) ==> ((op(y)(x) === x) /\ (op(x)(y) === x))) by InstantiateForall(x)(step2a)
+    val step2 = have(w === x) by Tautology.from(step2b, step1b)
+
+    // Transitivity: x === w === y
+    have(x === y) by Tautology.from(
+      equalityTransitivity of (x := x, y := w, z := y),
+      step2,
+      step1
+    )
+  }
 
   // we can multiply to both sides of an equality
   val congruence = Theorem(
     (group(G)(op), x === y) |-
       op(z)(x) === op(z)(y)
   ) {
-    sorry
+    have(thesis) by Congruence
   }
 
   val congruenceRight = Theorem(
     (group(G)(op), x === y) |-
       op(x)(z) === op(y)(z)
   ) {
-    sorry
+    have(thesis) by Congruence
   }
 
   val inverseProperty2 = Theorem(
@@ -498,9 +569,154 @@ object Groups extends lisa.Main:
     (group(G)(op), x ∈ G) |- isIdentityElement(G)(op)(op(inverseOf(G)(op)(x))(x))
   ) {
     assume(group(G)(op), x ∈ G)
-    val thm1 = have(isIdentityElement(G)(op)(op(x)(inverseOf(G)(op)(x)))) by  Tautology.from(inverseProperty2)
+    val thm1 = have(isIdentityElement(G)(op)(op(x)(inverseOf(G)(op)(x)))) by Tautology.from(inverseProperty2)
     val thm1a = have(inverseOf(G)(op)(x) ∈ G) by Tautology.from(inverseStaysInGroup)
-    val thm2 = have(isIdentityElement(G)(op)(op( inverseOf(G)(op)(x)) (x))) by Tautology.from(thm1a, inverseCommutability of (x:=x, y:=inverseOf(G)(op)(x)), thm1)
+    val thm2 = have(isIdentityElement(G)(op)(op(inverseOf(G)(op)(x))(x))) by Tautology.from(thm1a, inverseCommutability of (x := x, y := inverseOf(G)(op)(x)), thm1)
+  }
+
+  val groupHasTheSameIdentityAsSubgroup = Theorem(
+    (group(G)(op), subgroup(H)(G)(op), isIdentityElement(H)(op)(e)) |- isIdentityElement(G)(op)(e)
+  ) {
+    assume(group(G)(op), subgroup(H)(G)(op), isIdentityElement(H)(op)(e))
+    
+    val step1 = have(group(H)(op)) by Tautology.from(subgroup.definition)
+    
+    val step2 = have(e ∈ H) by Tautology.from(
+      isIdentityElement.definition of (G := H, x := e)
+    )
+    
+    val step3 = have(e ∈ G) by Tautology.from(
+      elementInSubgroupMeansItsInGroup of (x := e),
+      step2
+    )
+    
+    val step4a = have(∀(h ∈ H, (op(e)(h) === h) /\ (op(h)(e) === h))) by Tautology.from(
+      isIdentityElement.definition of (G := H, x := e)
+    )
+    val step4b = have((e ∈ H) ==> ((op(e)(e) === e) /\ (op(e)(e) === e))) by InstantiateForall(e)(step4a)
+    val step4 = have(op(e)(e) === e) by Tautology.from(step4b, step2)
+    
+    val invH = inverseOf(G)(op)(e)
+    val step4c = have(invH ∈ G) by Tautology.from(
+      inverseStaysInGroup of (G := G, op := op, x := e),
+      step3
+    )
+    
+    val step5 = have(op(invH)(op(e)(e)) === op(invH)(e)) by Tautology.from(
+      congruence of (G := G, op := op, x := op(e)(e), y := e, z := invH),
+      step4
+    )
+    
+    val eG = identityOf(G)(op)
+    val step6a = have(isIdentityElement(G)(op)(op(invH)(e))) by Tautology.from(
+      inverseProperty of (G := G, op := op, x := e),
+      step3
+    )
+    val step6b = have(∃(z, isIdentityElement(G)(op)(z))) by Tautology.from(
+      group.definition,
+      identityElement.definition of (G := G)
+    )
+    val eGDef = have(eG === ε(z, isIdentityElement(G)(op)(z))) by Tautology.from(
+      identityOf.definition of (G := G, op := op)
+    )
+    val eGEps = have(isIdentityElement(G)(op)(ε(z, isIdentityElement(G)(op)(z)))) by Tautology.from(
+      step6b,
+      Quantifiers.existsEpsilon of (x := z, P := lambda(z, isIdentityElement(G)(op)(z)))
+    )
+    val eGEq = eG === ε(z, isIdentityElement(G)(op)(z))
+    val eGThmA = have(eGEq |- isIdentityElement(G)(op)(eG)) by Substitution.Apply(eGEq)(eGEps)
+    val eGThm = have(isIdentityElement(G)(op)(eG)) by Tautology.from(eGThmA, eGDef)
+    
+    val step6 = have(op(invH)(e) === eG) by Tautology.from(
+      identityIsUnique of (x := op(invH)(e), y := eG),
+      step6a,
+      eGThm
+    )
+    
+    val step7 = have(op(invH)(op(e)(e)) === eG) by Tautology.from(
+      equalityTransitivity of (x := op(invH)(op(e)(e)), y := op(invH)(e), z := eG),
+      step5,
+      step6
+    )
+    
+    val assocG = have(associativity(G)(op)) by Tautology.from(group.definition)
+    val step8 = have(op(op(invH)(e))(e) === eG) by Tautology.from(
+      equalityTransitivity of (x := op(op(invH)(e))(e), y := op(invH)(op(e)(e)), z := eG),
+      associativityThm of (x := invH, y := e, z := e),
+      assocG,
+      step4c,
+      step3,
+      step7
+    )
+    
+    val step9Eq = op(invH)(e) === eG
+    val step9a = have(step9Eq |- op(op(invH)(e))(e) === op(eG)(e)) by Substitution.Apply(step9Eq)(
+      have(op(eG)(e) === op(eG)(e)) by Restate
+    )
+    val step9 = have(op(eG)(e) === eG) by Tautology.from(
+      equalityTransitivity of (x := op(eG)(e), y := op(op(invH)(e))(e), z := eG),
+      step9a,
+      step6,
+      step8
+    )
+    
+    val step10a = have(isIdentityElement(G)(op)(eG) |- ∀(a ∈ G, (op(eG)(a) === a) /\ (op(a)(eG) === a))) by Tautology.from(
+      isIdentityElement.definition of (G := G, x := eG)
+    )
+    val step10b = have(isIdentityElement(G)(op)(eG) |- (e ∈ G) ==> ((op(eG)(e) === e) /\ (op(e)(eG) === e))) by InstantiateForall(e)(step10a)
+    val step10c = have(op(eG)(e) === e) by Tautology.from(step10b, eGThm, step3)
+    val step10 = have(e === eG) by Tautology.from(
+      equalityTransitivity of (x := e, y := op(eG)(e), z := eG),
+      step10c,
+      step9
+    )
+    
+    val step11Eq = e === eG
+    val step11 = have(step11Eq |- isIdentityElement(G)(op)(e)) by Substitution.Apply(step11Eq)(eGThm)
+    have(thesis) by Tautology.from(step11, step10)
+  }
+
+  val subgroupHasTheSameIdentity = Theorem(
+    (group(G)(op), subgroup(H)(G)(op), isIdentityElement(G)(op)(e)) |- isIdentityElement(H)(op)(e)
+  ) {
+    assume(group(G)(op), subgroup(H)(G)(op), isIdentityElement(G)(op)(e))
+    // T.P. (e ∈ H) /\ (∀(y ∈ H, ((op(e)(y) === y) /\ (op(y)(e) === y))))
+
+    // H is a group, so it has inverse elements
+    val step1 = have(group(H)(op)) by Tautology.from(subgroup.definition)
+    val step2 = have(inverseElement(H)(op)) by Tautology.from(step1, group.definition of (G := H))
+
+    // H is non-empty (has at least one element)
+    val step3 = have(identityElement(H)(op)) by Tautology.from(step1, group.definition of (G := H))
+
+    val step4 = have(∃(e, isIdentityElement(H)(op)(e))) by Tautology.from(
+      step3,
+      identityElement.definition of (G := H)
+    )
+    val eH = identityOf(H)(op)
+    val eHDef = have(eH === ε(e, isIdentityElement(H)(op)(e))) by Tautology.from(
+      identityOf.definition of (G := H, op := op)
+    )
+    val eHEps = have(isIdentityElement(H)(op)(ε(e, isIdentityElement(H)(op)(e)))) by Tautology.from(
+      step4,
+      Quantifiers.existsEpsilon of (x := e, P := lambda(e, isIdentityElement(H)(op)(e)))
+    )
+    val eHEq = eH === ε(e, isIdentityElement(H)(op)(e))
+    val eHThmA = have(eHEq |- isIdentityElement(H)(op)(eH)) by Substitution.Apply(eHEq)(eHEps)
+    val eHThm = have(isIdentityElement(H)(op)(eH)) by Tautology.from(eHThmA, eHDef)
+
+    val eHThm2 = have(isIdentityElement(G)(op)(eH)) by Tautology.from(
+      groupHasTheSameIdentityAsSubgroup of (e := eH),
+      eHThm
+    )
+
+    val step5 = have(eH === e) by Tautology.from(
+      identityIsUnique of (x := eH, y := e),
+      eHThm2
+    )
+    val step6Eq = eH === e
+    val step6 = have(step6Eq |- isIdentityElement(H)(op)(e)) by Substitution.Apply(step6Eq)(eHThm)
+    have(thesis) by Tautology.from(step6, step5)
   }
 
   val rightCosetMembershipTest = Theorem(
