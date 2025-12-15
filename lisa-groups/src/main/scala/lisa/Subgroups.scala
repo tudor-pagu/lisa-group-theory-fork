@@ -266,7 +266,13 @@ object Subgroups extends lisa.Main:
   val identityInSubgroupIsTheSame = Theorem(
     (group(G)(op), subgroup(H)(G)(op), isIdentityElement(H)(op)(x), isIdentityElement(G)(op)(y)) |- x === y
   ) {
-    sorry
+    assume(group(G)(op), subgroup(H)(G)(op), isIdentityElement(H)(op)(x), isIdentityElement(G)(op)(y))
+    have(isIdentityElement(G)(op)(x)) by Tautology.from(
+        groupHasTheSameIdentityAsSubgroup of (e := x)
+    )
+    thenHave(thesis) by Tautology.fromLastStep(
+        identityIsUnique of (x := x, y := y)
+    )
   }
 
   val inverseInSubgroupIsTheSame = Theorem(
