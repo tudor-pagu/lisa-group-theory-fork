@@ -485,114 +485,67 @@ object Cosets extends lisa.Main:
       doubleInclusion of (x := aH, y := bH)
     )
   }
-  
+
   val rightCosetEqualityTheorem = Theorem(
-    (group(G)(op), subgroup(H)(G)(op), a ∈ G, b ∈ G, a ∈ rightCoset(H)(op)(b))
-      |- rightCoset(H)(op)(a) === rightCoset(H)(op)(b)
+  (group(G)(op), subgroup(H)(G)(op), a ∈ G, b ∈ G, a ∈ rightCoset(H)(op)(b))
+    |- rightCoset(H)(op)(a) === rightCoset(H)(op)(b)
   ) {
     assume(group(G)(op), subgroup(H)(G)(op), a ∈ G, b ∈ G, a ∈ rightCoset(H)(op)(b))
-    val _h = have(a ∈ rightCoset(H)(op)(b)) by Restate
-    val rc_def = (op(h)(b) | (h ∈ H)) === rightCoset(H)(op)(b)
-    val _1 = have(rc_def) by Tautology.from(rightCoset.definition of (g := b))
-    val _2 = have(rc_def |- a ∈ (op(h)(b) | (h ∈ H))) by Substitution.Apply(rc_def)(_h)
 
-    /// there exists h such that a = h*b
-    val _3 = have(∃(h ∈ H, a === op(h)(b))) by Tautology.from(
-      _1, _2,
-      Replacement.membership of (F := lambda(x, op(x)(b)), A := H, x := h, y := a)
-    )
-    val auxP = lambda(h, (h ∈ H) /\ (op(h)(b) === a))
-    val h0 = ε(h, auxP(h))
-
-    val _4 = have((h0 ∈ H) /\ (op(h0)(b) === a)) by Tautology.from(
-      _3, Quantifiers.existsEpsilon of (P := auxP))
-    val h0inH = thenHave(h0 ∈ H) by Tautology
-    
-    val hInv = inverseOf(H)(op)(h0)
-    val _5 = have(group(H)(op)) by Tautology.from(subgroup.definition)
-    val _6 = have(hInv ∈ H) by Tautology.from(
-      inverseStaysInGroup of (G := H, x := h0), _5, h0inH)
-    
-    val h1 = variable[Ind]
-    val invRight = lambda(h1, (h1 ∈ H) /\ (isIdentityElement(H)(op)(op(h0)(h1))))
-    val _hInv = hInv === ε(h1, invRight(h1))
-    val _7 = have(_hInv) by Tautology.from(
-      inverseOf.definition of (G := H, x := h0, y := h1)
-    )
-    val eps = have(∃(h1, invRight(h1)) |- invRight(ε(h1, invRight(h1)))) by Tautology.from(
-      Quantifiers.existsEpsilon of (P := invRight, y := h1))
-    val _8 = have(inverseElement(H)(op)) by Tautology.from(_5, group.definition of (G := H))
-    
-    val _9 = have(h0 ∈ H |- ∀(x ∈ H, ∃(h1 ∈ H, isIdentityElement(H)(op)(op(x)(h1))))) by Tautology.from(
-      inverseElement.definition of (G := H, y := h1),
-      _8
-    )
-    val _10 = thenHave(h0 ∈ H |- ∃(h1 ∈ H, isIdentityElement(H)(op)(op(h0)(h1)))) by InstantiateForall(h0)
-    val _11 = have(∃(h1, invRight(h1))) by Tautology.from(_10, h0inH)
-    val _12 = have(invRight(ε(h1, invRight(h1)))) by Tautology.from(eps, _11)
-    val _13 = have(_hInv |- invRight(hInv)) by Substitution.Apply(_hInv)(_12)
-    val _14 = have(invRight(hInv)) by Tautology.from(_13, _7)
-
-    val invLeft = lambda(h1, isIdentityElement(H)(op)(op(h1)(h0)))
-    
-    val _15 = have(invLeft(hInv)) by Tautology.from(
-      h0inH, _5, inverseProperty of (G := H, x := h0))
-
-    val _16 = have(op(hInv)(op(h0)(b)) === op(hInv)(a)) by Tautology.from(
-      _4, _5, congruence of (G := H, x := op(h0)(b), y := a, z := hInv)
-    )
-    val assoc = have(∀(x ∈ G, ∀(y ∈ G, ∀(z ∈ G, op(x)(op(y)(z)) === op(op(x)(y))(z))))) by Tautology.from(
-      group.definition, associativity.definition
-    )
-    thenHave(hInv ∈ G |- ∀(y ∈ G, ∀(z ∈ G, op(hInv)(op(y)(z)) === op(op(hInv)(y))(z)))) by InstantiateForall(hInv)
-    thenHave((hInv ∈ G, h0 ∈ G) |- ∀(z ∈ G, op(hInv)(op(h0)(z)) === op(op(hInv)(h0))(z))) by InstantiateForall(h0)
-    val _17 = thenHave((hInv ∈ G, h0 ∈ G, b ∈ G) |- op(hInv)(op(h0)(b)) === op(op(hInv)(h0))(b)) by InstantiateForall(b)
-    
-    val h0inG = have(h0 ∈ G) by Tautology.from(
-      subgroup.definition, Subset.membership of (z := h0, x := H, y := G), h0inH)
-    val hInvinG = have(hInv ∈ G) by Tautology.from(
-      subgroup.definition, Subset.membership of (z := hInv, x := H, y := G), _6)
-    
-    val _18 = have(op(hInv)(op(h0)(b)) === op(op(hInv)(h0))(b)) by Tautology.from(
-      _17, h0inG, hInvinG
-    )
-    val s1 = op(hInv)(op(h0)(b))
-    val s2 = op(op(hInv)(h0))(b)
-    val s3 = op(hInv)(a)
-
-    val _19 = have(op(op(hInv)(h0))(b) === op(hInv)(a)) by Tautology.from(
-      _18, _16, Utils.equalityTransitivity of (Utils.x := s2 , Utils.y := s1, Utils.z := s3))
-    val e0 = op(hInv)(h0)
-    val _20 = have(isIdentityElement(H)(op)(e0)) by Tautology.from(_15)
-    val _21 = have(isIdentityElement(G)(op)(e0)) by Tautology.from(
-      _20, 
-      groupHasTheSameIdentityAsSubgroup of (e := e0)
-    )
-
-    have(∀(y ∈ G, (op(e0)(y) === y) /\ (op(y)(e0) === y))) by Tautology.from(
-      _21, isIdentityElement.definition of (x := e0)
-    )
-    val _22 = thenHave((op(e0)(b) === b) /\ (op(b)(e0) === b)) by InstantiateForall(b)
-    
-    val _23 = have(b === op(hInv)(a)) by Tautology.from(
-      _22, _19, Utils.equalityTransitivity of (Utils.x := b, Utils.y := op(e0)(b), Utils.z := op(hInv)(a))
-    )
-
-    val _24 = have(b ∈ rightCoset(H)(op)(a)) by Tautology.from(
-      _23,
-      _6,
-      rightCosetMembershipTest of (a := b, b := a, h := hInv)
-    )
-    
     val Ha = rightCoset(H)(op)(a)
     val Hb = rightCoset(H)(op)(b)
+
+    val _1 = have(∃(h ∈ H, a === op(h)(b))) by Tautology.from(rightCosetMembership)
+    val auxP = lambda(h, (h ∈ H) /\ (a === op(h)(b)))
+    val h0 = ε(h, auxP(h))
+
+    val _2 = have((h0 ∈ H) /\ (a === op(h0)(b))) by Tautology.from(
+        _1,
+        Quantifiers.existsEpsilon of (P := auxP)
+    )
+    val h0inH = thenHave(h0 ∈ H) by Tautology
+    val h0inG = thenHave(h0 ∈ G) by Tautology.fromLastStep(
+        elementInSubgroupMeansItsInGroup of (x := h0)
+    )
+
+    val h1 = inverseOf(G)(op)(h0)
+    val h1inG = have(h1 ∈ G) by Tautology.from(
+        h0inG,
+        inverseStaysInGroup of (x := h0)
+    )
+
+    val _3 = have(op(h1)(a) === b) by Tautology.from(
+        applyInverseLeft of (x := a, z := b, y := h0),
+        _2,
+        h0inG
+    )
+
+    val h1p = inverseOf(H)(op)(h0)
+    val _4 = have(h1p === h1) by Tautology.from(
+        inverseInSubgroupIsTheSame of (x := h0),
+        h0inH
+    )
+    val _5 = have(h1p ∈ H) by Tautology.from(
+        h0inH,
+        inverseStaysInGroup of (G := H, x := h0),
+        subgroup.definition
+    )
+    have(h1 === h1p |- h1 ∈ H) by Substitution.Apply(h1 === h1p)(_5)
+    val h1inH = thenHave(h1 ∈ H) by Tautology.fromLastStep(_4)
+
+    val _7 = have(b ∈ Ha) by Tautology.from(
+        _3,
+        rightCosetMembershipTest of (a := b, b := a, h := h1),
+        h1inH
+    )
+
     have(Ha ⊆ Hb /\ Hb ⊆ Ha) by Tautology.from(
-      _h, _24,
-      rightCosetSubsetFromMembership,
-      rightCosetSubsetFromMembership of (a := b, b := a)
+        _7,
+        rightCosetSubsetFromMembership,
+        rightCosetSubsetFromMembership of (a := b, b := a)
     )
     thenHave(thesis) by Tautology.fromLastStep(
-      doubleInclusion of (x := Ha, y := Hb)
+        doubleInclusion of (x := Ha, y := Hb)
     )
   }
 
