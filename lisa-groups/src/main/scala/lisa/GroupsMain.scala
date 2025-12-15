@@ -23,6 +23,7 @@ import lisa.maths.GroupTheory.Utils.equalityTransitivity
 import lisa.utils.prooflib.SimpleDeducedSteps.InstantiateForall
 import lisa.maths.GroupTheory.Utils.equalityTransitivity
 import lisa.maths.GroupTheory.Utils.equalityTransitivity
+import lisa.maths.GroupTheory.Utils.equalityTransitivity
 
 object Utils extends lisa.Main:
   val x = variable[Ind]
@@ -605,4 +606,179 @@ object Groups extends lisa.Main:
     }
 
     have(thesis) by Tautology.from(leftImplies, rightImplies)
+  }
+
+  val applyInverseRight = Theorem(
+    (group(G)(op), x ∈ G, y ∈ G, z ∈ G) |- 
+      (x === op(z)(y)) <=> (op(x)(inverseOf(G)(op)(y)) === z)
+  ) {
+    assume(group(G)(op), x ∈ G, y ∈ G, z ∈ G)
+
+    val inv = inverseOf(G)(op)(y)
+
+    val leftImplies = have((x === op(z)(y)) |- (op(x)(inv) === z)) subproof {
+      assume(x === op(z)(y))
+
+      // apply congruence
+      val _1 = have(op(x)(inv) === op(op(z)(y))(inv)) by Tautology.from(
+        congruenceRight of (z := inv, x := x, y := op(z)(y))
+      )
+
+      // apply associativity
+      val _2 = have(op(x)(inv) === op(z)(op(y)(inv))) by Tautology.from(
+        _1,
+        applyAssociativity of (a := op(x)(inv), x := z, y := y, z := inv),
+        inverseStaysInGroup of (x := y)
+      )
+
+      // identify the identity element
+      val e0 = op(y)(inv)
+      val _3 = have(isIdentityElement(G)(op)(e0)) by Tautology.from(
+        group.definition,
+        binaryOperationThm of (x := y, y := inv),
+        inverseStaysInGroup of (x := y),
+        inverseProperty2 of (x := y)
+      )
+      val _4 = have(op(z)(e0) === z) by Tautology.from(
+        _3,
+        identityProperty of (e := e0, x := z)
+      )
+
+      // transitivity to get the final result
+      have(op(x)(inv) === z) by Tautology.from(
+        equalityTransitivity of (x := op(x)(inv), y := op(z)(e0), z := z),
+        _4,
+        _2
+      )
+    }
+
+    val rightImplies = have((op(x)(inv) === z) |- (x === op(z)(y))) subproof {
+      assume(op(x)(inv) === z)
+
+      val inv2 = inverseOf(G)(op)(inv)
+      val _1 = have(op(z)(inv2) === x) by Tautology.from(
+        leftImplies of (x := z, y := inv, z := x),
+        inverseStaysInGroup of (x := y)
+      )
+      val _2 = have(inv2 === y) by Tautology.from(
+        doubleInverse of (x := y)
+      )
+
+      have(y === inv2 |- op(z)(y) === x) by Substitution.Apply(y === inv2)(_1)
+      thenHave(x === op(z)(y)) by Tautology.fromLastStep(_2)
+    }
+
+    have(thesis) by Tautology.from(leftImplies, rightImplies)
+  }
+
+  val eliminateLeft = Theorem(
+    (group(G)(op), x ∈ G, y ∈ G, z ∈ G) |- (op(z)(x) === op(z)(y)) <=> (x === y)
+  ) {
+    assume(group(G)(op), x ∈ G, y ∈ G, z ∈ G)
+
+    val zx = op(z)(x)
+    val _1 = have(zx ∈ G) by Tautology.from(
+      binaryOperationThm of (x := z, y := x),
+      group.definition
+    )
+
+    val invz = inverseOf(G)(op)(z)
+    val _2 = have(invz ∈ G) by Tautology.from(
+      inverseStaysInGroup of (x := z)
+    )
+
+    val _3 = have((op(invz)(op(z)(x)) === y) <=> (op(z)(x) === op(z)(y))) by Tautology.from(
+      applyInverseLeft of (x := op(z)(x), y := z, z := y),
+      _1
+    )
+
+    val _4 = have((op(op(invz)(z))(x) === y) <=> (op(z)(x) === op(z)(y))) by Tautology.from(
+      applyAssociativity of (a := y, x := invz, y := z, z := x),
+      _2,
+      _3
+    )
+
+    val e0 = op(invz)(z)
+    val _5 = have(isIdentityElement(G)(op)(e0)) by Tautology.from(
+      inverseProperty of (x := z)
+    )
+
+    val prod = op(e0)(x)
+    have(e0 ∈ G) by Tautology.from(
+      binaryOperationThm of (x := invz, y := z),
+      group.definition,
+      _2
+    )
+    val prodinG = thenHave(prod ∈ G) by Tautology.fromLastStep(
+      binaryOperationThm of (x := e0, y := x),
+      group.definition
+    )
+
+    val _6 = have(x === op(e0)(x)) by Tautology.from(
+      _5, identityProperty of (e := e0, x := x)
+    )
+    val _7 = have((op(op(invz)(z))(x) === y) <=> (y === x)) by Tautology.from(
+      _6,
+      equalityTransitivity of (x := x, y := op(e0)(x), z := y),
+      equalityTransitivity of (x := y, y := x, z := op(e0)(x)),
+      prodinG
+    )
+
+    have(thesis) by Tautology.from(_7, _4)
+  }
+
+  val eliminateRight = Theorem(
+    (group(G)(op), x ∈ G, y ∈ G, z ∈ G) |- (op(x)(z) === op(y)(z)) <=> (x === y)
+  ) {
+    assume(group(G)(op), x ∈ G, y ∈ G, z ∈ G)
+
+    val xz = op(x)(z)
+    val _1 = have(xz ∈ G) by Tautology.from(
+      binaryOperationThm of (x := x, y := z),
+      group.definition
+    )
+
+    val invz = inverseOf(G)(op)(z)
+    val _2 = have(invz ∈ G) by Tautology.from(
+      inverseStaysInGroup of (x := z)
+    )
+
+    val _3 = have((op(op(x)(z))(invz) === y) <=> (xz === op(y)(z))) by Tautology.from(
+      applyInverseRight of (x := xz, y := z, z := y),
+      _1
+    )
+
+    val _4 = have((op(x)(op(z)(invz)) === y) <=> (op(x)(z) === op(y)(z))) by Tautology.from(
+      applyAssociativity of (a := y, x := x, y := z, z := invz),
+      _2,
+      _3
+    )
+    
+    val e0 = op(z)(invz)
+    val _5 = have(isIdentityElement(G)(op)(e0)) by Tautology.from(
+      inverseProperty2 of (x := z)
+    )
+
+    val prod = op(x)(e0)
+    have(e0 ∈ G) by Tautology.from(
+      binaryOperationThm of (x := z, y := invz),
+      group.definition,
+      _2
+    )
+    val prodinG = thenHave(prod ∈ G) by Tautology.fromLastStep(
+      binaryOperationThm of (x := x, y := e0),
+      group.definition
+    )
+
+    val _6 = have(x === op(x)(e0)) by Tautology.from(
+      _5, identityProperty of (e := e0, x := x)
+    )
+    val _7 = have((op(x)(op(z)(invz)) === y) <=> (y === x)) by Tautology.from(
+      _6,
+      equalityTransitivity of (x := x, y := op(x)(e0), z := y),
+      equalityTransitivity of (x := y, y := x, z := op(x)(e0)),
+      prodinG
+    )
+
+    have(thesis) by Tautology.from(_7, _4)
   }

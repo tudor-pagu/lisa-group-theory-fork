@@ -262,3 +262,51 @@ object Subgroups extends lisa.Main:
     val step6 = have(step6Eq |- isIdentityElement(H)(op)(e)) by Substitution.Apply(step6Eq)(eHThm)
     have(thesis) by Tautology.from(step6, step5)
   }
+
+  val identityInSubgroupIsTheSame = Theorem(
+    (group(G)(op), subgroup(H)(G)(op), isIdentityElement(H)(op)(x), isIdentityElement(G)(op)(y)) |- x === y
+  ) {
+    sorry
+  }
+
+  val inverseInSubgroupIsTheSame = Theorem(
+    (group(G)(op), subgroup(H)(G)(op), x ∈ H) |- inverseOf(H)(op)(x) === inverseOf(G)(op)(x)
+  ) {
+    assume(group(G)(op), subgroup(H)(G)(op), x ∈ H)
+    
+    val invh = inverseOf(H)(op)(x)
+    val invg = inverseOf(G)(op)(x)
+
+    have(invh ∈ H) by Tautology.from(
+        inverseStaysInGroup of (G := H),
+        subgroup.definition
+    )
+    val invhinG = thenHave(invh ∈ G) by Tautology.fromLastStep(
+        elementInSubgroupMeansItsInGroup of (x := invh)
+    )
+    val xinG = have(x ∈ G) by Tautology.from(
+        elementInSubgroupMeansItsInGroup
+    )
+    val invginG = have(invg ∈ G) by Tautology.from(
+        inverseStaysInGroup,
+        xinG
+    )
+    val eh = op(invh)(x)
+    val eg = op(invg)(x)
+    val _1 = have(isIdentityElement(H)(op)(eh)) by Tautology.from(
+        inverseProperty of (G := H),
+        subgroup.definition
+    )
+    val _2 = have(isIdentityElement(G)(op)(eg)) by Tautology.from(
+        inverseProperty,
+        xinG
+    )
+
+    val _3 = have(eh === eg) by Tautology.from(_1, _2, identityInSubgroupIsTheSame of (x := eh, y := eg))
+
+    val _4 = thenHave(op(invh)(x) === op(invg)(x)) by Tautology
+    thenHave(thesis) by Tautology.fromLastStep(
+        invhinG, xinG, invginG,
+        eliminateRight of (x := invh, y := invg, z := x)
+    )
+  }

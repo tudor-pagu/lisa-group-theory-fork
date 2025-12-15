@@ -435,7 +435,55 @@ object Cosets extends lisa.Main:
   ) {
     assume(group(G)(op), subgroup(H)(G)(op), a ∈ G, b ∈ G, a ∈ leftCoset(b)(op)(H))
 
-    sorry
+    val aH = leftCoset(a)(op)(H)
+    val bH = leftCoset(b)(op)(H)
+
+    val _1 = have(∃(h ∈ H, a === op(b)(h))) by Tautology.from(leftCosetMembership)
+    val auxP = lambda(h, (h ∈ H) /\ (a === (op(b)(h))))
+    val h0 = ε(h, auxP(h))
+
+    val _2 = have((h0 ∈ H) /\ (a === op(b)(h0))) by Tautology.from(
+        _1,
+        Quantifiers.existsEpsilon of (P := auxP)
+    ) 
+    val h0inH = thenHave(h0 ∈ H) by Tautology
+    val h0inG = thenHave(h0 ∈ G) by Tautology.fromLastStep(
+        elementInSubgroupMeansItsInGroup of (x := h0)
+    )
+
+    val h1 = inverseOf(G)(op)(h0)
+    val h1inG = have(h1 ∈ G) by Tautology.from(h0inG, inverseStaysInGroup of (x := h0))
+    val _3 = have(op(a)(h1) === b) by Tautology.from(
+        applyInverseRight of (x := a, z := b, y := h0),
+        _2, h0inG
+    )
+
+    val h1p = inverseOf(H)(op)(h0)
+    val _4 = have(h1p === h1) by Tautology.from(
+        inverseInSubgroupIsTheSame of (x := h0),
+        h0inH
+    )
+    val _5 = have(h1p ∈ H) by Tautology.from(
+        h0inH, 
+        inverseStaysInGroup of (G := H, x := h0),
+        subgroup.definition
+    )
+    have(h1 === h1p |- h1 ∈ H) by Substitution.Apply(h1 === h1p)(_5)
+    val h1inH = thenHave(h1 ∈ H) by Tautology.fromLastStep(_4)
+
+    val _7 = have(b ∈ aH) by Tautology.from(
+        _3, leftCosetMembershipTest of (a := b, b := a, h := h1),
+        h1inH
+    )
+
+    have(aH ⊆ bH /\ bH ⊆ aH) by Tautology.from(
+      _7,
+      leftCosetSubsetFromMembership,
+      leftCosetSubsetFromMembership of (a := b, b := a)
+    )
+    thenHave(thesis) by Tautology.fromLastStep(
+      doubleInclusion of (x := aH, y := bH)
+    )
   }
   
   val rightCosetEqualityTheorem = Theorem(
