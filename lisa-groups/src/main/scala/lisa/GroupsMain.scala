@@ -159,7 +159,7 @@ object Groups extends lisa.Main:
         λ(
           op,
           subgroup(H)(G)(op) /\
-            (G === normalizer(H)(G)(op))
+          ∀(g ∈ G, leftCoset(g)(op)(H) === rightCoset(H)(op)(g))
         )
       )
     )
