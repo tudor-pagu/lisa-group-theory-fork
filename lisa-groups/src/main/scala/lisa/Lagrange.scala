@@ -416,6 +416,10 @@ object Lagrange extends lisa.Main:
         assume(group(G)(op), subgroup(H)(G)(op), x ∈ G)
         val rel = ((h,op(h)(x)) | (h ∈ H))
         val relFunc = λ(h, (h, op(h)(x)))
+        val rangeDef = have({ snd(h) | h ∈ rel } === range(rel)) by Tautology.from(range.definition of (Relation.R := rel, z := h))
+        have(y ∈ range(rel) <=> y ∈ range(rel)) by Restate
+        val rangeMemEq = thenHave(y ∈ range(rel) <=> y ∈ { snd(h) | h ∈ rel }) by Substitution.Apply(rangeDef)
+
         val dir1 = have(y ∈ rightCoset(H)(op)(x) ==> y ∈ range(rel)) subproof {  
           val subsetImpl = have((y ∈ rightCoset(H)(op)(x), rightCoset(H)(op)(x) ⊆ G) |- (y ∈ G)) by Tautology.from(Subset.membership of (x := rightCoset(H)(op)(x), y := G, z := y))
           val yInG = have((y ∈ rightCoset(H)(op)(x)) |- y ∈ G) by Tautology.from(
@@ -449,16 +453,78 @@ object Lagrange extends lisa.Main:
           )
 
           val range1 = thenHave((y ∈ rightCoset(H)(op)(x)) |- ∃(h ∈ rel, snd(h) === y)) by RightExists.withParameters((eps,op(eps)(x)))
-          val range2 = have((y ∈ rightCoset(H)(op)(x)) |- y ∈ { snd(h) | h ∈ rel }) by Tautology.from(Replacement.membership of (F := snd, A := rel, x := h), range1)
-          val rangeDef = have({ snd(h) | h ∈ rel } === range(rel)) by Tautology.from(range.definition of (Relation.R := rel, z := h))
-
-          have(y ∈ range(rel) <=> y ∈ range(rel)) by Restate
-          val rangeMemEq = thenHave(y ∈ range(rel) <=> y ∈ { snd(h) | h ∈ rel }) by Substitution.Apply(rangeDef)
+          val range2 = have((y ∈ rightCoset(H)(op)(x)) |- y ∈ { snd(h) | h ∈ rel }) by Tautology.from(
+            Replacement.membership of (
+              F := snd, 
+              A := rel, 
+              x := h), 
+            range1
+          )
           have(thesis) by Tautology.from(range2,rangeMemEq)
         }
 
         val dir2 = have(y ∈ range(rel) ==> y ∈ rightCoset(H)(op)(x)) subproof {
-          sorry
+          val step1 = have(y ∈ range(rel) |- ∃(h ∈ rel, snd(h) === y)) by Tautology.from(
+            rangeMemEq, 
+            Replacement.membership of (
+              F := snd, 
+              A := rel, 
+              x := h
+            )
+          )
+
+          val hsy = λ(h, h ∈ rel /\ (snd(h) === y))
+          val eps1 = ε(h, hsy(h))
+          val epsCond1 = have(∃(h, hsy(h)) |- hsy(eps1)) by Tautology.from(Quantifiers.existsEpsilon of (x := h, P := hsy))
+          val epsValid1 = have((y ∈ range(rel)) |- hsy(eps1)) by Tautology.from(epsCond1, step1)
+          val epsEq1 = have((y ∈ range(rel)) |- snd(eps1) === y) by Tautology.from(epsValid1)
+          val epsInRel1 = have((y ∈ range(rel)) |- eps1 ∈ rel) by Tautology.from(epsValid1)
+
+          val sndExists = have(h ∈ rel |- ∃(a ∈ H, (a, op(a)(x)) === h)) by Tautology.from(
+            Replacement.membership of (
+              F := relFunc, 
+              A := H, 
+              x := a,
+              y := h
+            )
+          )
+
+          val aoh = λ(a, a ∈ H /\ ((a, op(a)(x)) === h))
+          val eps2 = ε(a, aoh(a))
+          val epsCond2 = have(∃(a, aoh(a)) |- aoh(eps2)) by Tautology.from(Quantifiers.existsEpsilon of (x := a, P := aoh))
+          val epsValid2 = have((h ∈ rel) |- aoh(eps2)) by Tautology.from(epsCond2, sndExists)
+          val epsEq2 = have((h ∈ rel) |- (eps2, op(eps2)(x)) === h) by Tautology.from(epsValid2)
+          val epsInH2 = have((h ∈ rel) |- eps2 ∈ H) by Tautology.from(epsValid2)
+
+          val sndRefl = have((h ∈ rel) |- snd(h) === snd(h)) by Restate
+          val congruence = have((h ∈ rel) |- snd(h) === snd((eps2, op(eps2)(x))) ) by Substitution.Apply(epsEq2)(sndRefl)
+          val pairExtr = have(snd((eps2, op(eps2)(x))) === op(eps2)(x)) by Tautology.from(pairSnd of (x := eps2, y := op(eps2)(x)))
+          val pairExtrEq = have((h ∈ rel) |- snd(h) === op(eps2)(x) ) by Substitution.Apply(congruence)(pairExtr)
+
+          val hSubsG = have(H ⊆ G) by Tautology.from(subgroup.definition)
+          val subsetAxiomRestate = have((H ⊆ G) |- ∀(z, (z ∈ H) ==> (z ∈ G))) by Tautology.from(subsetAxiom of (x := H, y := G))
+          val epsSubsetAxiom = thenHave((H ⊆ G) |- (eps2 ∈ H) ==> (eps2 ∈ G)) by InstantiateForall(eps2)
+          val eps2InG = have((h ∈ rel) |- eps2 ∈ G) by Tautology.from(epsInH2, hSubsG, epsSubsetAxiom)
+
+          val restateBinaryOp = have(∀(x, ∀(y, x ∈ G /\ y ∈ G ==> op(x)(y) ∈ G))) by Tautology.from(binaryOperation.definition, group.definition)
+          val binaryOpInstX = thenHave(∀(y, eps2 ∈ G /\ y ∈ G ==> op(eps2)(y) ∈ G)) by InstantiateForall(eps2)
+          val binaryOpInstY = thenHave(eps2 ∈ G /\ x ∈ G ==> op(eps2)(x) ∈ G) by InstantiateForall(x)
+
+          val opInG = have((h ∈ rel) |- op(eps2)(x) ∈ G) by Tautology.from(binaryOpInstY, eps2InG)
+
+          val sndInG = have(h ∈ rel |- snd(h) ∈ G) by Substitution.Apply(pairExtrEq)(opInG)
+          val sndInCoset = have(h ∈ rel |- snd(h) ∈ rightCoset(H)(op)(x)) by Tautology.from(
+            pairExtrEq,
+            rightCosetMembershipTest of (a := snd(h), b := x, h := eps2),
+            epsInH2,
+            sndInG
+          )
+          val sndEps1InCoset = have((y ∈ range(rel)) |- snd(eps1) ∈ rightCoset(H)(op)(x)) by Tautology.from(
+            epsInRel1, 
+            sndInCoset of (h := eps1)
+          )
+
+          have(y ∈ range(rel) |- y ∈ rightCoset(H)(op)(x)) by Substitution.Apply(epsEq1)(sndEps1InCoset)
         }
         have(y ∈ range(rel) <=> y ∈ rightCoset(H)(op)(x)) by Tautology.from(dir1,dir2)
         val forallMemb = thenHave(∀(y,y ∈ range(rel) <=> y ∈ rightCoset(H)(op)(x))) by RightForall
