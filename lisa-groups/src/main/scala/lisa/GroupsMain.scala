@@ -151,6 +151,8 @@ object Groups extends lisa.Main:
     )
   )
 
+  val conjugation = DEF(λ(G, λ(op, λ(x, λ(y, op(op(y)(x))(inverseOf(G)(op)(y)))))))
+  
   val normalSubgroup = DEF(
     λ(
       H,
@@ -159,7 +161,7 @@ object Groups extends lisa.Main:
         λ(
           op,
           subgroup(H)(G)(op) /\
-            (G === normalizer(H)(G)(op))
+          ∀(g ∈ G, leftCoset(g)(op)(H) === rightCoset(H)(op)(g))
         )
       )
     )
@@ -781,4 +783,26 @@ object Groups extends lisa.Main:
     )
 
     have(thesis) by Tautology.from(_7, _4)
+  }
+
+  val identityOfIsIdentity = Theorem(
+    (group(G)(op)) |- isIdentityElement(G)(op)(identityOf(G)(op))
+  ) {
+    assume(group(G)(op))
+    val auxP = lambda(x, isIdentityElement(G)(op)(x))
+    val e0 = identityOf(G)(op)
+
+    val _1 = have(∃(x, auxP(x))) by Tautology.from(
+      group.definition,
+      identityElement.definition
+    )
+    val _2 = have(e0 === ε(x, auxP(x))) by Tautology.from(
+      identityOf.definition
+    )
+    val _3 = have(auxP(ε(x, auxP(x)))) by Tautology.from(
+      _1, _2, Quantifiers.existsEpsilon of (P := auxP)
+    )
+    have(thesis) by Congruence.from(
+      _2, _3
+    )
   }

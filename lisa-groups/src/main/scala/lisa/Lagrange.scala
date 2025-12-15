@@ -19,6 +19,7 @@ import lisa.utils.prooflib.BasicStepTactic.RightForall
 import lisa.maths.GroupTheory.Groups.*
 import lisa.maths.GroupTheory.Subgroups.*
 import lisa.maths.GroupTheory.Cosets.*
+import lisa.maths.GroupTheory.NormalSubgroups.*
 import lisa.maths.GroupTheory.Utils.equalityTransitivity
 import lisa.utils.prooflib.SimpleDeducedSteps.InstantiateForall
 

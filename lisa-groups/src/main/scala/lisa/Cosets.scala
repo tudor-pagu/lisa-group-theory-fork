@@ -22,6 +22,7 @@ import lisa.maths.GroupTheory.Cosets.*
 import lisa.maths.GroupTheory.Utils.equalityTransitivity
 import lisa.utils.prooflib.SimpleDeducedSteps.InstantiateForall
 import lisa.utils.fol 
+import lisa.maths.GroupTheory.Subgroups.groupHasTheSameIdentityAsSubgroup
 
 object Cosets extends lisa.Main:
   val a = variable[Ind]
@@ -597,6 +598,89 @@ object Cosets extends lisa.Main:
     thenHave(thesis) by Tautology.fromLastStep(
         doubleInclusion of (x := Ha, y := Hb)
     )
+  }
+
+  val cosetContainsRepresentative = Theorem(
+    (group(G)(op), subgroup(H)(G)(op), x ∈ G)
+    |- x ∈ leftCoset(x)(op)(H) /\ x ∈ rightCoset(H)(op)(x)
+  ) {
+    val e0 = identityOf(H)(op)
+    have(thesis) by Tautology.from(
+        leftCosetMembershipTest of (a := x, b := x, h := e0),
+        rightCosetMembershipTest of (a := x, b := x, h := e0),
+        identityOfIsIdentity of (G := H),
+        group.definition, subgroup.definition,
+        identityProperty of (e := e0, x := x),
+        isIdentityElement.definition of (x := e0),
+        isIdentityElement.definition of (x := e0, G := H),
+        groupHasTheSameIdentityAsSubgroup of (e := e0)
+    )
+  }
+
+  val leftCosetEqualityCondition = Theorem(
+    (group(G)(op), subgroup(H)(G)(op), a ∈ G, b ∈ G)
+    |- (leftCoset(a)(op)(H) === leftCoset(b)(op)(H)) <=> 
+        (op(inverseOf(G)(op)(b))(a) ∈ H)
+  ) {
+    assume(group(G)(op), subgroup(H)(G)(op), a ∈ G, b ∈ G)
+    val aH = leftCoset(a)(op)(H)
+    val bH = leftCoset(b)(op)(H)
+    val bi = inverseOf(G)(op)(b)
+
+    val _1 = have((aH === bH) <=> ∀(z, z ∈ aH <=> z ∈ bH)) by Tautology.from(
+        extensionalityAxiom of (x := aH, y := bH)
+    )
+    val _2 = have(a ∈ aH) by Tautology.from(
+        cosetContainsRepresentative of (x := a)
+    )
+
+    val leftImplies = have(aH === bH |- op(bi)(a) ∈ H) subproof {
+        assume(aH === bH)
+        have(∀(z, z ∈ aH <=> z ∈ bH)) by Tautology.from(_1)
+        thenHave(a ∈ aH <=> a ∈ bH) by InstantiateForall(a)
+        thenHave(a ∈ bH) by Tautology.fromLastStep(_2)
+        thenHave(∃(h ∈ H, a === op(b)(h))) by Tautology.fromLastStep(leftCosetMembership)
+        val auxP = lambda(h, h ∈ H /\ (a === op(b)(h)))
+        val h0 = ε(x, auxP(x))
+        thenHave(h0 ∈ H /\ (a === op(b)(h0))) by Tautology.fromLastStep(
+            Quantifiers.existsEpsilon of (P := auxP)
+        )
+        val _1a = thenHave((op(bi)(a) === h0) /\ h0 ∈ H) by Tautology.fromLastStep(
+            applyInverseLeft of (x := a, y := b, z := h0),
+            elementInSubgroupMeansItsInGroup of (x := h0)
+        )
+        val _1b = have(op(bi)(a) === h0 |- (op(bi)(a) === op(bi)(a)) /\ op(bi)(a) ∈ H) by Substitution.Apply(op(bi)(a) === h0)(_1a)
+        have(thesis) by Tautology.from(_1a, _1b)
+    }
+
+    val rightImplies = have(op(bi)(a) ∈ H |- aH === bH) subproof {
+        val h0 = op(bi)(a)
+        assume(h0 ∈ H)
+        val bii = inverseOf(G)(op)(bi)
+        val biinG = have(bi ∈ G) by Tautology.from(
+            inverseStaysInGroup of (x := b)
+        )
+        val h0inG = have(h0 ∈ G) by Tautology.from(
+            elementInSubgroupMeansItsInGroup of (x := h0)
+        )
+        have(h0 === op(bi)(a)) by Tautology
+        val _2a = thenHave(op(bii)(h0) === a) by Tautology.fromLastStep(
+            applyInverseLeft of (x := h0, y := bi, z := a),
+            biinG, h0inG
+        )
+        have(op(b)(h0) === a) by Congruence.from(
+            _2a,
+            doubleInverse of (x := b)
+        )
+        thenHave(a ∈ bH) by Tautology.fromLastStep(
+            leftCosetMembershipTest of (h := h0)
+        )
+        thenHave(aH === bH) by Tautology.fromLastStep(
+            leftCosetEqualityTheorem
+        )
+    }
+
+    have(thesis) by Tautology.from(leftImplies, rightImplies)
   }
 
   val leftCosetMapsToRightCoset = Theorem(
