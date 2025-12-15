@@ -275,6 +275,20 @@ object Subgroups extends lisa.Main:
     )
   }
 
+  val identityOfInSubgroup = Theorem(
+    (group(G)(op), subgroup(H)(G)(op)) |- identityOf(G)(op) === identityOf(H)(op)
+  ) {
+    assume(group(G)(op), subgroup(H)(G)(op))
+    val e1 = identityOf(H)(op)
+    val e2 = identityOf(G)(op)
+    have(thesis) by Tautology.from(
+        identityOfIsIdentity,
+        identityOfIsIdentity of (G := H),
+        subgroup.definition,
+        identityInSubgroupIsTheSame of (x := e1, y := e2)
+    )
+  }
+
   val inverseInSubgroupIsTheSame = Theorem(
     (group(G)(op), subgroup(H)(G)(op), x ∈ H) |- inverseOf(H)(op)(x) === inverseOf(G)(op)(x)
   ) {

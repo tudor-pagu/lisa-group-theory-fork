@@ -22,6 +22,7 @@ import lisa.maths.GroupTheory.Cosets.*
 import lisa.maths.GroupTheory.Utils.equalityTransitivity
 import lisa.utils.prooflib.SimpleDeducedSteps.InstantiateForall
 import lisa.utils.fol 
+import lisa.maths.GroupTheory.Subgroups.groupHasTheSameIdentityAsSubgroup
 
 object Cosets extends lisa.Main:
   val a = variable[Ind]
@@ -599,11 +600,21 @@ object Cosets extends lisa.Main:
     )
   }
 
-  val leftCosetContainsLeft = Theorem(
-    (group(G)(op), subgroup(H)(G)(op), a ∈ G)
-    |- a ∈ leftCoset(a)(op)(H)
+  val cosetContainsRepresentative = Theorem(
+    (group(G)(op), subgroup(H)(G)(op), x ∈ G)
+    |- x ∈ leftCoset(x)(op)(H) /\ x ∈ rightCoset(H)(op)(x)
   ) {
-    sorry
+    val e0 = identityOf(H)(op)
+    have(thesis) by Tautology.from(
+        leftCosetMembershipTest of (a := x, b := x, h := e0),
+        rightCosetMembershipTest of (a := x, b := x, h := e0),
+        identityOfIsIdentity of (G := H),
+        group.definition, subgroup.definition,
+        identityProperty of (e := e0, x := x),
+        isIdentityElement.definition of (x := e0),
+        isIdentityElement.definition of (x := e0, G := H),
+        groupHasTheSameIdentityAsSubgroup of (e := e0)
+    )
   }
 
   val leftCosetEqualityCondition = Theorem(
