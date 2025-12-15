@@ -324,7 +324,7 @@ object Lagrange extends lisa.Main:
 
       val obs25c = have(obs24Eq |- a0 ∈ rightCoset(H)(op)(b0)) by Substitution.Apply(obs24Eq)(obs24b)
       val obs25 = have(a0 ∈ rightCoset(H)(op)(b0)) by Tautology.from(obs25c, obs24a)
-      val obs26 = have(rightCoset(H)(op)(a0) === rightCoset(H)(op)(b0)) by Tautology.from(cosetEqualityTheorem of (a := a0, b := b0), aThm, bThm, obs25)
+      val obs26 = have(rightCoset(H)(op)(a0) === rightCoset(H)(op)(b0)) by Tautology.from(rightCosetEqualityTheorem of (a := a0, b := b0), aThm, bThm, obs25)
       val obs27a = have(y === rightCoset(H)(op)(b0)) by Tautology.from(
         Utils.equalityTransitivity of (x := y, y := rightCoset(H)(op)(a0), z := rightCoset(H)(op)(b0)),
         aThm,
