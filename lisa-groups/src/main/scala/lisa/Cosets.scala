@@ -21,6 +21,7 @@ import lisa.maths.GroupTheory.Subgroups.*
 import lisa.maths.GroupTheory.Cosets.*
 import lisa.maths.GroupTheory.Utils.equalityTransitivity
 import lisa.utils.prooflib.SimpleDeducedSteps.InstantiateForall
+import lisa.utils.fol 
 
 object Cosets extends lisa.Main:
   val a = variable[Ind]
@@ -46,6 +47,64 @@ object Cosets extends lisa.Main:
   val H = variable[Ind]
   val C = variable[Ind]
   val op = variable[Ind >>: Ind >>: Ind]
+
+  val leftCosetStaysInGroupLemma = Theorem(
+    (group(G)(op), subgroup(H)(G)(op), x ∈ G) |-
+      (leftCoset(x)(op)(H) ⊆ G)
+  ) {
+    assume(group(G)(op), subgroup(H)(G)(op), x ∈ G)
+
+    val lc = leftCoset(x)(op)(H)
+    val thm1 = have(lc === (op(x)(h) | (h ∈ H))) by Tautology.from(
+        leftCoset.definition of (g := x))
+
+    val obs1 = have(h ∈ H |- h ∈ G) by Tautology.from(
+        elementInSubgroupMeansItsInGroup of (x := h))
+
+    val eq1 = lc === (op(x)(h) | (h ∈ H))
+
+    val step2a = have(y ∈ (op(x)(h) | (h ∈ H)) <=> ∃(h ∈ H, op(x)(h) === y)) by Tautology.from(
+        Replacement.membership of (F := lambda(h, op(x)(h)), A := H, y := y)
+    )
+
+    val step2b = have(eq1 |- y ∈ lc <=> ∃(h ∈ H, op(x)(h) === y)) by Substitution.Apply(eq1)(step2a)
+
+    val step2 = have(y ∈ lc |- ∃(h ∈ H, op(x)(h) === y)) by Tautology.from(step2b, thm1)
+
+    val goal = have(y ∈ lc |- y ∈ G) subproof {
+        assume(y ∈ lc)
+
+        val substep1 =
+        have(∃(h ∈ H, op(x)(h) === y)) by Tautology.from(step2)
+
+        val auxP = lambda(z, (z ∈ H) /\ (op(x)(z) === y))
+        val h1 = ε(h, auxP(h))
+
+        val hThm =
+        have(auxP(h1)) by Tautology.from(
+            substep1,
+            Quantifiers.existsEpsilon of (x := h, P := auxP)
+        )
+
+        val substep2 =
+        have(op(x)(h1) ∈ G) by Tautology.from(
+            binaryOperationThm of (G := G, op := op, x := x, y := h1),
+            group.definition,
+            elementInSubgroupMeansItsInGroup of (x := h1),
+            hThm
+        )
+
+        val substep3Eq = op(x)(h1) === y
+        val substep3 =
+        have(substep3Eq |- y ∈ G) by Substitution.Apply(substep3Eq)(substep2)
+
+        have(y ∈ G) by Tautology.from(substep3, hThm)
+    }
+
+    val goal1 = have((y ∈ lc) ==> (y ∈ G)) by Tautology.from(goal)
+    val goal2 = thenHave(∀(y, (y ∈ lc) ==> (y ∈ G))) by RightForall
+    have(thesis) by Tautology.from(subsetAxiom of (x := lc, y := G), goal2)
+  }
 
   val rightCosetStaysInGroupLemma = Theorem(
     (group(G)(op), subgroup(H)(G)(op), x ∈ G) |-
@@ -88,6 +147,33 @@ object Cosets extends lisa.Main:
     have(thesis) by Tautology.from(subsetAxiom of (x := rc, y := G), goal2)
   }
 
+  val leftCosetMembershipTest = Theorem(
+    (group(G)(op), subgroup(H)(G)(op), a ∈ G, b ∈ G, h ∈ H, a === op(b)(h))
+      |- a ∈ leftCoset(b)(op)(H)
+  ) {
+    assume(group(G)(op), subgroup(H)(G)(op), a ∈ G, b ∈ G, h ∈ H, a === op(b)(h))
+
+    val lc_def = (op(b)(h) | (h ∈ H)) === leftCoset(b)(op)(H)
+
+    val _map = have(op(b)(h) ∈ (op(b)(h) | (h ∈ H))) by Tautology.from(
+        Replacement.map of (A := H, x := h, F := lambda(h, op(b)(h)))
+    )
+
+    val _rel = have(a === op(b)(h)) by Restate
+
+    have(a === op(b)(h) |- a ∈ (op(b)(h) | (h ∈ H))) by
+        Substitution.Apply(a === op(b)(h))(_map)
+
+    val _h = thenHave(a ∈ (op(b)(h) | (h ∈ H))) by
+        Tautology.fromLastStep(_rel)
+
+    val _1 = have(lc_def) by Tautology.from(leftCoset.definition of (g := b))
+    val _2 = have(lc_def |- a ∈ leftCoset(b)(op)(H)) by
+        Substitution.Apply(lc_def)(_h)
+
+    have(thesis) by Tautology.from(_1, _2)
+  }
+
   val rightCosetMembershipTest = Theorem(
     (group(G)(op), subgroup(H)(G)(op), a ∈ G, b ∈ G, h ∈ H, a === op(h)(b))
       |- a ∈ rightCoset(H)(op)(b)
@@ -106,6 +192,46 @@ object Cosets extends lisa.Main:
     val _1 = have(rc_def) by Tautology.from(rightCoset.definition of (g := b))
     val _2 = have(rc_def |- a ∈ rightCoset(H)(op)(b)) by Substitution.Apply(rc_def)(_h)
     have(thesis) by Tautology.from(_1, _2)
+  }
+
+  val leftCosetMembership = Theorem(
+  (
+    group(G)(op),
+    subgroup(H)(G)(op),
+    a ∈ G,
+    b ∈ G,
+    a ∈ leftCoset(b)(op)(H)
+  )
+  |- ∃(h ∈ H, a === op(b)(h))
+  ) {
+    assume(
+        group(G)(op),
+        subgroup(H)(G)(op),
+        a ∈ G,
+        b ∈ G,
+        a ∈ leftCoset(b)(op)(H)
+    )
+
+    val _h = have(a ∈ leftCoset(b)(op)(H)) by Restate
+
+    val lc_def = (op(b)(h) | (h ∈ H)) === leftCoset(b)(op)(H)
+    val _1 = have(lc_def) by Tautology.from(
+        leftCoset.definition of (g := b)
+    )
+
+    val _2 = have(lc_def |- a ∈ (op(b)(h) | (h ∈ H))) by
+        Substitution.Apply(lc_def)(_h)
+
+    have(∃(h ∈ H, a === op(b)(h))) by Tautology.from(
+        _1,
+        _2,
+        Replacement.membership of (
+        F := lambda(x, op(b)(x)),
+        A := H,
+        x := h,
+        y := a
+        )
+    )
   }
 
   val rightCosetMembership = Theorem(
@@ -132,6 +258,88 @@ object Cosets extends lisa.Main:
     val _3 = have(∃(h ∈ H, a === op(h)(b))) by Tautology.from(
       _1, _2,
       Replacement.membership of (F := lambda(x, op(x)(b)), A := H, x := h, y := a)
+    )
+  }
+
+  val leftCosetSubsetFromMembership = Theorem(
+  ( group(G)(op),
+    subgroup(H)(G)(op),
+    a ∈ G,
+    b ∈ G,
+    a ∈ leftCoset(b)(op)(H)
+  )
+    |- leftCoset(a)(op)(H) ⊆ leftCoset(b)(op)(H)
+  ) {
+    assume(group(G)(op),
+        subgroup(H)(G)(op),
+        a ∈ G,
+        b ∈ G,
+        a ∈ leftCoset(b)(op)(H))
+
+    val Ha = leftCoset(a)(op)(H)
+    val Hb = leftCoset(b)(op)(H)
+
+    have(Ha ⊆ G) by Tautology.from(
+        leftCosetStaysInGroupLemma of (x := a)
+    )
+    thenHave(∀(x, x ∈ Ha ==> x ∈ G)) by Tautology.fromLastStep(
+        ⊆.definition of (z := x, x := Ha, y := G)
+    )
+    thenHave(x ∈ Ha ==> x ∈ G) by InstantiateForall(x)
+    val _0 = thenHave(x ∈ Ha |- x ∈ G) by Restate
+
+    val _1 = have(∃(h ∈ H, a === op(b)(h))) by Tautology.from(leftCosetMembership)
+    val _2 = have(x ∈ Ha |- ∃(h ∈ H, x === op(a)(h))) by Tautology.from(
+        leftCosetMembership of (a := x, b := a),
+        _0
+    )
+
+    val auxP = lambda(h, (h ∈ H) /\ (op(b)(h) === a))
+    val h0 = ε(h, auxP(h))
+    val _3 = have((h0 ∈ H) /\ (op(b)(h0) === a)) by Tautology.from(
+        _1, Quantifiers.existsEpsilon of (P := auxP))
+    val h0inH = thenHave(h0 ∈ H) by Tautology
+    val h0inG = have(h0 ∈ G) by Tautology.from(
+        subgroup.definition, Subset.membership of (z := h0, x := H, y := G), h0inH)
+
+    val auxP1 = lambda(h, (h ∈ H) /\ (op(a)(h) === x))
+    val h1 = ε(h, auxP1(h))
+    val _4 = have(x ∈ Ha |- (h1 ∈ H) /\ (op(a)(h1) === x)) by Tautology.from(
+        _2, Quantifiers.existsEpsilon of (P := auxP1))
+    val h1inH = thenHave(x ∈ Ha |- h1 ∈ H) by Tautology
+    val h1inG = have(x ∈ Ha |- h1 ∈ G) by Tautology.from(
+        subgroup.definition, Subset.membership of (z := h1, x := H, y := G), h1inH)
+
+    val subst = op(b)(h0) === a
+    have((subst, x ∈ Ha) |- (h1 ∈ H) /\ (op(op(b)(h0))(h1) === x)) by Substitution.Apply(subst)(_4)
+    val _5 = thenHave(x ∈ Ha |- x === op(op(b)(h0))(h1)) by Tautology.fromLastStep(_3)
+
+    val assoc = have(∀(x ∈ G, ∀(y ∈ G, ∀(z ∈ G, op(op(x)(y))(z) === op(x)(op(y)(z)))))) by Tautology.from(
+        group.definition, associativity.definition
+    )
+    thenHave(b ∈ G |- ∀(y ∈ G, ∀(z ∈ G, op(op(b)(y))(z) === op(b)(op(y)(z))))) by InstantiateForall(b)
+    thenHave((b ∈ G, h0 ∈ G) |- ∀(z ∈ G, op(op(b)(h0))(z) === op(b)(op(h0)(z)))) by InstantiateForall(h0)
+    thenHave((b ∈ G, h0 ∈ G, h1 ∈ G) |- op(op(b)(h0))(h1) === op(b)(op(h0)(h1))) by InstantiateForall(h1)
+    val _6 = thenHave(x ∈ Ha |- op(op(b)(h0))(h1) === op(b)(op(h0)(h1))) by Tautology.fromLastStep(h1inG, h0inG)
+    val s1 = x
+    val s2 = op(op(b)(h0))(h1)
+    val s3 = op(b)(op(h0)(h1))
+    val _7 = have(x ∈ Ha |- x === op(b)(op(h0)(h1))) by Tautology.from(_5, _6, equalityTransitivity of (x := s1, y := s2, z := s3))
+
+    val h2 = op(h0)(h1)
+    val h2inH = have(x ∈ Ha |- h2 ∈ H) by Tautology.from(
+        h0inH, h1inH, subgroup.definition, group.definition of (G := H),
+        binaryOperationThm of (G := H, x := h0, y := h1)
+    )
+        
+    val _8 = have(x ∈ Ha |- x ∈ Hb) by Tautology.from(
+        _0, _7, h2inH, leftCosetMembershipTest of (a := x, h := h2, b := b)
+    )
+
+    thenHave(x ∈ Ha ==> x ∈ Hb) by Restate
+    thenHave(∀(x, x ∈ Ha ==> x ∈ Hb)) by RightForall
+    thenHave(Ha ⊆ Hb) by Tautology.fromLastStep(
+        ⊆.definition of (z := x, x := Ha, y := Hb)
     )
   }
 
@@ -220,8 +428,17 @@ object Cosets extends lisa.Main:
       ⊆.definition of (z := x, x := Ha, y := Hb)
     )
   }
+
+  val leftCosetEqualityTheorem = Theorem(
+    (group(G)(op), subgroup(H)(G)(op), a ∈ G, b ∈ G, a ∈ leftCoset(b)(op)(H))
+      |- leftCoset(a)(op)(H) === leftCoset(b)(op)(H)
+  ) {
+    assume(group(G)(op), subgroup(H)(G)(op), a ∈ G, b ∈ G, a ∈ leftCoset(b)(op)(H))
+
+    sorry
+  }
   
-  val cosetEqualityTheorem = Theorem(
+  val rightCosetEqualityTheorem = Theorem(
     (group(G)(op), subgroup(H)(G)(op), a ∈ G, b ∈ G, a ∈ rightCoset(H)(op)(b))
       |- rightCoset(H)(op)(a) === rightCoset(H)(op)(b)
   ) {
@@ -329,4 +546,14 @@ object Cosets extends lisa.Main:
     thenHave(thesis) by Tautology.fromLastStep(
       doubleInclusion of (x := Ha, y := Hb)
     )
+  }
+
+  val leftCosetMapsToRightCoset = Theorem(
+    (group(G)(op), subgroup(H)(G)(op), a ∈ G, b ∈ G) |-
+    a ∈ leftCoset(b)(op)(H)
+      <=> inverseOf(G)(op)(a) ∈ rightCoset(H)(op)(inverseOf(G)(op)(b))
+  ) {
+    assume(group(G)(op), subgroup(H)(G)(op), a ∈ G, b ∈ G)
+
+    sorry
   }
