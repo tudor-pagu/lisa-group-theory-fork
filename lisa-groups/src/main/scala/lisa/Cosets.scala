@@ -599,6 +599,20 @@ object Cosets extends lisa.Main:
     )
   }
 
+  val leftCosetContainsLeft = Theorem(
+    (group(G)(op), subgroup(H)(G)(op), a ∈ G)
+    |- a ∈ leftCoset(a)(op)(H)
+  ) {
+    sorry
+  }
+
+  val leftCosetEqualityCondition = Theorem(
+    (group(G)(op), subgroup(H)(G)(op), a ∈ G, b ∈ G)
+    |- (leftCoset(a)(op)(H) === leftCoset(b)(op)(H)) <=> (op(inverseOf(G)(op)(b))(a) ∈ H)
+  ) {
+    sorry
+  }
+
   val leftCosetMapsToRightCoset = Theorem(
     (group(G)(op), subgroup(H)(G)(op), a ∈ G, b ∈ G, a ∈ leftCoset(b)(op)(H)) |-
         inverseOf(G)(op)(a) ∈ rightCoset(H)(op)(inverseOf(G)(op)(b))

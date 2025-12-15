@@ -151,6 +151,8 @@ object Groups extends lisa.Main:
     )
   )
 
+  val conjugation = DEF(λ(G, λ(op, λ(x, λ(y, op(op(y)(x))(inverseOf(G)(op)(y)))))))
+  
   val normalSubgroup = DEF(
     λ(
       H,
