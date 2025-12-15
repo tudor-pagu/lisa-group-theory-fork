@@ -11,12 +11,13 @@ import lisa.maths.SetTheory.Base.EmptySet
 import lisa.maths.SetTheory.Base.Singleton
 import lisa.maths.SetTheory.Base.Subset
 import lisa.Main
-import lisa.maths.SetTheory.Relations.Relation.relationBetween
+import lisa.maths.SetTheory.Relations.Relation.{relationBetween, range}
 import lisa.maths.SetTheory.Relations.Relation
 import lisa.maths.SetTheory.Base.Replacement.map
 import lisa.maths.SetTheory.Base.Replacement
 import lisa.SetTheoryLibrary.{extensionalityAxiom, subsetAxiom}
 import lisa.maths.SetTheory.Base.CartesianProduct.{membershipSufficientCondition, ×, membership}
+import lisa.maths.SetTheory.Base.Pair.{pairSnd}
 
 import lisa.automation.Congruence
 import lisa.automation.Substitution.{Apply => Substitute}
@@ -413,17 +414,56 @@ object Lagrange extends lisa.Main:
       (group(G)(op), subgroup(H)(G)(op), x ∈ G) |- surjective(((h,op(h)(x)) | (h ∈ H)))(rightCoset(H)(op)(x))
       ) subproof {
         assume(group(G)(op), subgroup(H)(G)(op), x ∈ G)
-        val step2 = have(y ∈ rightCoset(H)(op)(x) |- y ∈ (op(h)(x) | (h ∈ H))) by Tautology.from(
-          rightCoset.definition of (g := x),
-          extensionalityAxiom of (x := rightCoset(H)(op)(x), y := (op(h)(x) | (h ∈ H)))
-        )
-        have(y ∈ rightCoset(H)(op)(x) |- ∃(h ∈ H, op(h)(x) === y)) by Tautology.from(
-          Replacement.membership of (
-            F := λ(h, op(h)(x)), 
-            A := H,
-            x := h
+        val rel = ((h,op(h)(x)) | (h ∈ H))
+        val relFunc = λ(h, (h, op(h)(x)))
+        val dir1 = have(y ∈ rightCoset(H)(op)(x) ==> y ∈ range(rel)) subproof {  
+          val subsetImpl = have((y ∈ rightCoset(H)(op)(x), rightCoset(H)(op)(x) ⊆ G) |- (y ∈ G)) by Tautology.from(Subset.membership of (x := rightCoset(H)(op)(x), y := G, z := y))
+          val yInG = have((y ∈ rightCoset(H)(op)(x)) |- y ∈ G) by Tautology.from(
+            rightCosetStaysInGroupLemma,
+            subsetImpl
+          )  
+          val step1 = have((y ∈ rightCoset(H)(op)(x)) |- ∃(h ∈ H, op(h)(x) === y)) by Tautology.from(
+            rightCosetMembership of (
+              a := y,
+              b := x
+            ),
+            yInG
           )
-        )
+          val hxy = λ(h, h ∈ H /\ (op(h)(x) === y))
+          val eps = ε(h, hxy(h))
+          val epsCond = have(∃(h, hxy(h)) |- hxy(eps)) by Tautology.from(Quantifiers.existsEpsilon of (x := h, P := hxy))
+          val epsValid = have((y ∈ rightCoset(H)(op)(x)) |- hxy(eps)) by Tautology.from(epsCond, step1)
+          val epsEq = have((y ∈ rightCoset(H)(op)(x)) |- (op(eps)(x) === y)) by Tautology.from(epsValid)
+          
+
+          val sndIsOp = have(snd((eps,op(eps)(x))) === op(eps)(x)) by Tautology.from(pairSnd of (x := eps, y := op(eps)(x)))
+          val step2 = have((y ∈ rightCoset(H)(op)(x)) |- snd((eps,op(eps)(x))) === y) by Substitution.Apply(epsEq)(sndIsOp)
+
+          val existsBuildup = have((y ∈ rightCoset(H)(op)(x)) |- eps ∈ H /\ ((eps,op(eps)(x)) === (eps,op(eps)(x)))) by Tautology.from(epsValid)
+          val existsInRange = thenHave((y ∈ rightCoset(H)(op)(x)) |- ∃(h ∈ H, (h,op(h)(x)) === (eps,op(eps)(x)))) by RightExists.withParameters(eps)
+
+          val pairInRel = have((y ∈ rightCoset(H)(op)(x)) |- (eps,op(eps)(x)) ∈ rel /\ (snd((eps,op(eps)(x))) === y)) by Tautology.from(
+            step2,
+            Replacement.membership of (F := relFunc, A := H, y := (eps,op(eps)(x)), x := h),
+            existsInRange
+          )
+
+          val range1 = thenHave((y ∈ rightCoset(H)(op)(x)) |- ∃(h ∈ rel, snd(h) === y)) by RightExists.withParameters((eps,op(eps)(x)))
+          val range2 = have((y ∈ rightCoset(H)(op)(x)) |- y ∈ { snd(h) | h ∈ rel }) by Tautology.from(Replacement.membership of (F := snd, A := rel, x := h), range1)
+          val rangeDef = have({ snd(h) | h ∈ rel } === range(rel)) by Tautology.from(range.definition of (Relation.R := rel, z := h))
+
+          have(y ∈ range(rel) <=> y ∈ range(rel)) by Restate
+          val rangeMemEq = thenHave(y ∈ range(rel) <=> y ∈ { snd(h) | h ∈ rel }) by Substitution.Apply(rangeDef)
+          have(thesis) by Tautology.from(range2,rangeMemEq)
+        }
+
+        val dir2 = have(y ∈ range(rel) ==> y ∈ rightCoset(H)(op)(x)) subproof {
+          sorry
+        }
+        have(y ∈ range(rel) <=> y ∈ rightCoset(H)(op)(x)) by Tautology.from(dir1,dir2)
+        val forallMemb = thenHave(∀(y,y ∈ range(rel) <=> y ∈ rightCoset(H)(op)(x))) by RightForall
+        val rangeCosetEq = have(range(rel) === rightCoset(H)(op)(x)) by Tautology.from(extensionalityAxiom of (x := range(rel), y := rightCoset(H)(op)(x)), forallMemb)
+        have(thesis) by Tautology.from(surjective.definition of (f := rel, B := rightCoset(H)(op)(x)), rangeCosetEq)
       }
 
     val injectiveF = have(
