@@ -13,9 +13,11 @@ import lisa.maths.SetTheory.Base.Singleton
 import lisa.maths.SetTheory.Base.Subset
 import lisa.Main
 import lisa.maths.SetTheory.Relations.Relation.relationBetween
+import lisa.maths.SetTheory.Relations.Relation
 import lisa.maths.SetTheory.Base.Replacement.map
+import lisa.maths.SetTheory.Base.Replacement
 import lisa.SetTheoryLibrary.{extensionalityAxiom, subsetAxiom}
-import lisa.maths.SetTheory.Base.CartesianProduct.{membershipSufficientCondition, ×}
+import lisa.maths.SetTheory.Base.CartesianProduct.{membershipSufficientCondition, ×, membership}
 
 import lisa.automation.Congruence
 import lisa.automation.Substitution.{Apply => Substitute}
@@ -1021,7 +1023,7 @@ object Groups extends lisa.Main:
   ) {
     
     val functionF = have(
-      (group(G)(op), subgroup(H)(G)(op), x ∈ G) |- (((h,op(h)(g)) | (h ∈ H)) :: H -> rightCoset(H)(op)(x))
+      (group(G)(op), subgroup(H)(G)(op), x ∈ G) |- (((h,op(h)(x)) | (h ∈ H)) :: H -> rightCoset(H)(op)(x))
       ) subproof {
         val step1 = have((group(G)(op), subgroup(H)(G)(op), x ∈ G) |- ∀(z, z ∈ rightCoset(H)(op)(x) <=> z ∈ (op(h)(x) | (h ∈ H))) <=> (rightCoset(H)(op)(x) === (op(h)(x) | (h ∈ H)))) by Tautology.from(
           extensionalityAxiom of (x := rightCoset(H)(op)(x), y := (op(h)(x) | (h ∈ H)))
@@ -1041,27 +1043,58 @@ object Groups extends lisa.Main:
         )
         val step6 = thenHave((group(G)(op), subgroup(H)(G)(op), x ∈ G) |- ∀(h, (h ∈ H) ==> (h,op(h)(x)) ∈ (H × rightCoset(H)(op)(x)))) by RightForall
         val step7 = thenHave((group(G)(op), subgroup(H)(G)(op), x ∈ G) |- ∀((h ∈ H), (h,op(h)(x)) ∈ (H × rightCoset(H)(op)(x)))) by Tautology
-        val step8 = thenHave((group(G)(op), subgroup(H)(G)(op), x ∈ G) |- ((h,op(h)(g)) | (h ∈ H)) ⊆ rightCoset(H)(op)(x)) by Tautology
-        have(relationBetween(((h,op(h)(g)) | (h ∈ H)))(H)(rightCoset(H)(op)(x))) by Tautology
-      }
-
-    val surjectiveF = have(
-      (group(G)(op), subgroup(H)(G)(op), x ∈ G) |- surjective(((h,op(h)(g)) | (h ∈ H)))(rightCoset(H)(op)(x))
-      ) subproof {
+        val step8 = have((group(G)(op), subgroup(H)(G)(op), x ∈ G) |- ∃(h ∈ H, (h,op(h)(x)) === z) ==> (z ∈ (H × rightCoset(H)(op)(x)))) subproof {
+          assume(group(G)(op), subgroup(H)(G)(op), x ∈ G, ∃(h ∈ H, (h,op(h)(x)) === z))
+          val hxz = λ(h, h ∈ H /\ ((h,op(h)(x)) === z))
+          have(∃(h, hxz(h)) |- hxz(ε(h, hxz(h)))) by Tautology.from(Quantifiers.existsEpsilon of (x := h, P := hxz))
+          val hxzEps = thenHave(hxz(ε(h, hxz(h)))) by Tautology
+          sorry
+          // val hInH = have(h ∈ H) by Tautology.from(hxzEps)
+          // val hxCross = have((h,op(h)(x)) ∈ (H × rightCoset(H)(op)(x))) by InstantiateForall(h)(step7)
+          // have(z ∈ (H × rightCoset(H)(op)(x))) by Tautology.from(step7, hxzEps)
+        }
+        // val step8 = have((group(G)(op), subgroup(H)(G)(op), x ∈ G) |- ∀(z, z ∈ ((h,op(h)(x)) | (h ∈ H)) ==> z ∈ (H × rightCoset(H)(op)(x)))) by Tautology.from(
+        //   step7,
+        //   Replacement.membership of (
+        //     y := z, 
+        //     F := λ(h, (h, op(h)(x))), 
+        //     A := H,
+        //     x := h
+        //   )
+        // )
+        // val step9 = have((group(G)(op), subgroup(H)(G)(op), x ∈ G) |- ((h,op(h)(x)) | (h ∈ H)) ⊆ (H × rightCoset(H)(op)(x))) by Tautology.from(sorry)
+        // have(relationBetween(((h,op(h)(g)) | (h ∈ H)))(H)(rightCoset(H)(op)(x))) by Tautology.from(step9, relationBetween.definition of (Relation.R := ((h,op(h)(g)) | (h ∈ H)), X := H, Y := rightCoset(H)(op)(x)))
         sorry
       }
 
+    val surjectiveF = have(
+      (group(G)(op), subgroup(H)(G)(op), x ∈ G) |- surjective(((h,op(h)(x)) | (h ∈ H)))(rightCoset(H)(op)(x))
+      ) subproof {
+        assume(group(G)(op), subgroup(H)(G)(op), x ∈ G)
+        val step2 = have(y ∈ rightCoset(H)(op)(x) |- y ∈ (op(h)(x) | (h ∈ H))) by Tautology.from(
+          rightCoset.definition of (g := x),
+          extensionalityAxiom of (x := rightCoset(H)(op)(x), y := (op(h)(x) | (h ∈ H)))
+        )
+        have(y ∈ rightCoset(H)(op)(x) |- ∃(h ∈ H, op(h)(x) === y)) by Tautology.from(
+          Replacement.membership of (
+            F := λ(h, op(h)(x)), 
+            A := H,
+            x := h
+          )
+        )
+      }
+
     val injectiveF = have(
-      (group(G)(op), subgroup(H)(G)(op), x ∈ G) |- injective(((h,op(h)(g)) | (h ∈ H)))(H)
+      (group(G)(op), subgroup(H)(G)(op), x ∈ G) |- injective(((h,op(h)(x)) | (h ∈ H)))(H)
       ) subproof {
         sorry
       }
     val bijectiveF = have(
-      (group(G)(op), subgroup(H)(G)(op), x ∈ G) |- bijective(((h,op(h)(g)) | (h ∈ H)))(H)(rightCoset(H)(op)(x))
+      (group(G)(op), subgroup(H)(G)(op), x ∈ G) |- bijective(((h,op(h)(x)) | (h ∈ H)))(H)(rightCoset(H)(op)(x))
       ) subproof {
-        have(thesis) by Tautology.from(functionF, surjectiveF,injectiveF, bijective.definition of (f := ((h,op(h)(g)) | (h ∈ H)), A := H, B := rightCoset(H)(op)(x)))
+        have(thesis) by Tautology.from(functionF, surjectiveF,injectiveF, bijective.definition of (f := ((h,op(h)(x)) | (h ∈ H)), A := H, B := rightCoset(H)(op)(x)))
       }
-    have((group(G)(op), subgroup(H)(G)(op), x ∈ G) |- bijective(((h,op(h)(g)) | (h ∈ H)))(H)(rightCoset(H)(op)(x))) by Restate.from(bijectiveF)
+    have((group(G)(op), subgroup(H)(G)(op), x ∈ G) |- bijective(((h,op(h)(x)) | (h ∈ H)))(H)(rightCoset(H)(op)(x))) by Restate.from(bijectiveF)
     thenHave(thesis) by RightExists
   }
 
