@@ -6,7 +6,7 @@ import lisa.kernel.proof.RunningTheoryJudgement._
 import lisa.maths.SetTheory.Base.Symbols._
 import lisa.maths.Quantifiers
 import lisa.automation.Substitution
-import lisa.maths.SetTheory.Functions.Function.{bijective, surjective, injective, ::}
+import lisa.maths.SetTheory.Functions.Function.{bijective, surjective, injective, ::, app}
 import lisa.maths.SetTheory.Base.EmptySet
 import lisa.maths.SetTheory.Base.Singleton
 import lisa.maths.SetTheory.Base.Subset
@@ -389,24 +389,27 @@ object Lagrange extends lisa.Main:
         val step8 = have((group(G)(op), subgroup(H)(G)(op), x ∈ G) |- ∃(h ∈ H, (h,op(h)(x)) === z) ==> (z ∈ (H × rightCoset(H)(op)(x)))) subproof {
           assume(group(G)(op), subgroup(H)(G)(op), x ∈ G, ∃(h ∈ H, (h,op(h)(x)) === z))
           val hxz = λ(h, h ∈ H /\ ((h,op(h)(x)) === z))
-          have(∃(h, hxz(h)) |- hxz(ε(h, hxz(h)))) by Tautology.from(Quantifiers.existsEpsilon of (x := h, P := hxz))
-          val hxzEps = thenHave(hxz(ε(h, hxz(h)))) by Tautology
-          sorry
-          // val hInH = have(h ∈ H) by Tautology.from(hxzEps)
-          // val hxCross = have((h,op(h)(x)) ∈ (H × rightCoset(H)(op)(x))) by InstantiateForall(h)(step7)
-          // have(z ∈ (H × rightCoset(H)(op)(x))) by Tautology.from(step7, hxzEps)
+          val eps = ε(h, hxz(h))
+          have(∃(h, hxz(h)) |- hxz(eps)) by Tautology.from(Quantifiers.existsEpsilon of (x := h, P := hxz))
+          val epsValid = thenHave(hxz(eps)) by Tautology
+          val epsEq = have(((eps,op(eps)(x)) === z)) by Tautology.from(epsValid)
+          val epsInH = have(eps ∈ H) by Tautology.from(epsValid)
+          val epsInCrossCond = have(eps ∈ H ==> (eps,op(eps)(x)) ∈ (H × rightCoset(H)(op)(x))) by InstantiateForall(eps)(step7)
+          val epsInCross = have((eps,op(eps)(x)) ∈ (H × rightCoset(H)(op)(x))) by Tautology.from(epsInH, epsInCrossCond)
+          val zInCross = have(z ∈ (H × rightCoset(H)(op)(x))) by Substitution.Apply(epsEq)(epsInCross)
         }
-        // val step8 = have((group(G)(op), subgroup(H)(G)(op), x ∈ G) |- ∀(z, z ∈ ((h,op(h)(x)) | (h ∈ H)) ==> z ∈ (H × rightCoset(H)(op)(x)))) by Tautology.from(
-        //   step7,
-        //   Replacement.membership of (
-        //     y := z, 
-        //     F := λ(h, (h, op(h)(x))), 
-        //     A := H,
-        //     x := h
-        //   )
-        // )
-        // val step9 = have((group(G)(op), subgroup(H)(G)(op), x ∈ G) |- ((h,op(h)(x)) | (h ∈ H)) ⊆ (H × rightCoset(H)(op)(x))) by Tautology.from(sorry)
-        // have(relationBetween(((h,op(h)(g)) | (h ∈ H)))(H)(rightCoset(H)(op)(x))) by Tautology.from(step9, relationBetween.definition of (Relation.R := ((h,op(h)(g)) | (h ∈ H)), X := H, Y := rightCoset(H)(op)(x)))
+        val step9 = have((group(G)(op), subgroup(H)(G)(op), x ∈ G) |- z ∈ ((h,op(h)(x)) | (h ∈ H)) ==> z ∈ (H × rightCoset(H)(op)(x))) by Tautology.from(
+          step8,
+          Replacement.membership of (
+            y := z, 
+            F := λ(h, (h, op(h)(x))), 
+            A := H,
+            x := h
+          )
+        )
+        val step10 = thenHave((group(G)(op), subgroup(H)(G)(op), x ∈ G) |- ∀(z, z ∈ ((h,op(h)(x)) | (h ∈ H)) ==> z ∈ (H × rightCoset(H)(op)(x)))) by RightForall
+        val step11 = have((group(G)(op), subgroup(H)(G)(op), x ∈ G) |- ((h,op(h)(x)) | (h ∈ H)) ⊆ (H × rightCoset(H)(op)(x))) by Tautology.from(step10, subsetAxiom of (x := ((h,op(h)(x)) | (h ∈ H)), y := (H × rightCoset(H)(op)(x))))
+        have((group(G)(op), subgroup(H)(G)(op), x ∈ G) |- relationBetween(((h,op(h)(x)) | (h ∈ H)))(H)(rightCoset(H)(op)(x))) by Tautology.from(step11, relationBetween.definition of (Relation.R := ((h,op(h)(x)) | (h ∈ H)), X := H, Y := rightCoset(H)(op)(x)))
         sorry
       }
 
@@ -535,6 +538,8 @@ object Lagrange extends lisa.Main:
     val injectiveF = have(
       (group(G)(op), subgroup(H)(G)(op), x ∈ G) |- injective(((h,op(h)(x)) | (h ∈ H)))(H)
       ) subproof {
+        val func = ((h,op(h)(x)) | (h ∈ H))
+        val step1 = have((app(func)(y) === app(func)(z)) |- (app(func)(y) === app(func)(z))) by Restate
         sorry
       }
     val bijectiveF = have(
