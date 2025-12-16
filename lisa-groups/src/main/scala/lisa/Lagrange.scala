@@ -538,9 +538,22 @@ object Lagrange extends lisa.Main:
     val injectiveF = have(
       (group(G)(op), subgroup(H)(G)(op), x ∈ G) |- injective(((h,op(h)(x)) | (h ∈ H)))(H)
       ) subproof {
+        assume(group(G)(op), subgroup(H)(G)(op), x ∈ G)
         val func = ((h,op(h)(x)) | (h ∈ H))
-        val step1 = have((app(func)(y) === app(func)(z)) |- (app(func)(y) === app(func)(z))) by Restate
-        sorry
+
+        val opEq = have((y ∈ H, z ∈ H) |-((app(func)(y) === app(func)(z)) ==> (op(y)(x) === op(z)(x)))) subproof {
+          assume(y ∈ H, z ∈ H)
+          sorry
+        }
+        val yInG = have(y ∈ H |- y ∈ G) by Tautology.from(elementInSubgroupMeansItsInGroup of (x := y))
+        val zInG = have(z ∈ H |- z ∈ G) by Tautology.from(elementInSubgroupMeansItsInGroup of (x := z))
+        val elimination = have((y ∈ H , z ∈ H) |- ((op(y)(x) === op(z)(x)) ==> (y===z))) by Tautology.from(eliminateRight of (z := x, x := y, y := z), yInG, zInG)
+        have((y ∈ H, z ∈ H) |- ((app(func)(y) === app(func)(z)) ==> (y===z))) by Tautology.from(opEq, elimination)
+        thenHave((y ∈ H) |- z ∈ H ==> ((app(func)(y) === app(func)(z)) ==> (y===z))) by Tautology
+        thenHave(y ∈ H |- ∀(z ∈ H, ((app(func)(y) === app(func)(z)) ==> (y===z)))) by RightForall
+        thenHave((y ∈ H) ==> ∀(z ∈ H, ((app(func)(y) === app(func)(z)) ==> (y===z)))) by Tautology
+        val fEq = thenHave(∀(y ∈ H, ∀(z ∈ H, (app(func)(y) === app(func)(z)) ==> (y===z)))) by RightForall
+        have(thesis) by Tautology.from(fEq, injective.definition of (f := func, A := H, x := y, y := z))
       }
     val bijectiveF = have(
       (group(G)(op), subgroup(H)(G)(op), x ∈ G) |- bijective(((h,op(h)(x)) | (h ∈ H)))(H)(rightCoset(H)(op)(x))
