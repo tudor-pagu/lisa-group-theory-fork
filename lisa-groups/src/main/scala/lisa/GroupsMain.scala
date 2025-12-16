@@ -58,6 +58,7 @@ object Groups extends lisa.Main:
   val H = variable[Ind]
   val C = variable[Ind]
   val op = variable[Ind >>: Ind >>: Ind]
+  val op2 = variable[Ind >>: Ind >>: Ind]
 
   val binaryOperation = DEF(λ(G, λ(op, ∀(x, ∀(y, x ∈ G /\ y ∈ G ==> op(x)(y) ∈ G)))))
 
@@ -166,6 +167,15 @@ object Groups extends lisa.Main:
       )
     )
   )
+
+  val quotientGroup = DEF(λ(G, λ(H, λ(op, 
+    { leftCoset(g)(op)(H) | g ∈ G }
+  ))))
+  val isCosetOperation = DEF(λ(G, λ(H, λ(op, λ(op2,
+    ∀(A ∈ quotientGroup(G)(H)(op), ∀(B ∈ quotientGroup(G)(H)(op), 
+      op2(A)(B) === { op(a)(b) | a ∈ A | b ∈ B }
+    ))
+  )))))
 
   /*
   Functions on groups
