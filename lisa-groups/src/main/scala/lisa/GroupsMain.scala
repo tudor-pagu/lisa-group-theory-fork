@@ -3,8 +3,6 @@ package lisa.maths.GroupTheory
 import lisa.maths.SetTheory.Base.Predef.{_, given}
 
 import lisa.kernel.proof.RunningTheoryJudgement._
-import lisa.maths.SetTheory.Functions.Function.{bijective, surjective, injective, functionBetween, ::}
-import lisa.maths.SetTheory.Base.Pair.{_, given}
 import lisa.maths.SetTheory.Base.Symbols._
 import lisa.maths.Quantifiers
 import lisa.automation.Substitution
@@ -12,12 +10,6 @@ import lisa.maths.SetTheory.Base.EmptySet
 import lisa.maths.SetTheory.Base.Singleton
 import lisa.maths.SetTheory.Base.Subset
 import lisa.Main
-import lisa.maths.SetTheory.Relations.Relation.relationBetween
-import lisa.maths.SetTheory.Relations.Relation
-import lisa.maths.SetTheory.Base.Replacement.map
-import lisa.maths.SetTheory.Base.Replacement
-import lisa.SetTheoryLibrary.{extensionalityAxiom, subsetAxiom}
-import lisa.maths.SetTheory.Base.CartesianProduct.{membershipSufficientCondition, ×, membership}
 
 import lisa.automation.Congruence
 import lisa.automation.Substitution.{Apply => Substitute}
