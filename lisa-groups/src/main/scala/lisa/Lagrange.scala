@@ -18,7 +18,7 @@ import lisa.maths.SetTheory.Base.Replacement.map
 import lisa.maths.SetTheory.Base.Replacement
 import lisa.SetTheoryLibrary.{extensionalityAxiom, subsetAxiom}
 import lisa.maths.SetTheory.Base.CartesianProduct.{membershipSufficientCondition, ×, membership}
-import lisa.maths.SetTheory.Base.Pair.{pairSnd}
+import lisa.maths.SetTheory.Base.Pair.{pairSnd, extensionality}
 import lisa.maths.Quantifiers.{existsOneAlternativeDefinition, ∃!}
 
 import lisa.automation.Congruence
@@ -440,12 +440,30 @@ object Lagrange extends lisa.Main:
 
         // prove uniqueness
         val func = ((h,op(h)(x)) | (h ∈ H))
+        val membFunc = λ(h, (h, op(h)(x)))
         assume(group(G)(op), subgroup(H)(G)(op), x ∈ G)
         have(y ∈ H |- (y,op(y)(x)) ∈ func) by Tautology.from(pairInReplacement)
         val existsPair = thenHave(y ∈ H |- ∃(z, (y,z) ∈ func)) by RightExists.withParameters(op(y)(x))
 
         val ifInFuncThenOp = have((y ∈ H, (y,z) ∈ func) |- z === op(y)(x)) subproof {
-          sorry
+          assume(y ∈ H, (y,z) ∈ func)
+          val pairExists = have(∃(h ∈ H, (h,op(h)(x)) === (y,z))) by Tautology.from(
+            Replacement.membership of (F := membFunc, A := H, y := (y,z), x := h)
+          )
+          val hyz = λ(h, h ∈ H /\ ((h,op(h)(x)) === (y,z)))
+          val eps = ε(h, hyz(h))
+          val epsCond = have(∃(h, hyz(h)) |- hyz(eps)) by Tautology.from(Quantifiers.existsEpsilon of (x := h, P := hyz))
+          val epsValid = have(hyz(eps)) by Tautology.from(epsCond, pairExists)
+          val epsEq = have((eps,op(eps)(x)) === (y,z)) by Tautology.from(epsValid)
+
+          val pairEq = have((eps === y) /\ (op(eps)(x) === z)) by Tautology.from(
+            extensionality of (a := eps, b := op(eps)(x), c := y, d := z),
+            epsEq
+          )
+
+          val epsIsY = thenHave((eps === y)) by Tautology
+          have((eps === y) /\ (op(y)(x) === z)) by Substitution.Apply(epsIsY)(pairEq)
+          thenHave(thesis) by Tautology
         }
 
         val ifInFuncThenOpH = have((y ∈ H, (y,h) ∈ func) |- h === op(y)(x)) by Tautology.from(ifInFuncThenOp of (z := h))
