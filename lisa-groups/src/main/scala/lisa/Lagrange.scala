@@ -6,12 +6,13 @@ import lisa.kernel.proof.RunningTheoryJudgement._
 import lisa.maths.SetTheory.Base.Symbols._
 import lisa.maths.Quantifiers
 import lisa.automation.Substitution
-import lisa.maths.SetTheory.Functions.Function.{bijective, surjective, injective, ::, app}
+import lisa.maths.SetTheory.Functions.Function.{bijective, surjective, injective, ::, app, function}
+import lisa.maths.SetTheory.Functions.BasicTheorems.{functionBetweenDomain, functionBetweenIsFunction, appDefinition}
 import lisa.maths.SetTheory.Base.EmptySet
 import lisa.maths.SetTheory.Base.Singleton
 import lisa.maths.SetTheory.Base.Subset
 import lisa.Main
-import lisa.maths.SetTheory.Relations.Relation.{relationBetween, range}
+import lisa.maths.SetTheory.Relations.Relation.{relationBetween, range, dom}
 import lisa.maths.SetTheory.Relations.Relation
 import lisa.maths.SetTheory.Base.Replacement.map
 import lisa.maths.SetTheory.Base.Replacement
@@ -40,6 +41,7 @@ object Lagrange extends lisa.Main:
   val z = variable[Ind]
 
   val h = variable[Ind]
+  val r = variable[Ind]
 
   val g = variable[Ind]
   val e = variable[Ind]
@@ -541,9 +543,48 @@ object Lagrange extends lisa.Main:
         assume(group(G)(op), subgroup(H)(G)(op), x ∈ G)
         val func = ((h,op(h)(x)) | (h ∈ H))
 
+        val funcBridge = have(y ∈ H |- ((app(func)(y) === op(y)(x)))) subproof {
+          assume(y ∈ H)
+          val yInH = have(y ∈ H) by Tautology
+          val funcFunc = have(function(func)) by Tautology.from(functionF, functionBetweenIsFunction of (f := func, A:=H, B:= rightCoset(H)(op)(x)))
+          val domH = have(dom(func) === H) by Tautology.from(functionF, functionBetweenDomain of (f := func, A:=H, B:= rightCoset(H)(op)(x)))
+          val yInDomH = have(y ∈ dom(func)) by Substitution.Apply(domH)(yInH)
+          val pairInReplacement = have((y,op(y)(x)) ∈ func) subproof {
+            val membFunc = λ(h, (h,op(h)(x)))
+            val yPair = (y, op(y)(x))
+
+            have(y ∈ H /\ (membFunc(y) === yPair)) by Tautology
+            val existsH = thenHave(∃(h ∈ H, membFunc(h) === yPair)) by RightExists.withParameters(y)
+            
+            val replacementEq = have(func === (membFunc(h) | (h ∈ H))) by Tautology
+            val membEquiv = have((yPair ∈ func) <=> existsH.statement.right.head) by Tautology.from(
+              Replacement.membership of (
+                F := membFunc,
+                x := h,
+                y := yPair,
+                A := H
+              ),
+              replacementEq
+            )
+            have(thesis) by Tautology.from(membEquiv, existsH)
+          }
+          have(thesis) by Tautology.from(
+            funcFunc,
+            yInDomH,
+            pairInReplacement,
+            appDefinition of (
+              f := func,
+              x := y,
+              y := op(y)(x)
+            )
+          )
+        }
+
         val opEq = have((y ∈ H, z ∈ H) |-((app(func)(y) === app(func)(z)) ==> (op(y)(x) === op(z)(x)))) subproof {
           assume(y ∈ H, z ∈ H)
-          sorry
+          have((app(func)(y) === app(func)(z)) ==> (app(func)(y) === app(func)(z))) by Restate
+          thenHave((app(func)(y) === app(func)(z)) ==> (op(y)(x) === app(func)(z))) by Substitution.Apply(funcBridge)
+          thenHave((app(func)(y) === app(func)(z)) ==> (op(y)(x) === op(z)(x))) by Substitution.Apply(funcBridge of (y := z))
         }
         val yInG = have(y ∈ H |- y ∈ G) by Tautology.from(elementInSubgroupMeansItsInGroup of (x := y))
         val zInG = have(z ∈ H |- z ∈ G) by Tautology.from(elementInSubgroupMeansItsInGroup of (x := z))
