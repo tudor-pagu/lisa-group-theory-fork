@@ -6,7 +6,7 @@ import lisa.kernel.proof.RunningTheoryJudgement._
 import lisa.maths.SetTheory.Base.Symbols._
 import lisa.maths.Quantifiers
 import lisa.automation.Substitution
-import lisa.maths.SetTheory.Functions.Function.{bijective, surjective, injective, ::, app, function}
+import lisa.maths.SetTheory.Functions.Function.{bijective, surjective, injective, ::, app, function, functionBetween}
 import lisa.maths.SetTheory.Functions.BasicTheorems.{functionBetweenDomain, functionBetweenIsFunction, appDefinition}
 import lisa.maths.SetTheory.Base.EmptySet
 import lisa.maths.SetTheory.Base.Singleton
@@ -19,6 +19,7 @@ import lisa.maths.SetTheory.Base.Replacement
 import lisa.SetTheoryLibrary.{extensionalityAxiom, subsetAxiom}
 import lisa.maths.SetTheory.Base.CartesianProduct.{membershipSufficientCondition, ×, membership}
 import lisa.maths.SetTheory.Base.Pair.{pairSnd}
+import lisa.maths.Quantifiers.{existsOneAlternativeDefinition, ∃!}
 
 import lisa.automation.Congruence
 import lisa.automation.Substitution.{Apply => Substitute}
@@ -28,7 +29,7 @@ import lisa.maths.GroupTheory.Groups.*
 import lisa.maths.GroupTheory.Subgroups.*
 import lisa.maths.GroupTheory.Cosets.*
 import lisa.maths.GroupTheory.Utils.equalityTransitivity
-import lisa.utils.prooflib.SimpleDeducedSteps.InstantiateForall
+import lisa.utils.prooflib.SimpleDeducedSteps.{InstantiateForall, Generalize}
 
 object Lagrange extends lisa.Main:
   val a = variable[Ind]
@@ -366,10 +367,33 @@ object Lagrange extends lisa.Main:
     (group(G)(op), subgroup(H)(G)(op), x ∈ G) |-
       ∃(f, bijective(f)(H)(rightCoset(H)(op)(x)))
   ) {
+
+    val pairInReplacement = have((group(G)(op), subgroup(H)(G)(op), x ∈ G, y ∈ H) |- (y,op(y)(x)) ∈ ((h,op(h)(x)) | (h ∈ H))) subproof {
+      assume(group(G)(op), subgroup(H)(G)(op), x ∈ G, y ∈ H)
+      val func = ((h,op(h)(x)) | (h ∈ H))
+      val membFunc = λ(h, (h,op(h)(x)))
+      val yPair = (y, op(y)(x))
+
+      have(y ∈ H /\ (membFunc(y) === yPair)) by Tautology
+      val existsH = thenHave(∃(h ∈ H, membFunc(h) === yPair)) by RightExists.withParameters(y)
+      
+      val replacementEq = have(func === (membFunc(h) | (h ∈ H))) by Tautology
+      val membEquiv = have((yPair ∈ func) <=> existsH.statement.right.head) by Tautology.from(
+        Replacement.membership of (
+          F := membFunc,
+          x := h,
+          y := yPair,
+          A := H
+        ),
+        replacementEq
+      )
+      have(thesis) by Tautology.from(membEquiv, existsH)
+    }
     
     val functionF = have(
       (group(G)(op), subgroup(H)(G)(op), x ∈ G) |- (((h,op(h)(x)) | (h ∈ H)) :: H -> rightCoset(H)(op)(x))
       ) subproof {
+        //prove relation
         val step1 = have((group(G)(op), subgroup(H)(G)(op), x ∈ G) |- ∀(z, z ∈ rightCoset(H)(op)(x) <=> z ∈ (op(h)(x) | (h ∈ H))) <=> (rightCoset(H)(op)(x) === (op(h)(x) | (h ∈ H)))) by Tautology.from(
           extensionalityAxiom of (x := rightCoset(H)(op)(x), y := (op(h)(x) | (h ∈ H)))
         )
@@ -411,8 +435,45 @@ object Lagrange extends lisa.Main:
         )
         val step10 = thenHave((group(G)(op), subgroup(H)(G)(op), x ∈ G) |- ∀(z, z ∈ ((h,op(h)(x)) | (h ∈ H)) ==> z ∈ (H × rightCoset(H)(op)(x)))) by RightForall
         val step11 = have((group(G)(op), subgroup(H)(G)(op), x ∈ G) |- ((h,op(h)(x)) | (h ∈ H)) ⊆ (H × rightCoset(H)(op)(x))) by Tautology.from(step10, subsetAxiom of (x := ((h,op(h)(x)) | (h ∈ H)), y := (H × rightCoset(H)(op)(x))))
-        have((group(G)(op), subgroup(H)(G)(op), x ∈ G) |- relationBetween(((h,op(h)(x)) | (h ∈ H)))(H)(rightCoset(H)(op)(x))) by Tautology.from(step11, relationBetween.definition of (Relation.R := ((h,op(h)(x)) | (h ∈ H)), X := H, Y := rightCoset(H)(op)(x)))
-        sorry
+        val isRelation = have((group(G)(op), subgroup(H)(G)(op), x ∈ G) |- relationBetween(((h,op(h)(x)) | (h ∈ H)))(H)(rightCoset(H)(op)(x))) by Tautology.from(step11, relationBetween.definition of (Relation.R := ((h,op(h)(x)) | (h ∈ H)), X := H, Y := rightCoset(H)(op)(x)))
+
+
+        // prove uniqueness
+        val func = ((h,op(h)(x)) | (h ∈ H))
+        assume(group(G)(op), subgroup(H)(G)(op), x ∈ G)
+        have(y ∈ H |- (y,op(y)(x)) ∈ func) by Tautology.from(pairInReplacement)
+        val existsPair = thenHave(y ∈ H |- ∃(z, (y,z) ∈ func)) by RightExists.withParameters(op(y)(x))
+
+        val ifInFuncThenOp = have((y ∈ H, (y,z) ∈ func) |- z === op(y)(x)) subproof {
+          sorry
+        }
+
+        val ifInFuncThenOpH = have((y ∈ H, (y,h) ∈ func) |- h === op(y)(x)) by Tautology.from(ifInFuncThenOp of (z := h))
+
+        have((y ∈ H, (y,z) ∈ func, (y,h) ∈ func) |- z === op(y)(x)) by Tautology.from(ifInFuncThenOp)
+        val hZEq = thenHave((y ∈ H, (y,z) ∈ func, (y,h) ∈ func) |- z === h) by Substitution.Apply(ifInFuncThenOpH)
+
+        thenHave(y ∈ H |- ((y,z) ∈ func /\ (y,h) ∈ func) ==> (z === h)) by Tautology
+        val uniqueForall = thenHave(y ∈ H |- ∀(z, ∀(h, ((y,z) ∈ func /\ (y,h) ∈ func) ==> (z === h)))) by Generalize
+        val pred = λ(z, (y,z) ∈ func)
+        val uniqueE = have(y ∈ H |- ∃!(z, (y,z) ∈ func)) by Tautology.from(
+          existsOneAlternativeDefinition of (
+            P := pred
+          ),
+          existsPair,
+          uniqueForall
+        )
+        thenHave(y ∈ H ==> ∃!(z, (y,z) ∈ func)) by Tautology
+        val uniqueEForall = thenHave(∀(y ∈ H, ∃!(z, (y,z) ∈ func))) by RightForall
+        have(thesis) by Tautology.from(
+          isRelation,
+          uniqueEForall,
+          functionBetween.definition of (
+            A := H,
+            B := rightCoset(H)(op)(x),
+            f := func
+          )
+        )
       }
 
     val surjectiveF = have(
@@ -549,25 +610,7 @@ object Lagrange extends lisa.Main:
           val funcFunc = have(function(func)) by Tautology.from(functionF, functionBetweenIsFunction of (f := func, A:=H, B:= rightCoset(H)(op)(x)))
           val domH = have(dom(func) === H) by Tautology.from(functionF, functionBetweenDomain of (f := func, A:=H, B:= rightCoset(H)(op)(x)))
           val yInDomH = have(y ∈ dom(func)) by Substitution.Apply(domH)(yInH)
-          val pairInReplacement = have((y,op(y)(x)) ∈ func) subproof {
-            val membFunc = λ(h, (h,op(h)(x)))
-            val yPair = (y, op(y)(x))
-
-            have(y ∈ H /\ (membFunc(y) === yPair)) by Tautology
-            val existsH = thenHave(∃(h ∈ H, membFunc(h) === yPair)) by RightExists.withParameters(y)
-            
-            val replacementEq = have(func === (membFunc(h) | (h ∈ H))) by Tautology
-            val membEquiv = have((yPair ∈ func) <=> existsH.statement.right.head) by Tautology.from(
-              Replacement.membership of (
-                F := membFunc,
-                x := h,
-                y := yPair,
-                A := H
-              ),
-              replacementEq
-            )
-            have(thesis) by Tautology.from(membEquiv, existsH)
-          }
+          val pairInReplacementInst = have((y,op(y)(x)) ∈ func) by Tautology.from(pairInReplacement)
           have(thesis) by Tautology.from(
             funcFunc,
             yInDomH,
