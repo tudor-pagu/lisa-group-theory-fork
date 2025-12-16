@@ -6,7 +6,6 @@ import lisa.kernel.proof.RunningTheoryJudgement._
 import lisa.maths.SetTheory.Base.Symbols._
 import lisa.maths.Quantifiers
 import lisa.automation.Substitution
-import lisa.maths.SetTheory.Functions.Function.bijective
 import lisa.maths.SetTheory.Base.EmptySet
 import lisa.maths.SetTheory.Base.Singleton
 import lisa.maths.SetTheory.Base.Subset
