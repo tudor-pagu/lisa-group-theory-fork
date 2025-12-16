@@ -211,11 +211,11 @@ object NormalSubgroups extends lisa.Main:
     val _1 = thenHave(xH === Hx) by InstantiateForall(x)
   }
 
-  val normalInversionLeft = Theorem(
-    (group(G)(op), normalSubgroup(H)(G)(op), x ∈ G, h ∈ H) 
+  val conjugationInversionLeft = Theorem(
+    (group(G)(op), x ∈ G, h ∈ G) 
     |- op(x)(h) === op(conjugation(G)(op)(h)(x))(x)
   ) {
-    assume(group(G)(op), normalSubgroup(H)(G)(op), x ∈ G, h ∈ H) 
+    assume(group(G)(op), x ∈ G, h ∈ G) 
     val xi = inverseOf(G)(op)(x)
     val e0 = op(xi)(x)
     val xh = op(x)(h)
@@ -244,11 +244,11 @@ object NormalSubgroups extends lisa.Main:
     have(thesis) by Congruence.from(_3, _4)
   }
 
-  val normalInversionRight = Theorem(
-  (group(G)(op), normalSubgroup(H)(G)(op), x ∈ G, h ∈ H) 
+  val conjugationInversionRight = Theorem(
+  (group(G)(op), x ∈ G, h ∈ G) 
   |- op(h)(x) === op(x)(conjugation(G)(op)(h)(inverseOf(G)(op)(x)))
   ) {
-    assume(group(G)(op), normalSubgroup(H)(G)(op), x ∈ G, h ∈ H)
+    assume(group(G)(op), x ∈ G, h ∈ G)
 
     val xi = inverseOf(G)(op)(x)
     val xiinG = have(xi ∈ G) by Tautology.from(
@@ -372,8 +372,8 @@ object NormalSubgroups extends lisa.Main:
     )
     
     val _10 = have(h1d === op(d)(h3)) by Tautology.from(
-        normalInversionRight of (h := h1, x := d),
-        _1
+        conjugationInversionRight of (h := h1, x := d),
+        h1inG
     )
 
     val _11 = have(h1dh2 === op(op(d)(h3))(h2)) by Congruence.from(_9, _10)
