@@ -34,6 +34,13 @@ object Utils extends lisa.Main:
     have(thesis) by Congruence
   }
 
+  val equalitySetMembership = Theorem((A === B, x ∈ A) |- x ∈ B) {
+    assume(A === B, x ∈ A)
+    val _1 = have(x ∈ A) by Restate
+    have(B === A |- x ∈ B) by Substitution.Apply(B === A)(_1)
+    thenHave(thesis) by Tautology
+  }
+
 object Groups extends lisa.Main:
   val a = variable[Ind]
   val b = variable[Ind]
@@ -173,7 +180,7 @@ object Groups extends lisa.Main:
   ))))
   val isCosetOperation = DEF(λ(G, λ(H, λ(op, λ(op2,
     ∀(A ∈ quotientGroup(G)(H)(op), ∀(B ∈ quotientGroup(G)(H)(op), 
-      op2(A)(B) === { op(a)(b) | a ∈ A | b ∈ B }
+      op2(A)(B) === ⋃{ {op(a)(b) | a ∈ A} | b ∈ B }
     ))
   )))))
 

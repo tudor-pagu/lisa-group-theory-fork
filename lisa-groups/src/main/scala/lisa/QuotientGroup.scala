@@ -16,6 +16,7 @@ import lisa.automation.Congruence
 import lisa.automation.Substitution.{Apply => Substitute}
 import lisa.automation.Tableau
 import lisa.utils.prooflib.BasicStepTactic.RightForall
+import lisa.maths.GroupTheory.Utils.*
 import lisa.maths.GroupTheory.Groups.*
 import lisa.maths.GroupTheory.Subgroups.*
 import lisa.maths.GroupTheory.Cosets.*
@@ -50,10 +51,116 @@ object QuotientGroup extends lisa.Main:
   val op = variable[Ind >>: Ind >>: Ind]
   val op2 = variable[Ind >>: Ind >>: Ind]
 
+  val eq = variable[Ind]
+
+  val equivalenceClass = λ(x, λ(op, λ(H, 
+    ε(eq, (eq ∈ G) /\ (x === leftCoset(eq)(op)(H)))
+  )))
+  val quotientGroupMembership = Theorem(
+    (x ∈ quotientGroup(G)(H)(op)) |- (equivalenceClass(x)(op)(H) ∈ G) /\ (x === leftCoset(equivalenceClass(x)(op)(H))(op)(H))
+  ) {
+    assume(x ∈ quotientGroup(G)(H)(op))
+    val G_H = quotientGroup(G)(H)(op)
+    val auxF = lambda(x, leftCoset(x)(op)(H))
+    val G_Hdef = { leftCoset(x)(op)(H) | x ∈ G }
+    val _1 = have(G_H === G_Hdef) by Tautology.from(
+        quotientGroup.definition of (g := x)
+    )
+    val _2 = have((x ∈ G_Hdef) ==> ∃(eq ∈ G, leftCoset(eq)(op)(H) === x)) by Tautology.from(
+        Replacement.membership of (x := eq, y := x, A := G, F := auxF)
+    )
+    val _3 = have(G_H === G_Hdef |- (x ∈ G_H) ==> ∃(eq ∈ G, leftCoset(eq)(op)(H) === x)) by Substitution.Apply(G_H === G_Hdef)(_2)
+    val auxP = lambda(y, (y ∈ G) /\ (leftCoset(y)(op)(H) === x))
+    val _4 = have(∃(eq, auxP(eq))) by Tautology.from(
+        _1, _3
+    )
+    have(thesis) by Tautology.from(
+        _4, Quantifiers.existsEpsilon of (x := eq, P := auxP)
+    )
+  }
+
+  val quotientGroupMembershipTest = Theorem(
+    (x === leftCoset(y)(op)(H), y ∈ G) |- x ∈ quotientGroup(G)(H)(op)
+  ) {
+    assume(x === leftCoset(y)(op)(H), y ∈ G)
+    val yH = leftCoset(y)(op)(H)
+    val G_H = quotientGroup(G)(H)(op)
+    val G_Hdef = { leftCoset(x)(op)(H) | x ∈ G }
+    val _1 = have(G_H === G_Hdef) by Tautology.from(
+        quotientGroup.definition of (g := x)
+    )
+
+    val _2 = have(yH ∈ G_Hdef) by Tautology.from(
+        Replacement.map of (x := y, A := G, F := lambda(y, leftCoset(y)(op)(H)))
+    )
+    val _3 = have(x === yH |- x ∈ G_Hdef) by Substitution.Apply(x === yH)(_2)
+    val _4 = have(x ∈ G_Hdef) by Tautology.from(_3)
+    val _5 = have(G_H === G_Hdef |- x ∈ G_H) by Substitution.Apply(G_H === G_Hdef)(_4)
+    have(thesis) by Tautology.from(_1, _5)
+  }
+
+  val doubleSetMembership = Theorem(
+    (x ∈ ⋃{ {op(a)(b) | a ∈ A} | b ∈ B }) |- ∃(b ∈ B, ∃(a ∈ A, x === op(a)(b)))
+  ) {
+    val SS = { { op(a)(b) | a ∈ A } | b ∈ B }
+    val RHS = ⋃(SS)
+    val _1 = have((x ∈ RHS) <=> ∃(y ∈ SS, x ∈ y)) by Tautology.from(
+        unionAxiom of (x := SS, y := y, z := x)
+    )
+    val _2 = have(y ∈ SS <=> ∃(b ∈ B, y === { op(a)(b) | a ∈ A })) by Tautology.from(
+        Replacement.membership of (x := b, A := B, y := y, F := lambda(b, { op(a)(b) | a ∈ A }))
+    )
+    assume(x ∈ RHS)
+    val _3 = have(∃(y, y ∈ SS /\ x ∈ y)) by Tautology.from(_1)
+    val auxP = lambda(y, y ∈ SS /\ x ∈ y)
+    val y0 = ε(y, y ∈ SS /\ x ∈ y)
+    val _4 = have(auxP(y0)) by Tautology.from(
+        _3, Quantifiers.existsEpsilon of (x := y, P := auxP)
+    )
+
+    val _5 = have(∃(b ∈ B, y0 === { op(a)(b) | a ∈ A }) /\ x ∈ y0) by Tautology.from(
+        _2 of (y := y0), _4
+    )
+
+    val auxP2 = lambda(b, b ∈ B /\ (y0 === { op(a)(b) | a ∈ A }))
+    val b0 = ε(b, auxP2(b))
+    val _6 = have(b0 ∈ B /\ (y0 === { op(a)(b0) | a ∈ A }) /\ x ∈ y0) by Tautology.from(
+        _5, Quantifiers.existsEpsilon of (x := b, P := auxP2)
+    )
+
+    val _7 = have(b0 ∈ B /\ x ∈ { op(a)(b0) | a ∈ A }) by Tautology.from(
+        _6, equalitySetMembership of (x := x, A := y0, B := { op(a)(b0) | a ∈ A })
+    )
+    val _8 = have(b0 ∈ B /\ ∃(a ∈ A, x === op(a)(b0))) by Tautology.from(
+        _7, Replacement.membership of (x := a, A := A, y := x, F := lambda(a, op(a)(b0)))
+    )
+    thenHave(thesis) by RightExists
+  }
+
   val cosetOperationProperty = Theorem(
     (group(G)(op), normalSubgroup(H)(G)(op), isCosetOperation(G)(H)(op)(op2), a ∈ G, b ∈ G)
     |- op2(leftCoset(a)(op)(H))(leftCoset(b)(op)(H)) === leftCoset(op(a)(b))(op)(H)
   ) {
+    assume(group(G)(op), normalSubgroup(H)(G)(op), isCosetOperation(G)(H)(op)(op2), a ∈ G, b ∈ G)
+    val aH = leftCoset(a)(op)(H)
+    val bH = leftCoset(b)(op)(H)
+    val G_H = quotientGroup(G)(H)(op)
+    have(∀(A ∈ quotientGroup(G)(H)(op), ∀(B ∈ quotientGroup(G)(H)(op), 
+      op2(A)(B) === ⋃{ {op(a)(b) | a ∈ A} | b ∈ B }
+    ))) by Tautology.from(isCosetOperation.definition)
+
+    thenHave(aH ∈ G_H |- ∀(B ∈ quotientGroup(G)(H)(op), 
+      op2(aH)(B) === ⋃{ {op(a)(b) | a ∈ aH} | b ∈ B }
+    )) by InstantiateForall(aH)
+
+    thenHave((aH ∈ G_H, bH ∈ G_H) |- (op2(aH)(bH) === ⋃{ {op(a)(b) | a ∈ aH} | b ∈ bH })) by InstantiateForall(bH)
+    val _1 = thenHave(op2(aH)(bH) === ⋃{ {op(a)(b) | a ∈ aH} | b ∈ bH }) by Tautology.fromLastStep(
+        quotientGroupMembershipTest of (x := aH, y := a),
+        quotientGroupMembershipTest of (x := bH, y := b)
+    )
+    val LHS = op2(aH)(bH)
+    val RHS = ⋃{ {op(a)(b) | a ∈ aH} | b ∈ bH }
+
     sorry
   }
 
