@@ -23,7 +23,7 @@ import lisa.maths.GroupTheory.Cosets.*
 import lisa.maths.GroupTheory.NormalSubgroups.*
 import lisa.maths.GroupTheory.QuotientGroup.*
 import lisa.maths.GroupTheory.Utils.equalityTransitivity
-import lisa.utils.prooflib.SimpleDeducedSteps.InstantiateForall
+import lisa.utils.prooflib.SimpleDeducedSteps.{InstantiateForall, Generalize}
 
 object QuotientGroup extends lisa.Main:
   val a = variable[Ind]
@@ -174,7 +174,35 @@ object QuotientGroup extends lisa.Main:
     (group(G)(op), normalSubgroup(H)(G)(op), isCosetOperation(G)(H)(op)(op2))
     |- binaryOperation(quotientGroup(G)(H)(op))(op2)
   ) {
-    sorry
+    assume(group(G)(op), normalSubgroup(H)(G)(op), isCosetOperation(G)(H)(op)(op2))
+    val cosetOpDef = have(∀(A ∈ quotientGroup(G)(H)(op), ∀(B ∈ quotientGroup(G)(H)(op), 
+      op2(A)(B) === ⋃{ {op(a)(b) | a ∈ A} | b ∈ B }
+    ))) by Tautology.from(isCosetOperation.definition)
+    val instFirst = thenHave(A ∈ quotientGroup(G)(H)(op) |- ∀(B ∈ quotientGroup(G)(H)(op), 
+      op2(A)(B) === ⋃{ {op(a)(b) | a ∈ A} | b ∈ B }
+    )) by InstantiateForall(A)
+    val instSecond = thenHave((A ∈ quotientGroup(G)(H)(op), B ∈ quotientGroup(G)(H)(op)) |-  
+      op2(A)(B) === ⋃{ {op(a)(b) | a ∈ A} | b ∈ B }
+    ) by InstantiateForall(B)
+    val quotientMembership = have((A ∈ quotientGroup(G)(H)(op), B ∈ quotientGroup(G)(H)(op)) |-  
+      ⋃{ {op(a)(b) | a ∈ A} | b ∈ B } ∈ quotientGroup(G)(H)(op)
+    ) subproof {
+      sorry
+    }
+    thenHave((A ∈ quotientGroup(G)(H)(op), B ∈ quotientGroup(G)(H)(op)) |-  
+      op2(A)(B) ∈ quotientGroup(G)(H)(op)) by Substitution.Apply(instSecond)
+    thenHave((A ∈ quotientGroup(G)(H)(op) /\ B ∈ quotientGroup(G)(H)(op)) ==>  
+      op2(A)(B) ∈ quotientGroup(G)(H)(op)) by Restate
+    val binaryOpCond = thenHave(∀(A, ∀(B, 
+      (A ∈ quotientGroup(G)(H)(op) /\ B ∈ quotientGroup(G)(H)(op)) ==> op2(A)(B) ∈ quotientGroup(G)(H)(op)
+    ))) by Generalize
+    have(thesis) by Tautology.from(
+      binaryOperation.definition of (
+        G := quotientGroup(G)(H)(op),
+        op := op2
+      ),
+      binaryOpCond
+    )
   }
 
   val cosetOperationIsAssociative = Theorem(
