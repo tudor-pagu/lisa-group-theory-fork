@@ -40,6 +40,13 @@ object Utils extends lisa.Main:
     thenHave(thesis) by Tautology
   }
 
+  val equalitySetMembership2 = Theorem((x ∈ A, x === y) |- y ∈ A) {
+    assume(x === y, x ∈ A)
+    val _1 = have(x ∈ A) by Restate
+    have(y === x |- y ∈ A) by Substitution.Apply(y === x)(_1)
+    thenHave(thesis) by Tautology
+  }
+
 object Groups extends lisa.Main:
   val a = variable[Ind]
   val b = variable[Ind]
@@ -181,6 +188,9 @@ object Groups extends lisa.Main:
     ∀(A ∈ quotientGroup(G)(H)(op), ∀(B ∈ quotientGroup(G)(H)(op), 
       op2(A)(B) === ⋃{ {op(a)(b) | a ∈ A} | b ∈ B }
     ))
+  )))))
+  val equivalenceClass = DEF(λ(G, λ(H, λ(op, λ(x, 
+    ε(y, (y ∈ G) /\ (x === leftCoset(y)(op)(H)))
   )))))
 
   /*

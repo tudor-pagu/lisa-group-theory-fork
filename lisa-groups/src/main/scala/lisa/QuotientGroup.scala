@@ -51,13 +51,8 @@ object QuotientGroup extends lisa.Main:
   val op = variable[Ind >>: Ind >>: Ind]
   val op2 = variable[Ind >>: Ind >>: Ind]
 
-  val eq = variable[Ind]
-
-  val equivalenceClass = λ(x, λ(op, λ(H, 
-    ε(eq, (eq ∈ G) /\ (x === leftCoset(eq)(op)(H)))
-  )))
   val quotientGroupMembership = Theorem(
-    (x ∈ quotientGroup(G)(H)(op)) |- (equivalenceClass(x)(op)(H) ∈ G) /\ (x === leftCoset(equivalenceClass(x)(op)(H))(op)(H))
+    (x ∈ quotientGroup(G)(H)(op)) |- (equivalenceClass(G)(H)(op)(x) ∈ G) /\ (x === leftCoset(equivalenceClass(G)(H)(op)(x))(op)(H))
   ) {
     assume(x ∈ quotientGroup(G)(H)(op))
     val G_H = quotientGroup(G)(H)(op)
@@ -66,17 +61,28 @@ object QuotientGroup extends lisa.Main:
     val _1 = have(G_H === G_Hdef) by Tautology.from(
         quotientGroup.definition of (g := x)
     )
-    val _2 = have((x ∈ G_Hdef) ==> ∃(eq ∈ G, leftCoset(eq)(op)(H) === x)) by Tautology.from(
-        Replacement.membership of (x := eq, y := x, A := G, F := auxF)
+    val _2 = have((x ∈ G_Hdef) ==> ∃(y ∈ G, leftCoset(y)(op)(H) === x)) by Tautology.from(
+        Replacement.membership of (x := y, y := x, A := G, F := auxF)
     )
-    val _3 = have(G_H === G_Hdef |- (x ∈ G_H) ==> ∃(eq ∈ G, leftCoset(eq)(op)(H) === x)) by Substitution.Apply(G_H === G_Hdef)(_2)
+    val _3 = have(G_H === G_Hdef |- (x ∈ G_H) ==> ∃(y ∈ G, leftCoset(y)(op)(H) === x)) by Substitution.Apply(G_H === G_Hdef)(_2)
     val auxP = lambda(y, (y ∈ G) /\ (leftCoset(y)(op)(H) === x))
-    val _4 = have(∃(eq, auxP(eq))) by Tautology.from(
+    val _4 = have(∃(y, auxP(y))) by Tautology.from(
         _1, _3
     )
-    have(thesis) by Tautology.from(
-        _4, Quantifiers.existsEpsilon of (x := eq, P := auxP)
+    val eps = ε(y, (y ∈ G) /\ (x === leftCoset(y)(op)(H)))
+    val eq = equivalenceClass(G)(H)(op)(x)
+    val _5 = have(auxP(eps)) by Tautology.from(
+        _4, Quantifiers.existsEpsilon of (x := y, P := auxP)
     )
+    val _6 = have(eq ∈ G) by Tautology.from(
+        equalitySetMembership2 of (x := eps, y := eq, A := G),
+        equivalenceClass.definition, _5
+    )
+    val _7 = have(x === leftCoset(eps)(op)(H)) by Tautology.from(_5)
+    val _8 = have(x === leftCoset(eq)(op)(H)) by Congruence.from(
+        _7, equivalenceClass.definition
+    )
+    have(thesis) by Tautology.from(_6, _8)
   }
 
   val quotientGroupMembershipTest = Theorem(
