@@ -25,63 +25,6 @@ import lisa.maths.GroupTheory.Utils.equalityTransitivity
 import lisa.maths.GroupTheory.Utils.equalityTransitivity
 import lisa.maths.GroupTheory.Utils.equalityTransitivity
 
-object Utils extends lisa.Main:
-  val x = variable[Ind]
-  val y = variable[Ind]
-  val z = variable[Ind]
-
-  val equalityTransitivity = Lemma((x === y, y === z) |- x === z) {
-    have(thesis) by Congruence
-  }
-
-  val equalitySetMembership = Theorem((A === B, x ∈ A) |- x ∈ B) {
-    assume(A === B, x ∈ A)
-    val _1 = have(x ∈ A) by Restate
-    have(B === A |- x ∈ B) by Substitution.Apply(B === A)(_1)
-    thenHave(thesis) by Tautology
-  }
-
-  val equalitySetMembership2 = Theorem((x ∈ A, x === y) |- y ∈ A) {
-    assume(x === y, x ∈ A)
-    val _1 = have(x ∈ A) by Restate
-    have(y === x |- y ∈ A) by Substitution.Apply(y === x)(_1)
-    thenHave(thesis) by Tautology
-  }
-
-  val P, Q = variable[Ind >>: Prop]
-  val p, q = variable[Prop]
-  val R = variable[Ind >>: Ind >>: Prop]
-  val equivalenceSubstitutionExists = Theorem(∀(x, P(x) <=> Q(x)) |-  ∃(x, P(x)) <=> ∃(x, Q(x))) {
-    have(thesis) by Tableau
-  }
-
-  val equivalenceSubstitutionForall = Theorem(∀(x, P(x) <=> Q(x)) |-  ∀(x, P(x)) <=> ∀(x, Q(x))) {
-    have(thesis) by Tableau  
-  }
-
-  val equivalenceIntroduceExists = Theorem((∃(x, P(x)) /\ p) <=> ∃(x, P(x) /\ p)) {
-    have(thesis) by Tableau
-  }
-
-  val swapExists = Theorem(∃(a ∈ A, ∃(b, (R(a)(b)))) <=> ∃(b, ∃(a ∈ A, (R(a)(b))))) {
-    have(thesis) by Tableau
-  }
-
-  val existsMembershipSet = Theorem(x ∈ A <=> ∃(B, (A === B) /\ x ∈ B)) {
-    val leftImplies = have(x ∈ A |- ∃(B, (A === B) /\ x ∈ B)) subproof {
-      have(x ∈ A |- (A === A) /\ x ∈ A) by Tautology
-      thenHave(thesis) by RightExists
-    }
-    val rightImplies = have(∃(B, (A === B) /\ x ∈ B) |- x ∈ A) subproof {
-      assume(∃(B, (A === B) /\ x ∈ B))
-      val auxP = lambda(B, (A === B) /\ x ∈ B)
-      val B0 = ε(B, auxP(B))
-      have((A === B0) /\ x ∈ B0) by Tautology.from(Quantifiers.existsEpsilon of (x := B, P := auxP))
-      thenHave(thesis) by Tautology.fromLastStep(equalitySetMembership of (A := B0, B := A))
-    }
-    have(thesis) by Tautology.from(leftImplies, rightImplies)
-  }
-
 object Groups extends lisa.Main:
   val a = variable[Ind]
   val b = variable[Ind]
