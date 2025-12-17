@@ -24,6 +24,7 @@ import lisa.maths.GroupTheory.NormalSubgroups.*
 import lisa.maths.GroupTheory.QuotientGroup.*
 import lisa.maths.GroupTheory.Utils.equalityTransitivity
 import lisa.utils.prooflib.SimpleDeducedSteps.InstantiateForall
+import lisa.utils.prooflib.BasicStepTactic.RightForall
 
 object QuotientGroup extends lisa.Main:
   val a = variable[Ind]
@@ -43,6 +44,7 @@ object QuotientGroup extends lisa.Main:
   val f = variable[Ind]
 
   val P, Q = variable[Ind >>: Prop]
+  val R = variable[Ind >>: Ind >>: Prop]
 
   val G = variable[Ind]
   val Pr = variable[Ind]
@@ -103,44 +105,6 @@ object QuotientGroup extends lisa.Main:
     val _4 = have(x ∈ G_Hdef) by Tautology.from(_3)
     val _5 = have(G_H === G_Hdef |- x ∈ G_H) by Substitution.Apply(G_H === G_Hdef)(_4)
     have(thesis) by Tautology.from(_1, _5)
-  }
-
-  val doubleSetMembership = Theorem(
-    (x ∈ ⋃{ {op(a)(b) | a ∈ A} | b ∈ B }) |- ∃(b ∈ B, ∃(a ∈ A, x === op(a)(b)))
-  ) {
-    val SS = { { op(a)(b) | a ∈ A } | b ∈ B }
-    val RHS = ⋃(SS)
-    val _1 = have((x ∈ RHS) <=> ∃(y ∈ SS, x ∈ y)) by Tautology.from(
-        unionAxiom of (x := SS, y := y, z := x)
-    )
-    val _2 = have(y ∈ SS <=> ∃(b ∈ B, y === { op(a)(b) | a ∈ A })) by Tautology.from(
-        Replacement.membership of (x := b, A := B, y := y, F := lambda(b, { op(a)(b) | a ∈ A }))
-    )
-    assume(x ∈ RHS)
-    val _3 = have(∃(y, y ∈ SS /\ x ∈ y)) by Tautology.from(_1)
-    val auxP = lambda(y, y ∈ SS /\ x ∈ y)
-    val y0 = ε(y, y ∈ SS /\ x ∈ y)
-    val _4 = have(auxP(y0)) by Tautology.from(
-        _3, Quantifiers.existsEpsilon of (x := y, P := auxP)
-    )
-
-    val _5 = have(∃(b ∈ B, y0 === { op(a)(b) | a ∈ A }) /\ x ∈ y0) by Tautology.from(
-        _2 of (y := y0), _4
-    )
-
-    val auxP2 = lambda(b, b ∈ B /\ (y0 === { op(a)(b) | a ∈ A }))
-    val b0 = ε(b, auxP2(b))
-    val _6 = have(b0 ∈ B /\ (y0 === { op(a)(b0) | a ∈ A }) /\ x ∈ y0) by Tautology.from(
-        _5, Quantifiers.existsEpsilon of (x := b, P := auxP2)
-    )
-
-    val _7 = have(b0 ∈ B /\ x ∈ { op(a)(b0) | a ∈ A }) by Tautology.from(
-        _6, equalitySetMembership of (x := x, A := y0, B := { op(a)(b0) | a ∈ A })
-    )
-    val _8 = have(b0 ∈ B /\ ∃(a ∈ A, x === op(a)(b0))) by Tautology.from(
-        _7, Replacement.membership of (x := a, A := A, y := x, F := lambda(a, op(a)(b0)))
-    )
-    thenHave(thesis) by RightExists
   }
 
   val cosetOperationProperty = Theorem(
