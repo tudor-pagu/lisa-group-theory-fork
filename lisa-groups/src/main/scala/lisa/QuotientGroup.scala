@@ -557,11 +557,58 @@ object QuotientGroup extends lisa.Main:
     )
   }
 
+  val cosetOperationInverseElement = Theorem(
+    (group(G)(op), normalSubgroup(H)(G)(op), isCosetOperation(G)(H)(op)(op2), x ∈ G)
+    |- isIdentityElement(quotientGroup(G)(H)(op))(op2)(op2(leftCoset(x)(op)(H))(leftCoset(inverseOf(G)(op)(x))(op)(H)))
+  ) {
+    assume(group(G)(op), normalSubgroup(H)(G)(op), isCosetOperation(G)(H)(op)(op2), x ∈ G)
+    val G_H = quotientGroup(G)(H)(op)
+    val xH = leftCoset(x)(op)(H)
+    val xi = inverseOf(G)(op)(x)
+    val xiH = leftCoset(xi)(op)(H)
+
+    val xxi = op(x)(xi)
+    val _1 = have(isIdentityElement(G)(op)(xxi)) by Tautology.from(inverseProperty2)
+
+    val _2 = have(op2(xH)(xiH) === leftCoset(xxi)(op)(H)) by Tautology.from(
+      cosetOperationProperty of (a := x, b := xi),
+      inverseStaysInGroup of (x := x)
+    )
+    val _3 = have(leftCoset(xxi)(op)(H) === H) by Tautology.from(
+      _1, leftCosetIdentity of (e := xxi), normalSubgroup.definition
+    )
+    val _4 = have(H === op2(xH)(xiH)) by Congruence.from(_2, _3)
+    have(isIdentityElement(G_H)(op2)(H)) by Tautology.from(cosetOperationIdentityElement)
+    thenHave(thesis) by Substitute(_4)
+  }
+
   val cosetOperationHasInverseElement = Theorem(
     (group(G)(op), normalSubgroup(H)(G)(op), isCosetOperation(G)(H)(op)(op2))
     |- inverseElement(quotientGroup(G)(H)(op))(op2)
   ) {
-    sorry
+    assume(group(G)(op), normalSubgroup(H)(G)(op), isCosetOperation(G)(H)(op)(op2))
+    val G_H = quotientGroup(G)(H)(op)
+    val x0 = equivalenceClass(G)(H)(op)(x)
+    val x0H = leftCoset(x0)(op)(H)
+    val xi = inverseOf(G)(op)(x0)
+    val xiH = leftCoset(xi)(op)(H)
+    
+    have(x ∈ G_H |- xiH ∈ G_H /\ isIdentityElement(G_H)(op2)(op2(x)(xiH))) subproof {
+      assume(x ∈ G_H)
+      val _1 = have(x0 ∈ G /\ (leftCoset(x0)(op)(H) === x)) by Tautology.from(quotientGroupMembership)
+      val _2 = have(isIdentityElement(G_H)(op2)(op2(x0H)(xiH))) by Tautology.from(_1, cosetOperationInverseElement of (x := x0))
+      val _3 = have(xi ∈ G) by Tautology.from(_1, inverseStaysInGroup of (x := x0))
+      val _4 = have(xiH ∈ G_H) by Tautology.from(quotientGroupMembershipTest of (x := xiH, y := xi), _3)
+      val _5 = have(x0H === x) by Tautology.from(_1)
+      have(xiH ∈ G_H /\ isIdentityElement(G_H)(op2)(op2(x0H)(xiH))) by Tautology.from(_2, _4)
+      thenHave(thesis) by Substitute(_5)
+    }
+    thenHave(x ∈ G_H |- ∃(y ∈ G_H, isIdentityElement(G_H)(op2)(op2(x)(y)))) by RightExists
+    thenHave(x ∈ G_H ==> ∃(y ∈ G_H, isIdentityElement(G_H)(op2)(op2(x)(y)))) by Restate
+    thenHave(∀(x ∈ G_H, ∃(y ∈ G_H, isIdentityElement(G_H)(op2)(op2(x)(y))))) by RightForall
+    thenHave(thesis) by Tautology.fromLastStep(
+      inverseElement.definition of (G := G_H, op := op2)
+    )
   }
 
   val quotientGroupIsGroup = Theorem(
