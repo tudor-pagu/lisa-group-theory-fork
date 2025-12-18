@@ -297,7 +297,60 @@ object QuotientGroup extends lisa.Main:
     (group(G)(op), normalSubgroup(H)(G)(op), isCosetOperation(G)(H)(op)(op2))
     |- associativity(quotientGroup(G)(H)(op))(op2)
   ) {
-    sorry
+    assume(group(G)(op), normalSubgroup(H)(G)(op), isCosetOperation(G)(H)(op)(op2))
+    val G_H = quotientGroup(G)(H)(op)
+    val assoc = have((x ∈ G_H, y ∈ G_H, z ∈ G_H) |- op2(x)(op2(y)(z)) === op2(op2(x)(y))(z)) subproof {
+        assume(x ∈ G_H, y ∈ G_H, z ∈ G_H)
+        val x0 = equivalenceClass(G)(H)(op)(x)
+        val y0 = equivalenceClass(G)(H)(op)(y)
+        val z0 = equivalenceClass(G)(H)(op)(z)
+
+        val x0H = leftCoset(x0)(op)(H)
+        val y0H = leftCoset(y0)(op)(H)
+        val z0H = leftCoset(z0)(op)(H)
+
+        val x0y0 = op(x0)(y0)
+        val y0z0 = op(y0)(z0)
+
+        val x0y0H = leftCoset(x0y0)(op)(H)
+        val y0z0H = leftCoset(y0z0)(op)(H)
+
+        val _1 = have(x0 ∈ G /\ (x === x0H)) by Tautology.from(quotientGroupMembership of (x := x))
+        val eq1 = thenHave(x === x0H) by Tautology
+        val _2 = have(y0 ∈ G /\ (y === y0H)) by Tautology.from(quotientGroupMembership of (x := y))
+        val eq2 = thenHave(y === y0H) by Tautology
+        val _3 = have(z0 ∈ G /\ (z === z0H)) by Tautology.from(quotientGroupMembership of (x := z))
+        val eq3 = thenHave(z === z0H) by Tautology
+        
+        val x0y0inG = have(x0y0 ∈ G) by Tautology.from(_1, _2, binaryOperationThm of (x := x0, y := y0), group.definition)
+        val y0z0inG = have(y0z0 ∈ G) by Tautology.from(_2, _3, binaryOperationThm of (x := y0, y := z0), group.definition)
+
+        val _4 = have(op2(x0H)(y0H) === x0y0H) by Tautology.from(cosetOperationProperty of (a := x0, b := y0), _1, _2)
+        val _5 = have(op2(y0H)(z0H) === y0z0H) by Tautology.from(cosetOperationProperty of (a := y0, b := z0), _2, _3)
+
+        val LHS = op2(x0y0H)(z0H)
+        val RHS = op2(x0H)(y0z0H)
+
+        val _6 = have(LHS === leftCoset(op(x0y0)(z0))(op)(H)) by Tautology.from(cosetOperationProperty of (a := x0y0, b := z0), _3, x0y0inG)
+        val _7 = have(RHS === leftCoset(op(x0)(y0z0))(op)(H)) by Tautology.from(cosetOperationProperty of (a := x0, b := y0z0), _1, y0z0inG)
+
+        val _8 = have(op(x0y0)(z0) === op(x0)(y0z0)) by Tautology.from(associativityThm of (x := x0, y := y0, z := z0), group.definition, _1, _2, _3)
+
+        val _9 = have(leftCoset(op(x0y0)(z0))(op)(H) === leftCoset(op(x0)(y0z0))(op)(H)) by Congruence.from(_6, _8)
+        val _10 = have(LHS === RHS) by Congruence.from(_6, _7, _9)
+        val _11 = have(op2(op2(x0H)(y0H))(z0H) === op2(x0H)(op2(y0H)(z0H))) by Congruence.from(_10, _4, _5)
+        
+        have(thesis) by Congruence.from(_11, eq1, eq2, eq3)
+    }
+    thenHave((x ∈ G_H, y ∈ G_H) |- z ∈ G_H ==> (op2(x)(op2(y)(z)) === op2(op2(x)(y))(z))) by Restate
+    thenHave((x ∈ G_H, y ∈ G_H) |- ∀(z ∈ G_H, op2(x)(op2(y)(z)) === op2(op2(x)(y))(z))) by RightForall
+    thenHave((x ∈ G_H) |- y ∈ G_H ==> ∀(z ∈ G_H, op2(x)(op2(y)(z)) === op2(op2(x)(y))(z))) by Restate
+    thenHave((x ∈ G_H) |- ∀(y ∈ G_H, ∀(z ∈ G_H, op2(x)(op2(y)(z)) === op2(op2(x)(y))(z)))) by RightForall
+    thenHave(x ∈ G_H ==> ∀(y ∈ G_H, ∀(z ∈ G_H, op2(x)(op2(y)(z)) === op2(op2(x)(y))(z)))) by Restate
+    thenHave(∀(x ∈ G_H, ∀(y ∈ G_H, ∀(z ∈ G_H, op2(x)(op2(y)(z)) === op2(op2(x)(y))(z))))) by RightForall
+    thenHave(thesis) by Tautology.fromLastStep(
+        associativity.definition of (G := G_H, op := op2)
+    )
   }
 
   val cosetOperationHasIdentityElement = Theorem(
