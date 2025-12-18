@@ -408,7 +408,90 @@ object QuotientGroup extends lisa.Main:
     (group(G)(op), normalSubgroup(H)(G)(op), isCosetOperation(G)(H)(op)(op2))
     |- identityElement(quotientGroup(G)(H)(op))(op2)
   ) {
-    sorry
+    assume(group(G)(op), normalSubgroup(H)(G)(op), isCosetOperation(G)(H)(op)(op2))
+    val e = identityOf(G)(op)
+    val eIsIdentity = have(isIdentityElement(G)(op)(e)) by Tautology.from(identityOfIsIdentity)
+
+    val eInG = have(e ∈ G) by Tautology.from(
+      eIsIdentity,
+      isIdentityElement.definition of (x := e)
+    )
+
+    val E = leftCoset(e)(op)(H)
+
+    val bigEInQ = have(E ∈ quotientGroup(G)(H)(op)) by Tautology.from(
+      quotientGroupMembershipTest of (
+        x := E,
+        y := e
+      ),
+      eInG
+    )
+
+    val quotientGroupRestate = have(A ∈ quotientGroup(G)(H)(op) |- (equivalenceClass(G)(H)(op)(A) ∈ G) /\ (A === leftCoset(equivalenceClass(G)(H)(op)(A))(op)(H))) by Tautology.from(
+      quotientGroupMembership of (x := A)
+    )
+
+    val quotientGroupRestateEq = have(A ∈ quotientGroup(G)(H)(op) |- (A === leftCoset(equivalenceClass(G)(H)(op)(A))(op)(H))) by Tautology.from(
+      quotientGroupRestate
+    )
+
+    val identityInst = have(A ∈ quotientGroup(G)(H)(op) |- ((op(e)(equivalenceClass(G)(H)(op)(A)) === equivalenceClass(G)(H)(op)(A)) /\ (op(equivalenceClass(G)(H)(op)(A))(e) === equivalenceClass(G)(H)(op)(A)))) by Tautology.from(
+      identityProperty of (
+        x := equivalenceClass(G)(H)(op)(A),
+        Groups.e := identityOf(G)(op)
+      ),
+      eIsIdentity,
+      quotientGroupRestate,
+    )
+
+    val identityInst1 = have(A ∈ quotientGroup(G)(H)(op) |- ((op(e)(equivalenceClass(G)(H)(op)(A)) === equivalenceClass(G)(H)(op)(A)))) by Tautology.from(identityInst)
+    val identityInst2 = have(A ∈ quotientGroup(G)(H)(op) |- ((op(equivalenceClass(G)(H)(op)(A))(e)) === equivalenceClass(G)(H)(op)(A))) by Tautology.from(identityInst)
+
+    val step1_a = have(A ∈ quotientGroup(G)(H)(op) |- op2(E)(leftCoset(equivalenceClass(G)(H)(op)(A))(op)(H)) === leftCoset(op(e)(equivalenceClass(G)(H)(op)(A)))(op)(H)) by Tautology.from(
+      quotientGroupRestate,
+      cosetOperationProperty of (
+        a := e, 
+        b := equivalenceClass(G)(H)(op)(A)
+      ),
+      eInG
+    )
+    val step1_b = thenHave(A ∈ quotientGroup(G)(H)(op) |- op2(E)(leftCoset(equivalenceClass(G)(H)(op)(A))(op)(H)) === leftCoset(equivalenceClass(G)(H)(op)(A))(op)(H)) by Substitution.Apply(identityInst1)
+    val step1_c = thenHave(A ∈ quotientGroup(G)(H)(op) |- op2(E)(leftCoset(equivalenceClass(G)(H)(op)(A))(op)(H)) === A) by Substitution.Apply(quotientGroupRestateEq)
+    val step1_d = thenHave(A ∈ quotientGroup(G)(H)(op) |- op2(E)(A) === A) by Substitution.Apply(quotientGroupRestateEq)
+    
+    val step2_a = have(A ∈ quotientGroup(G)(H)(op) |- op2(leftCoset(equivalenceClass(G)(H)(op)(A))(op)(H))(E) === leftCoset(op(equivalenceClass(G)(H)(op)(A))(e))(op)(H)) by Tautology.from(
+      quotientGroupRestate,
+      cosetOperationProperty of (
+        b := e, 
+        a := equivalenceClass(G)(H)(op)(A)
+      ),
+      eInG
+    )
+    val step2_b = thenHave(A ∈ quotientGroup(G)(H)(op) |- op2(leftCoset(equivalenceClass(G)(H)(op)(A))(op)(H))(E) === leftCoset(equivalenceClass(G)(H)(op)(A))(op)(H)) by Substitution.Apply(identityInst2)
+    val step2_c = thenHave(A ∈ quotientGroup(G)(H)(op) |- op2(leftCoset(equivalenceClass(G)(H)(op)(A))(op)(H))(E) === A) by Substitution.Apply(quotientGroupRestateEq)
+    val step2_d = thenHave(A ∈ quotientGroup(G)(H)(op) |- op2(A)(E) === A) by Substitution.Apply(quotientGroupRestateEq)
+
+    val step3_a = have(A ∈ quotientGroup(G)(H)(op) |- (op2(E)(A) === A) /\ (op2(A)(E) === A)) by Tautology.from(step1_d, step2_d)
+    val step3_b = thenHave(A ∈ quotientGroup(G)(H)(op) ==> ((op2(E)(A) === A)/\ (op2(A)(E) === A))) by Tautology
+    val step3_c = thenHave(∀(A ∈ quotientGroup(G)(H)(op), (op2(E)(A) === A) /\ (op2(A)(E) === A))) by RightForall
+    val step3_d = have(isIdentityElement(quotientGroup(G)(H)(op))(op2)(E)) by Tautology.from(
+      bigEInQ,
+      isIdentityElement.definition of (
+        G := quotientGroup(G)(H)(op),
+        op := op2,
+        x := E
+      ),
+      step3_c
+    )
+
+    val identityExistence = thenHave(∃(x, isIdentityElement(quotientGroup(G)(H)(op))(op2)(x))) by RightExists.withParameters(E)
+    have(thesis) by Tautology.from(
+      identityExistence,
+      identityElement.definition of (
+        G := quotientGroup(G)(H)(op),
+        op := op2
+      )
+    )
   }
 
   val cosetOperationHasInverseElement = Theorem(
