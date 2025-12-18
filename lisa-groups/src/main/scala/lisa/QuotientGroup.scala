@@ -175,33 +175,56 @@ object QuotientGroup extends lisa.Main:
     |- binaryOperation(quotientGroup(G)(H)(op))(op2)
   ) {
     assume(group(G)(op), normalSubgroup(H)(G)(op), isCosetOperation(G)(H)(op)(op2))
-    val cosetOpDef = have(∀(A ∈ quotientGroup(G)(H)(op), ∀(B ∈ quotientGroup(G)(H)(op), 
-      op2(A)(B) === ⋃{ {op(a)(b) | a ∈ A} | b ∈ B }
-    ))) by Tautology.from(isCosetOperation.definition)
-    val instFirst = thenHave(A ∈ quotientGroup(G)(H)(op) |- ∀(B ∈ quotientGroup(G)(H)(op), 
-      op2(A)(B) === ⋃{ {op(a)(b) | a ∈ A} | b ∈ B }
-    )) by InstantiateForall(A)
-    val instSecond = thenHave((A ∈ quotientGroup(G)(H)(op), B ∈ quotientGroup(G)(H)(op)) |-  
-      op2(A)(B) === ⋃{ {op(a)(b) | a ∈ A} | b ∈ B }
-    ) by InstantiateForall(B)
-    val quotientMembership = have((A ∈ quotientGroup(G)(H)(op), B ∈ quotientGroup(G)(H)(op)) |-  
-      ⋃{ {op(a)(b) | a ∈ A} | b ∈ B } ∈ quotientGroup(G)(H)(op)
-    ) subproof {
-      sorry
-    }
-    thenHave((A ∈ quotientGroup(G)(H)(op), B ∈ quotientGroup(G)(H)(op)) |-  
-      op2(A)(B) ∈ quotientGroup(G)(H)(op)) by Substitution.Apply(instSecond)
-    thenHave((A ∈ quotientGroup(G)(H)(op) /\ B ∈ quotientGroup(G)(H)(op)) ==>  
-      op2(A)(B) ∈ quotientGroup(G)(H)(op)) by Restate
-    val binaryOpCond = thenHave(∀(A, ∀(B, 
-      (A ∈ quotientGroup(G)(H)(op) /\ B ∈ quotientGroup(G)(H)(op)) ==> op2(A)(B) ∈ quotientGroup(G)(H)(op)
-    ))) by Generalize
+    val membFunc = λ(g,leftCoset(g)(op)(H))
+    val aInReplacement = have(A ∈ { leftCoset(g)(op)(H) | g ∈ G } |- ∃(g ∈ G, leftCoset(g)(op)(H) === A)) by Tautology.from(
+      Replacement.membership of (
+        F := membFunc,
+        A := G,
+        y := A
+      )
+    )
+    val hasLeftCoset = thenHave(A ∈ quotientGroup(G)(H)(op) |- ∃(g ∈ G, leftCoset(g)(op)(H) === A)) by Substitution.Apply(quotientGroup.definition)
+    val hgA = λ(g, g ∈ G /\ (leftCoset(g)(op)(H) === A))
+    val eps1 = ε(g, hgA(g))
+    val epsCond1 = have(∃(g, hgA(g)) |- hgA(eps1)) by Tautology.from(Quantifiers.existsEpsilon of (x := g, P := hgA))
+    val epsValid1 = have((A ∈ quotientGroup(G)(H)(op)) |- hgA(eps1)) by Tautology.from(epsCond1, hasLeftCoset)
+    val epsEq1 = have((A ∈ quotientGroup(G)(H)(op)) |- (leftCoset(eps1)(op)(H) === A)) by Tautology.from(epsValid1)
+
+    val hgB = λ(g, g ∈ G /\ (leftCoset(g)(op)(H) === B))
+    val eps2 = ε(g, hgB(g))
+    val epsCond2 = have(∃(g, hgB(g)) |- hgB(eps2)) by Tautology.from(Quantifiers.existsEpsilon of (x := g, P := hgB))
+    val epsValid2 = have((B ∈ quotientGroup(G)(H)(op)) |- hgB(eps2)) by Tautology.from(epsCond2, hasLeftCoset of (A := B))
+    val epsEq2 = have((B ∈ quotientGroup(G)(H)(op)) |- (leftCoset(eps2)(op)(H) === B)) by Tautology.from(epsValid2)
+
+    val cosetOperationPropertyRestate = have((A ∈ quotientGroup(G)(H)(op), B ∈ quotientGroup(G)(H)(op)) |- op(eps1)(eps2) ∈ G /\ (op2(leftCoset(eps1)(op)(H))(leftCoset(eps2)(op)(H)) === leftCoset(op(eps1)(eps2))(op)(H))) by Tautology.from(
+      cosetOperationProperty of (a := eps1, b := eps2), 
+      epsValid1, 
+      epsValid2,
+      binaryOperationThm of (x := eps1, y := eps2),
+      group.definition
+    )
+
+    val existsWitness = thenHave((A ∈ quotientGroup(G)(H)(op), B ∈ quotientGroup(G)(H)(op)) |- ∃(g ∈ G, op2(leftCoset(eps1)(op)(H))(leftCoset(eps2)(op)(H)) === leftCoset(g)(op)(H))) by RightExists.withParameters(op(eps1)(eps2))
+    val op2InReplacement = have((A ∈ quotientGroup(G)(H)(op), B ∈ quotientGroup(G)(H)(op)) |- op2(leftCoset(eps1)(op)(H))(leftCoset(eps2)(op)(H)) ∈ { leftCoset(g)(op)(H) | g ∈ G }) by Tautology.from(
+      Replacement.membership of (
+        F := membFunc,
+        A := G,
+        y := op2(leftCoset(eps1)(op)(H))(leftCoset(eps2)(op)(H))
+      ),
+      existsWitness
+    )
+    
+    val op2InQuotient = thenHave((A ∈ quotientGroup(G)(H)(op), B ∈ quotientGroup(G)(H)(op)) |- op2(leftCoset(eps1)(op)(H))(leftCoset(eps2)(op)(H)) ∈ quotientGroup(G)(H)(op)) by Substitution.Apply(quotientGroup.definition)
+    thenHave((A ∈ quotientGroup(G)(H)(op), B ∈ quotientGroup(G)(H)(op)) |- op2(A)(leftCoset(eps2)(op)(H)) ∈ quotientGroup(G)(H)(op)) by Substitution.Apply(epsEq1)
+    thenHave((A ∈ quotientGroup(G)(H)(op), B ∈ quotientGroup(G)(H)(op)) |- op2(A)(B) ∈ quotientGroup(G)(H)(op)) by Substitution.Apply(epsEq2)
+    thenHave((A ∈ quotientGroup(G)(H)(op) /\ B ∈ quotientGroup(G)(H)(op)) ==> op2(A)(B) ∈ quotientGroup(G)(H)(op)) by Restate
+    val binaryOpCond = thenHave(∀(A, ∀(B, (A ∈ quotientGroup(G)(H)(op) /\ B ∈ quotientGroup(G)(H)(op)) ==> op2(A)(B) ∈ quotientGroup(G)(H)(op)))) by Generalize
     have(thesis) by Tautology.from(
+      binaryOpCond,
       binaryOperation.definition of (
         G := quotientGroup(G)(H)(op),
         op := op2
-      ),
-      binaryOpCond
+      )
     )
   }
 
