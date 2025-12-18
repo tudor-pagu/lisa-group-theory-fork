@@ -404,9 +404,9 @@ object QuotientGroup extends lisa.Main:
     )
   }
 
-  val cosetOperationHasIdentityElement = Theorem(
+  val cosetOperationIdentityElement = Theorem(
     (group(G)(op), normalSubgroup(H)(G)(op), isCosetOperation(G)(H)(op)(op2))
-    |- identityElement(quotientGroup(G)(H)(op))(op2)
+    |- isIdentityElement(quotientGroup(G)(H)(op))(op2)(H)
   ) {
     assume(group(G)(op), normalSubgroup(H)(G)(op), isCosetOperation(G)(H)(op)(op2))
     val e = identityOf(G)(op)
@@ -484,7 +484,25 @@ object QuotientGroup extends lisa.Main:
       step3_c
     )
 
-    val identityExistence = thenHave(∃(x, isIdentityElement(quotientGroup(G)(H)(op))(op2)(x))) by RightExists.withParameters(E)
+    val leftCosetIdentityRestate = have(leftCoset(e)(op)(H) === H) by Tautology.from(
+      eIsIdentity,
+      normalSubgroup.definition,
+      leftCosetIdentity of (
+        Cosets.e := identityOf(G)(op)
+      )
+    )
+
+    have(thesis) by Substitution.Apply(leftCosetIdentityRestate)(step3_d)
+  }
+
+  val cosetOperationHasIdentityElement = Theorem(
+    (group(G)(op), normalSubgroup(H)(G)(op), isCosetOperation(G)(H)(op)(op2))
+    |- identityElement(quotientGroup(G)(H)(op))(op2)
+  ) {
+    assume(group(G)(op), normalSubgroup(H)(G)(op), isCosetOperation(G)(H)(op)(op2))
+    val identityIsH = have(isIdentityElement(quotientGroup(G)(H)(op))(op2)(H)) by Restate.from(cosetOperationIdentityElement)
+
+    val identityExistence = thenHave(∃(x, isIdentityElement(quotientGroup(G)(H)(op))(op2)(x))) by RightExists.withParameters(H)
     have(thesis) by Tautology.from(
       identityExistence,
       identityElement.definition of (

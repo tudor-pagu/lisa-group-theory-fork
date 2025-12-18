@@ -775,3 +775,10 @@ object Cosets extends lisa.Main:
         h0inH
     )
   }
+
+  val leftCosetIdentity = Theorem(
+    (group(G)(op), subgroup(H)(G)(op), isIdentityElement(G)(op)(e)) |-
+    leftCoset(e)(op)(H) === H
+  ) {
+    sorry
+  }
