@@ -11,6 +11,7 @@ import lisa.maths.SetTheory.Base.EmptySet
 import lisa.maths.SetTheory.Base.Singleton
 import lisa.maths.SetTheory.Base.Subset
 import lisa.Main
+import lisa.SetTheoryLibrary.extensionalityAxiom
 
 import lisa.automation.Congruence
 import lisa.automation.Substitution.{Apply => Substitute}
@@ -778,7 +779,58 @@ object Cosets extends lisa.Main:
 
   val leftCosetIdentity = Theorem(
     (group(G)(op), subgroup(H)(G)(op), isIdentityElement(G)(op)(e)) |-
-    leftCoset(e)(op)(H) === H
+    H === leftCoset(e)(op)(H)
   ) {
-    sorry
+    assume(group(G)(op), subgroup(H)(G)(op), isIdentityElement(G)(op)(e))
+    val dir1 = have(x ∈ leftCoset(e)(op)(H) ==> x ∈ H) subproof {
+      assume(x ∈ leftCoset(e)(op)(H))
+      val xInReplacement = thenHave(x ∈ (op(e)(h) | (h ∈ H))) by Substitution.Apply(leftCoset.definition of (g := e))
+      val xExistence1 = have(∃(h ∈ H, (op(e)(h) === x))) by Tautology.from(
+        leftCosetMembership of (
+          a := x,
+          b := e
+        )
+      )
+
+      val hex = λ(h, h ∈ H /\ (op(e)(h) === x))
+      val eps = ε(h, hex(h))
+      val epsCond = have(∃(h, hex(h)) |- hex(eps)) by Tautology.from(Quantifiers.existsEpsilon of (x := h, P := hex))
+      val epsValid = have(hex(eps)) by Tautology.from(epsCond, xExistence1)
+
+      val epsEq = have(op(e)(eps) === eps) by Tautology.from(
+        epsValid,
+        identityProperty of (x := eps),
+        elementInSubgroupMeansItsInGroup of (x := eps)
+      )
+
+      val epsIsX = have(eps ∈ H /\ (eps === x)) by Substitution.Apply(epsEq)(epsValid)
+      val epsIsXEq = have(eps === x) by Tautology.from(epsIsX)
+      val epsInH = have(eps ∈ H) by Tautology.from(epsIsX)
+      thenHave(x ∈ H) by Substitution.Apply(epsIsXEq)
+    }
+    val dir2 = have(x ∈ H ==> x ∈ leftCoset(e)(op)(H)) subproof {
+      assume(x ∈ H)
+      val xEqOp = have(x ∈ H /\ (x === op(e)(x))) by Tautology.from(
+        identityProperty,
+        elementInSubgroupMeansItsInGroup
+      )
+      have(thesis) by Tautology.from(
+        xEqOp,
+        leftCosetMembershipTest of (
+          b := e,
+          a := x,
+          h := x
+        )
+      )
+    }
+
+    have(x ∈ H <=> x ∈ leftCoset(e)(op)(H)) by Tautology.from(dir1,dir2)
+    val forallEquiv = thenHave(∀(x, x ∈ H <=> x ∈ leftCoset(e)(op)(H))) by RightForall
+    have(thesis) by Tautology.from(
+      extensionalityAxiom of (
+        x := H,
+        y := leftCoset(e)(op)(H)
+      ),
+      forallEquiv
+    )
   }
