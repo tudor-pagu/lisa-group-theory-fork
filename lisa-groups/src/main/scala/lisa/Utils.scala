@@ -43,11 +43,17 @@ object Utils extends lisa.Main:
     thenHave(thesis) by Tautology
   }
 
+  val equalitySetMembership3 = Theorem((A === B) |- x ∈ A <=> x ∈ B) {
+    have(thesis) by Tautology.from(
+        equalitySetMembership, equalitySetMembership of (A := B, B := A)
+    )
+  }
+
   val P, Q = variable[Ind >>: Prop]
   val p, q = variable[Prop]
   val R = variable[Ind >>: Ind >>: Prop]
   val op = variable[Ind >>: Ind >>: Ind]
-  
+
   val equivalenceSubstitutionExists = Theorem(∀(x, P(x) <=> Q(x)) |-  ∃(x, P(x)) <=> ∃(x, Q(x))) {
     have(thesis) by Tableau
   }
@@ -196,4 +202,10 @@ object Utils extends lisa.Main:
     have(thesis) by Tautology.from(
         leftImplies, rightImplies
     )
+  }
+
+  val opSubstitution = Theorem(
+    (x === op(a)(b), a === c, b === d) |- (x === op(c)(d))
+  ) {
+    have(thesis) by Congruence
   }
