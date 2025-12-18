@@ -834,3 +834,62 @@ object Cosets extends lisa.Main:
       forallEquiv
     )
   }
+
+  val rightCosetIdentity = Theorem(
+    (group(G)(op), subgroup(H)(G)(op), isIdentityElement(G)(op)(e)) |-
+    H === rightCoset(H)(op)(e)
+  ) {
+    assume(group(G)(op), subgroup(H)(G)(op), isIdentityElement(G)(op)(e))
+    val dir1 = have(x ∈ rightCoset(H)(op)(e) ==> x ∈ H) subproof {
+      assume(x ∈ rightCoset(H)(op)(e))
+      val xInReplacement = thenHave(x ∈ (op(h)(e) | (h ∈ H))) by Substitution.Apply(rightCoset.definition of (g := e))
+      val xExistence1 = have(∃(h ∈ H, (op(h)(e) === x))) by Tautology.from(
+        rightCosetMembership of (
+          a := x,
+          b := e
+        )
+      )
+
+      val hex = λ(h, h ∈ H /\ (op(h)(e) === x))
+      val eps = ε(h, hex(h))
+      val epsCond = have(∃(h, hex(h)) |- hex(eps)) by Tautology.from(Quantifiers.existsEpsilon of (x := h, P := hex))
+      val epsValid = have(hex(eps)) by Tautology.from(epsCond, xExistence1)
+
+      val epsEq = have(op(eps)(e) === eps) by Tautology.from(
+        epsValid,
+        identityProperty of (x := eps),
+        elementInSubgroupMeansItsInGroup of (x := eps)
+      )
+
+      val epsIsX = have(eps ∈ H /\ (eps === x)) by Substitution.Apply(epsEq)(epsValid)
+      val epsIsXEq = have(eps === x) by Tautology.from(epsIsX)
+      val epsInH = have(eps ∈ H) by Tautology.from(epsIsX)
+      thenHave(x ∈ H) by Substitution.Apply(epsIsXEq)
+    }
+
+    val dir2 = have(x ∈ H ==> x ∈ rightCoset(H)(op)(e)) subproof {
+      assume(x ∈ H)
+      val xEqOp = have(x ∈ H /\ (x === op(x)(e))) by Tautology.from(
+        identityProperty,
+        elementInSubgroupMeansItsInGroup
+      )
+      have(thesis) by Tautology.from(
+        xEqOp,
+        rightCosetMembershipTest of (
+          b := e,
+          a := x,
+          h := x
+        )
+      )
+    }
+
+    have(x ∈ H <=> x ∈ rightCoset(H)(op)(e)) by Tautology.from(dir1, dir2)
+    val forallEquiv = thenHave(∀(x, x ∈ H <=> x ∈ rightCoset(H)(op)(e))) by RightForall
+    have(thesis) by Tautology.from(
+      extensionalityAxiom of (
+        x := H,
+        y := rightCoset(H)(op)(e)
+      ),
+      forallEquiv
+    )
+  }
