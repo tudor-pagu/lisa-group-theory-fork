@@ -24,6 +24,8 @@ import lisa.maths.GroupTheory.NormalSubgroups.*
 import lisa.maths.GroupTheory.QuotientGroup.*
 import lisa.maths.GroupTheory.Utils.equalityTransitivity
 import lisa.utils.prooflib.SimpleDeducedSteps.{InstantiateForall, Generalize}
+import lisa.utils.prooflib.BasicStepTactic.RightForall
+import lisa.maths.GroupTheory.NormalSubgroups.normalSubgroupProperty
 
 object QuotientGroup extends lisa.Main:
   val a = variable[Ind]
@@ -43,6 +45,7 @@ object QuotientGroup extends lisa.Main:
   val f = variable[Ind]
 
   val P, Q = variable[Ind >>: Prop]
+  val R = variable[Ind >>: Ind >>: Prop]
 
   val G = variable[Ind]
   val Pr = variable[Ind]
@@ -105,44 +108,6 @@ object QuotientGroup extends lisa.Main:
     have(thesis) by Tautology.from(_1, _5)
   }
 
-  val doubleSetMembership = Theorem(
-    (x ∈ ⋃{ {op(a)(b) | a ∈ A} | b ∈ B }) |- ∃(b ∈ B, ∃(a ∈ A, x === op(a)(b)))
-  ) {
-    val SS = { { op(a)(b) | a ∈ A } | b ∈ B }
-    val RHS = ⋃(SS)
-    val _1 = have((x ∈ RHS) <=> ∃(y ∈ SS, x ∈ y)) by Tautology.from(
-        unionAxiom of (x := SS, y := y, z := x)
-    )
-    val _2 = have(y ∈ SS <=> ∃(b ∈ B, y === { op(a)(b) | a ∈ A })) by Tautology.from(
-        Replacement.membership of (x := b, A := B, y := y, F := lambda(b, { op(a)(b) | a ∈ A }))
-    )
-    assume(x ∈ RHS)
-    val _3 = have(∃(y, y ∈ SS /\ x ∈ y)) by Tautology.from(_1)
-    val auxP = lambda(y, y ∈ SS /\ x ∈ y)
-    val y0 = ε(y, y ∈ SS /\ x ∈ y)
-    val _4 = have(auxP(y0)) by Tautology.from(
-        _3, Quantifiers.existsEpsilon of (x := y, P := auxP)
-    )
-
-    val _5 = have(∃(b ∈ B, y0 === { op(a)(b) | a ∈ A }) /\ x ∈ y0) by Tautology.from(
-        _2 of (y := y0), _4
-    )
-
-    val auxP2 = lambda(b, b ∈ B /\ (y0 === { op(a)(b) | a ∈ A }))
-    val b0 = ε(b, auxP2(b))
-    val _6 = have(b0 ∈ B /\ (y0 === { op(a)(b0) | a ∈ A }) /\ x ∈ y0) by Tautology.from(
-        _5, Quantifiers.existsEpsilon of (x := b, P := auxP2)
-    )
-
-    val _7 = have(b0 ∈ B /\ x ∈ { op(a)(b0) | a ∈ A }) by Tautology.from(
-        _6, equalitySetMembership of (x := x, A := y0, B := { op(a)(b0) | a ∈ A })
-    )
-    val _8 = have(b0 ∈ B /\ ∃(a ∈ A, x === op(a)(b0))) by Tautology.from(
-        _7, Replacement.membership of (x := a, A := A, y := x, F := lambda(a, op(a)(b0)))
-    )
-    thenHave(thesis) by RightExists
-  }
-
   val cosetOperationProperty = Theorem(
     (group(G)(op), normalSubgroup(H)(G)(op), isCosetOperation(G)(H)(op)(op2), a ∈ G, b ∈ G)
     |- op2(leftCoset(a)(op)(H))(leftCoset(b)(op)(H)) === leftCoset(op(a)(b))(op)(H)
@@ -152,22 +117,173 @@ object QuotientGroup extends lisa.Main:
     val bH = leftCoset(b)(op)(H)
     val G_H = quotientGroup(G)(H)(op)
     have(∀(A ∈ quotientGroup(G)(H)(op), ∀(B ∈ quotientGroup(G)(H)(op), 
-      op2(A)(B) === ⋃{ {op(a)(b) | a ∈ A} | b ∈ B }
-    ))) by Tautology.from(isCosetOperation.definition)
+      op2(A)(B) === ⋃{ {op(c)(d) | c ∈ A} | d ∈ B }
+    ))) by Tautology.from(isCosetOperation.definition of (a := c, b := d))
 
     thenHave(aH ∈ G_H |- ∀(B ∈ quotientGroup(G)(H)(op), 
-      op2(aH)(B) === ⋃{ {op(a)(b) | a ∈ aH} | b ∈ B }
+      op2(aH)(B) === ⋃{ {op(c)(d) | c ∈ aH} | d ∈ B }
     )) by InstantiateForall(aH)
 
-    thenHave((aH ∈ G_H, bH ∈ G_H) |- (op2(aH)(bH) === ⋃{ {op(a)(b) | a ∈ aH} | b ∈ bH })) by InstantiateForall(bH)
-    val _1 = thenHave(op2(aH)(bH) === ⋃{ {op(a)(b) | a ∈ aH} | b ∈ bH }) by Tautology.fromLastStep(
+    thenHave((aH ∈ G_H, bH ∈ G_H) |- (op2(aH)(bH) === ⋃{ {op(c)(d) | c ∈ aH} | d ∈ bH })) by InstantiateForall(bH)
+    val _1 = thenHave(op2(aH)(bH) === ⋃{ {op(c)(d) | c ∈ aH} | d ∈ bH }) by Tautology.fromLastStep(
         quotientGroupMembershipTest of (x := aH, y := a),
         quotientGroupMembershipTest of (x := bH, y := b)
     )
     val LHS = op2(aH)(bH)
-    val RHS = ⋃{ {op(a)(b) | a ∈ aH} | b ∈ bH }
+    val RHS = ⋃{ {op(c)(d) | c ∈ aH} | d ∈ bH }
 
-    sorry
+    val _2 = have((z ∈ RHS) <=> ∃(d ∈ bH, ∃(c ∈ aH, z === op(c)(d)))) by Tautology.from(
+        doubleSetMembership of (A := aH, B := bH, a := c, b := d, x := z, op := op)
+    )
+
+    val _4 = have((z ∈ LHS) <=> ∃(d ∈ bH, ∃(c ∈ aH, z === op(c)(d)))) by Tautology.from(
+        equalitySetMembership3 of (A := LHS, B := RHS, x := z),
+        _1, _2
+    )
+
+    val abH = leftCoset(op(a)(b))(op)(H)
+    val ab = op(a)(b)
+
+    val _5 = have(∃(d ∈ bH, ∃(c ∈ aH, z === op(c)(d))) <=> z ∈ abH) subproof {
+        val rightImplies = have(z ∈ abH |- ∃(d ∈ bH, ∃(c ∈ aH, z === op(c)(d)))) subproof {
+            assume(z ∈ abH)
+            have(∃(h ∈ H, z === op(ab)(h))) by Tautology.from(
+                leftCosetMembership of (a := z, b := ab),
+                normalSubgroup.definition
+            )
+            val auxP = lambda(h, h ∈ H /\ (z === op(ab)(h)))
+            val h0 = ε(h, auxP(h))
+            val _a1 = thenHave(h0 ∈ H /\ (z === op(ab)(h0))) by Tautology.fromLastStep(
+                Quantifiers.existsEpsilon of (x := h, P := auxP)
+            )
+            val h0inG = thenHave(h0 ∈ G) by Tautology.fromLastStep(
+                elementInSubgroupMeansItsInGroup of (x := h0),
+                normalSubgroup.definition, subgroup.definition
+            )
+            
+            val bh0 = op(b)(h0)
+            val bh0inG = have(bh0 ∈ G) by Tautology.from(
+                group.definition, binaryOperationThm of (x := b, y := h0),
+                h0inG
+            )
+            val _a2 = have(a ∈ aH) by Tautology.from(cosetContainsRepresentative of (x := a), normalSubgroup.definition)
+            val _a3 = have(bh0 ∈ bH) by Tautology.from(
+                leftCosetMembershipTest of (a := bh0, h := h0, b := b), 
+                normalSubgroup.definition,
+                _a1, bh0inG
+            )
+
+            have(z === op(ab)(h0)) by Tautology.from(_a1)
+            val _a4 = thenHave(z === op(a)(bh0)) by Tautology.fromLastStep(
+                applyAssociativity of (a := z, x := a, y := b, z := h0), h0inG
+            )
+            have(a ∈ aH /\ (z === op(a)(bh0))) by Tautology.from(_a2, _a4)
+            val _a5 = thenHave(∃(c ∈ aH, z === op(c)(bh0))) by RightExists
+
+            have(bh0 ∈ bH /\ ∃(c ∈ aH, z === op(c)(bh0))) by Tautology.from(_a5, _a3)
+            thenHave(thesis) by RightExists
+        }
+        val leftImplies = have(∃(d ∈ bH, ∃(c ∈ aH, z === op(c)(d))) |- z ∈ abH) subproof {
+            assume(∃(d ∈ bH, ∃(c ∈ aH, z === op(c)(d))))
+            val auxP1 = lambda(d, d ∈ bH /\ ∃(c ∈ aH, z === op(c)(d)))
+            val d0 = ε(d, auxP1(d))
+            val _b1 = have(d0 ∈ bH /\ ∃(c ∈ aH, z === op(c)(d0))) by Tautology.from(Quantifiers.existsEpsilon of (x := d, P := auxP1))
+            val d0inbH = thenHave(d0 ∈ bH) by Tautology
+
+            val auxP2  = lambda(c, c ∈ aH /\ (z === op(c)(d0)))
+            val c0 = ε(c, auxP2(c))
+            val _b2 = have(c0 ∈ aH /\ (z === op(c0)(d0))) by Tautology.from(_b1, Quantifiers.existsEpsilon of (x := c, P := auxP2))
+            val c0inaH = thenHave(c0 ∈ aH) by Tautology
+            
+            val _b3 = have(∃(h ∈ H, c0 === op(a)(h))) by Tautology.from(
+                c0inaH, leftCosetMembership of (a := c0, b := a), normalSubgroup.definition
+            )
+            val auxP3 = lambda(h, h ∈ H /\ (c0 === op(a)(h)))
+            val h1 = ε(h, auxP3(h))
+            val _b4 = have(h1 ∈ H /\ (c0 === op(a)(h1))) by Tautology.from(_b3, Quantifiers.existsEpsilon of (x := h, P := auxP3))
+            val h1inG = thenHave(h1 ∈ G) by Tautology.fromLastStep(normalSubgroup.definition, elementInSubgroupMeansItsInGroup of (x := h1))
+
+            val bi = inverseOf(G)(op)(b)
+            val biinG = have(bi ∈ G) by Tautology.from(inverseStaysInGroup of (x := b))
+            val _b5 = have(∃(h ∈ H, d0 === op(b)(h))) by Tautology.from(
+                d0inbH, leftCosetMembership of (a := d0, b := b), normalSubgroup.definition
+            )
+            val auxP4 = lambda(h, h ∈ H /\ (d0 === op(b)(h)))
+            val h2 = ε(h, auxP4(h))
+            val _b6 = have(h2 ∈ H /\ (d0 === op(b)(h2))) by Tautology.from(_b5, Quantifiers.existsEpsilon of (x := h, P := auxP4))
+            val h2inG = thenHave(h2 ∈ G) by Tautology.fromLastStep(normalSubgroup.definition, elementInSubgroupMeansItsInGroup of (x := h2))
+
+            val _b7_1 = have(z === op(c0)(d0)) by Tautology.from(_b2)
+            val _b7_2 = have(c0 === op(a)(h1)) by Tautology.from(_b4)
+            val _b7_3 = have(d0 === op(b)(h2)) by Tautology.from(_b6)
+            val _b7 = have(z === op(op(a)(h1))(op(b)(h2))) by Tautology.from(
+                _b7_1, _b7_2, _b7_3, opSubstitution of (x := z, a := c0, b := d0, c := op(a)(h1), d := op(b)(h2))
+            )
+
+            val bh2 = op(b)(h2)
+            val bh2inG = have(bh2 ∈ G) by Tautology.from(binaryOperationThm of (x := b, y := h2), group.definition, h2inG)
+            val h1b = op(h1)(b)
+            val h1binG = have(h1b ∈ G) by Tautology.from(binaryOperationThm of (x := h1, y := b), group.definition, h1inG)
+            
+            val _b8 = have(z === op(a)(op(h1)(bh2))) by Tautology.from(
+                _b7, applyAssociativity of (a := z, x := a, y := h1, z := bh2), h1inG, bh2inG
+            )
+            val _b9 = have(op(h1b)(h2) === op(h1)(bh2)) by Tautology.from(
+                _b8, associativityThm of (x := h1, y := b, z := h2), group.definition, h1inG, h2inG
+            )
+            val h3 = conjugation(G)(op)(h1)(bi)
+            val _b10 = have(h1b === op(b)(h3)) by Tautology.from(
+                conjugationInversionRight of (h := h1, x := b), h1inG
+            )
+
+            val h3inH = have(h3 ∈ H) by Tautology.from(
+                normalSubgroupProperty of (y := h1, x := bi), biinG, _b4
+            )
+            val h3inG = thenHave(h3 ∈ G) by Tautology.fromLastStep(
+                elementInSubgroupMeansItsInGroup of (x := h3), normalSubgroup.definition
+            )
+
+            val bh3 = op(b)(h3)
+            val _b11 = have(op(h1b)(h2) === op(bh3)(h2)) by Tautology.from(
+                opSubstitution of (x := op(h1b)(h2), a := h1b, b := h2, c := bh3, d := h2),
+                _b10
+            )
+
+            val h3h2 = op(h3)(h2)
+            val _b12 = have(op(h1b)(h2) === op(b)(h3h2)) by Tautology.from(
+                _b11, applyAssociativity of (a := op(h1b)(h2), x := b, y := h3, z := h2),
+                h3inG, h2inG
+            )
+
+            val h3h2inH = have(h3h2 ∈ H) by Tautology.from(
+                binaryOperationThm of (x := h3, y := h2, G := H),
+                group.definition of (G := H), normalSubgroup.definition, subgroup.definition,
+                h3inH, _b6
+            )
+            val h3h2inG = have(h3h2 ∈ G) by Tautology.from(
+                h3h2inH, elementInSubgroupMeansItsInGroup of (x := h3h2), normalSubgroup.definition
+            )
+
+            val _b13 = have(op(h1)(bh2) === op(b)(h3h2)) by Tautology.from(
+                _b12, _b9, equalityTransitivity of (x := op(h1)(bh2), y := op(h1b)(h2), z := op(b)(h3h2))
+            )
+            val _b14 = have(z === op(a)(op(b)(h3h2))) by Tautology.from(
+                _b8, _b13, opSubstitution of (x := z, a := a, b := op(h1)(bh2), c := a, d := op(b)(h3h2))
+            )
+            val _b15 = have(z === op(op(a)(b))(h3h2)) by Tautology.from(
+                _b14, applyAssociativity of (a := z, x := a, y := b, z := h3h2), h3h2inG
+            )
+            have(thesis) by Tautology.from(
+                _b15, leftCosetMembershipTest of (a := z, b := op(a)(b), h := h3h2),
+                h3h2inH, normalSubgroup.definition
+            )
+        }
+        have(thesis) by Tautology.from(leftImplies, rightImplies)
+    }
+    
+    have(z ∈ LHS <=> z ∈ abH) by Tautology.from(_4, _5)
+    thenHave(∀(z, z ∈ LHS <=> z ∈ abH)) by RightForall
+    thenHave(thesis) by Tautology.fromLastStep(extensionalityAxiom of (x := LHS, y := abH))
   }
 
   val cosetOperationIsWellDefined = Theorem(

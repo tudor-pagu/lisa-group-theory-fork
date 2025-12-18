@@ -149,10 +149,10 @@ object Cosets extends lisa.Main:
   }
 
   val leftCosetMembershipTest = Theorem(
-    (group(G)(op), subgroup(H)(G)(op), a ∈ G, b ∈ G, h ∈ H, a === op(b)(h))
+    (group(G)(op), subgroup(H)(G)(op), h ∈ H, a === op(b)(h))
       |- a ∈ leftCoset(b)(op)(H)
   ) {
-    assume(group(G)(op), subgroup(H)(G)(op), a ∈ G, b ∈ G, h ∈ H, a === op(b)(h))
+    assume(group(G)(op), subgroup(H)(G)(op), h ∈ H, a === op(b)(h))
 
     val lc_def = (op(b)(h) | (h ∈ H)) === leftCoset(b)(op)(H)
 
@@ -176,10 +176,10 @@ object Cosets extends lisa.Main:
   }
 
   val rightCosetMembershipTest = Theorem(
-    (group(G)(op), subgroup(H)(G)(op), a ∈ G, b ∈ G, h ∈ H, a === op(h)(b))
+    (group(G)(op), subgroup(H)(G)(op), h ∈ H, a === op(h)(b))
       |- a ∈ rightCoset(H)(op)(b)
   ) {
-    assume(group(G)(op), subgroup(H)(G)(op), a ∈ G, b ∈ G, h ∈ H, a === op(h)(b))
+    assume(group(G)(op), subgroup(H)(G)(op), h ∈ H, a === op(h)(b))
 
     val rc_def = (op(h)(b) | (h ∈ H)) === rightCoset(H)(op)(b)
 
@@ -199,8 +199,6 @@ object Cosets extends lisa.Main:
   (
     group(G)(op),
     subgroup(H)(G)(op),
-    a ∈ G,
-    b ∈ G,
     a ∈ leftCoset(b)(op)(H)
   )
   |- ∃(h ∈ H, a === op(b)(h))
@@ -208,8 +206,6 @@ object Cosets extends lisa.Main:
     assume(
         group(G)(op),
         subgroup(H)(G)(op),
-        a ∈ G,
-        b ∈ G,
         a ∈ leftCoset(b)(op)(H)
     )
 
@@ -239,16 +235,12 @@ object Cosets extends lisa.Main:
     (
       group(G)(op),
       subgroup(H)(G)(op),
-      a ∈ G,
-      b ∈ G,
       a ∈ rightCoset(H)(op)(b)
     )
     |- ∃(h ∈ H, a === op(h)(b))
   ) {
     assume(group(G)(op),
       subgroup(H)(G)(op),
-      a ∈ G,
-      b ∈ G,
       a ∈ rightCoset(H)(op)(b))
     val _h = have(a ∈ rightCoset(H)(op)(b)) by Restate
     val rc_def = (op(h)(b) | (h ∈ H)) === rightCoset(H)(op)(b)

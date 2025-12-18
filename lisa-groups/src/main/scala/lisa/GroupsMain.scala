@@ -24,29 +24,6 @@ import lisa.maths.GroupTheory.Utils.equalityTransitivity
 import lisa.maths.GroupTheory.Utils.equalityTransitivity
 import lisa.maths.GroupTheory.Utils.equalityTransitivity
 
-object Utils extends lisa.Main:
-  val x = variable[Ind]
-  val y = variable[Ind]
-  val z = variable[Ind]
-
-  val equalityTransitivity = Lemma((x === y, y === z) |- x === z) {
-    have(thesis) by Congruence
-  }
-
-  val equalitySetMembership = Theorem((A === B, x ∈ A) |- x ∈ B) {
-    assume(A === B, x ∈ A)
-    val _1 = have(x ∈ A) by Restate
-    have(B === A |- x ∈ B) by Substitution.Apply(B === A)(_1)
-    thenHave(thesis) by Tautology
-  }
-
-  val equalitySetMembership2 = Theorem((x ∈ A, x === y) |- y ∈ A) {
-    assume(x === y, x ∈ A)
-    val _1 = have(x ∈ A) by Restate
-    have(y === x |- y ∈ A) by Substitution.Apply(y === x)(_1)
-    thenHave(thesis) by Tautology
-  }
-
 object Groups extends lisa.Main:
   val a = variable[Ind]
   val b = variable[Ind]
