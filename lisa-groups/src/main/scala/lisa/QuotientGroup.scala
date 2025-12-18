@@ -336,11 +336,7 @@ object QuotientGroup extends lisa.Main:
 
         val _8 = have(op(x0y0)(z0) === op(x0)(y0z0)) by Tautology.from(associativityThm of (x := x0, y := y0, z := z0), group.definition, _1, _2, _3)
 
-        val _9 = have(leftCoset(op(x0y0)(z0))(op)(H) === leftCoset(op(x0)(y0z0))(op)(H)) by Congruence.from(_6, _8)
-        val _10 = have(LHS === RHS) by Congruence.from(_6, _7, _9)
-        val _11 = have(op2(op2(x0H)(y0H))(z0H) === op2(x0H)(op2(y0H)(z0H))) by Congruence.from(_10, _4, _5)
-        
-        have(thesis) by Congruence.from(_11, eq1, eq2, eq3)
+        have(thesis) by Congruence.from(eq1, eq2, eq3, _4, _5, _6, _7, _8)
     }
     thenHave((x ∈ G_H, y ∈ G_H) |- z ∈ G_H ==> (op2(x)(op2(y)(z)) === op2(op2(x)(y))(z))) by Restate
     thenHave((x ∈ G_H, y ∈ G_H) |- ∀(z ∈ G_H, op2(x)(op2(y)(z)) === op2(op2(x)(y))(z))) by RightForall
