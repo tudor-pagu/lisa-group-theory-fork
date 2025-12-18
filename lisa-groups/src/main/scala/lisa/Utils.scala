@@ -209,3 +209,63 @@ object Utils extends lisa.Main:
   ) {
     have(thesis) by Congruence
   }
+
+  val doubleSetMembership2 = Theorem(
+    (x ∈ { op(fst(z))(snd(z)) | z ∈ (A × B) }) <=> ∃(b ∈ B, ∃(a ∈ A, x === op(a)(b)))
+  ) {
+    val S = { op(fst(z))(snd(z)) | z ∈ (A × B) }
+    val leftImplies = have(x ∈ S |- ∃(b ∈ B, ∃(a ∈ A, x === op(a)(b)))) subproof {
+        assume(x ∈ S) 
+        val _1 = have(∃(z ∈ (A × B), x === op(fst(z))(snd(z)))) by Tautology.from(
+            Replacement.membership of (y := x, x := z, A := (A × B), F := lambda(z, op(fst(z))(snd(z))))
+        )
+        val auxP = lambda(z, z ∈ (A × B) /\ (x === op(fst(z))(snd(z))))
+        val z0 = ε(z, auxP(z))
+
+        val _2 = have(auxP(z0)) by Tautology.from(_1, Quantifiers.existsEpsilon of (x := z, P := auxP))
+        val a0 = fst(z0)
+        val b0 = snd(z0)
+        val _3 = have(a0 ∈ A /\ b0 ∈ B) by Tautology.from(
+            _2, 
+            CartesianProduct.fstMembership of (z := z0),
+            CartesianProduct.sndMembership of (z := z0)
+        )
+        have(a0 ∈ A /\ (x === op(a0)(b0))) by Tautology.from(_3, _2)
+        thenHave(∃(a ∈ A, x === op(a)(b0))) by RightExists
+        thenHave(b0 ∈ B /\ ∃(a ∈ A, x === op(a)(b0))) by Tautology.fromLastStep(_3)
+        thenHave(thesis) by RightExists
+    }
+    val rightImplies = have(∃(b ∈ B, ∃(a ∈ A, x === op(a)(b))) |- x ∈ S) subproof {
+        assume(∃(b ∈ B, ∃(a ∈ A, x === op(a)(b))))
+        val auxP1 = lambda(b, b ∈ B /\ ∃(a ∈ A, x === op(a)(b)))
+        val b0 = ε(b, auxP1(b))
+        val _1 = have(auxP1(b0)) by Tautology.from(Quantifiers.existsEpsilon of (x := b, P := auxP1))
+        thenHave(∃(a ∈ A, x === op(a)(b0))) by Tautology
+
+        val auxP2 = lambda(a, a ∈ A /\ (x === op(a)(b0)))
+        val a0 = ε(a, auxP2(a))
+        val _2 = thenHave(auxP2(a0)) by Tautology.fromLastStep(Quantifiers.existsEpsilon of (x := a, P := auxP2))
+
+        val z0 = (a0, b0)
+        val _3 = have(z0 ∈ (A × B)) by Tautology.from(_1, _2, CartesianProduct.pairMembership of (x := a0, y := b0))
+
+        val _4 = have((fst(z0) === a0) /\ (snd(z0) === b0)) by Tautology.from(
+            Pair.pairFst of (x := a0, y := b0),
+            Pair.pairSnd of (x := a0, y := b0)
+        )
+        val _5 = have(x === op(fst(z0))(snd(z0))) by Tautology.from(
+            opSubstitution of (x := x, a := a0, b := b0, c := fst(z0), d := snd(z0)),
+            _2, _4
+        )
+        val auxF = lambda(z, op(fst(z))(snd(z)))
+        have(auxF(z0) ∈ S) by Tautology.from(
+            Replacement.map of (A := (A × B), x := z0, F := auxF),
+            _3
+        )
+        thenHave(thesis) by Tautology.fromLastStep(
+            equalitySetMembership2 of (y := x, x := auxF(z0), A := S),
+            _5
+        )
+    }
+    have(thesis) by Tautology.from(leftImplies, rightImplies)
+  }

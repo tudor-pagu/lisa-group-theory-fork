@@ -108,6 +108,55 @@ object QuotientGroup extends lisa.Main:
     have(thesis) by Tautology.from(_1, _5)
   }
 
+  val isCosetOperationAlternativeDefinition = Theorem(
+    isCosetOperation(G)(H)(op)(op2) <=> 
+        ∀(A ∈ quotientGroup(G)(H)(op), ∀(B ∈ quotientGroup(G)(H)(op), 
+            op2(A)(B) === { op(fst(z))(snd(z)) | z ∈ (A × B) }
+        ))
+  ) {
+    val G_H = quotientGroup(G)(H)(op)
+    val LHS = isCosetOperation(G)(H)(op)(op2)
+    val S1 = ⋃{ {op(c)(d) | c ∈ A} | d ∈ B }
+    val S2 = { op(fst(z))(snd(z)) | z ∈ (A × B) }
+
+    val _h = have(LHS <=> ∀(A ∈ G_H, ∀(B ∈ G_H, 
+      op2(A)(B) === S1
+    ))) by Tautology.from(isCosetOperation.definition of (a := c, b := d))
+
+    val _1 = have(S1 === S2) subproof {
+        have(x ∈ S1 <=> x ∈ S2) by Tautology.from(doubleSetMembership, doubleSetMembership2)
+        thenHave(∀(x, x ∈ S1 <=> x ∈ S2)) by RightForall
+        thenHave(thesis) by Tautology.fromLastStep(
+            extensionalityAxiom of (z := x, x := S1, y := S2)
+        )
+    }
+
+    val leftImplies = have(LHS |- ∀(A ∈ G_H, ∀(B ∈ G_H, op2(A)(B) === S2))) subproof {
+        assume(LHS)
+        have(∀(A ∈ G_H, ∀(B ∈ G_H, op2(A)(B) === S1))) by Tautology.from(_h)
+        thenHave(A ∈ G_H |- ∀(B ∈ G_H, op2(A)(B) === S1)) by InstantiateForall(A)
+        val _2 = thenHave((A ∈ G_H, B ∈ G_H) |- (op2(A)(B) === S1)) by InstantiateForall(B)
+        have((A ∈ G_H, B ∈ G_H) |- op2(A)(B) === S2) by Congruence.from(_1, _2)
+        thenHave(A ∈ G_H |- (B ∈ G_H) ==> (op2(A)(B) === S2)) by Restate
+        thenHave(A ∈ G_H |- ∀(B ∈ G_H, op2(A)(B) === S2)) by RightForall
+        thenHave((A ∈ G_H) ==> ∀(B ∈ G_H, op2(A)(B) === S2)) by Restate
+        thenHave(thesis) by RightForall
+    }
+    val rightImplies = have(∀(A ∈ G_H, ∀(B ∈ G_H, op2(A)(B) === S2)) |- LHS) subproof {
+        assume(∀(A ∈ G_H, ∀(B ∈ G_H, op2(A)(B) === S2)))
+        have(∀(A ∈ G_H, ∀(B ∈ G_H, op2(A)(B) === S2))) by Restate
+        thenHave(A ∈ G_H |- ∀(B ∈ G_H, op2(A)(B) === S2)) by InstantiateForall(A)
+        val _2 = thenHave((A ∈ G_H, B ∈ G_H) |- (op2(A)(B) === S2)) by InstantiateForall(B)
+        val _3 = have((A ∈ G_H, B ∈ G_H) |- (op2(A)(B) === S1)) by Congruence.from(_1, _2)
+        thenHave(A ∈ G_H |- (B ∈ G_H) ==> (op2(A)(B) === S1)) by Restate
+        thenHave(A ∈ G_H |- ∀(B ∈ G_H, op2(A)(B) === S1)) by RightForall
+        thenHave((A ∈ G_H) ==> ∀(B ∈ G_H, op2(A)(B) === S1)) by Restate
+        thenHave(∀(A ∈ G_H, ∀(B ∈ G_H, op2(A)(B) === S1))) by RightForall
+        thenHave(thesis) by Tautology.fromLastStep(_h)
+    }
+    have(thesis) by Tautology.from(leftImplies, rightImplies)
+  }
+
   val cosetOperationProperty = Theorem(
     (group(G)(op), normalSubgroup(H)(G)(op), isCosetOperation(G)(H)(op)(op2), a ∈ G, b ∈ G)
     |- op2(leftCoset(a)(op)(H))(leftCoset(b)(op)(H)) === leftCoset(op(a)(b))(op)(H)
