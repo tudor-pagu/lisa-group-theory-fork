@@ -136,6 +136,14 @@ object Groups extends lisa.Main:
     ε(y, (y ∈ G) /\ (x === leftCoset(y)(op)(H)))
   )))))
 
+
+  /* Lagrange's Theorem */
+  // P is a partition of G
+  val partition = DEF(λ(G, λ(Pr,
+    (∀(x ∈ Pr, x ⊆ G)) /\ // every set in P is a subset of G
+      (∀(x ∈ G, ∃(y ∈ Pr, x ∈ y))) /\ // every element of G is found in some set in P
+      (∀(x ∈ Pr, ∀(y ∈ Pr, x ≠ y ==> (x ∩ y === ∅)))) // the sets in P are disjoint
+  )))
   /*
   Functions on groups
    */
@@ -232,16 +240,7 @@ object Groups extends lisa.Main:
     thenHave(∀(y, x ∈ G /\ y ∈ G ==> op(x)(y) ∈ G)) by InstantiateForall(x)
     thenHave(x ∈ G /\ y ∈ G ==> op(x)(y) ∈ G) by InstantiateForall(y)
     thenHave(thesis) by Tautology
-  }
-
-  /* Lagrange's Theorem */
-
-  // P is a partition of G
-  val partition = DEF(λ(G, λ(Pr,
-    (∀(x ∈ Pr, x ⊆ G)) /\ // every set in P is a subset of G
-      (∀(x ∈ G, ∃(y ∈ Pr, x ∈ y))) /\ // every element of G is found in some set in P
-      (∀(x ∈ Pr, ∀(y ∈ Pr, x ≠ y ==> (x ∩ y === ∅)))) // the sets in P are disjoint
-  )))
+  }  
 
   val identityIsUnique = Theorem(
     (group(G)(op), isIdentityElement(G)(op)(x), isIdentityElement(G)(op)(y)) |- x === y
