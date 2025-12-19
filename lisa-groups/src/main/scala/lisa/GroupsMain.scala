@@ -50,113 +50,79 @@ object Groups extends lisa.Main:
   val op = variable[Ind >>: Ind >>: Ind]
   val op2 = variable[Ind >>: Ind >>: Ind]
 
-  val binaryOperation = DEF(λ(G, λ(op, ∀(x, ∀(y, x ∈ G /\ y ∈ G ==> op(x)(y) ∈ G)))))
+  val binaryOperation = DEF(λ(G, λ(op, 
+    ∀(x, ∀(y, x ∈ G /\ y ∈ G ==> op(x)(y) ∈ G))
+  )))
 
-  val isIdentityElement = DEF(λ(G, λ(op, λ(x, (x ∈ G) /\ (∀(y ∈ G, ((op(x)(y) === y) /\ (op(y)(x) === y))))))))
+  val isIdentityElement = DEF(λ(G, λ(op, λ(x, 
+    (x ∈ G) /\ (∀(y ∈ G, ((op(x)(y) === y) /\ (op(y)(x) === y))))
+  ))))
 
-  val identityElement = DEF(λ(G, λ(op, ∃(x, isIdentityElement(G)(op)(x)))))
-  val identityOf = DEF(λ(G, λ(op, ε(e, isIdentityElement(G)(op)(e)))))
+  val identityElement = DEF(λ(G, λ(op, 
+    ∃(x, isIdentityElement(G)(op)(x))
+  )))
 
-  val associativity = DEF(λ(G, λ(op, ∀(x ∈ G, ∀(y ∈ G, ∀(z ∈ G, op(x)(op(y)(z)) === op(op(x)(y))(z)))))))
+  val identityOf = DEF(λ(G, λ(op, 
+    ε(e, isIdentityElement(G)(op)(e))
+  )))
 
-  val inverseElement = DEF(λ(G, λ(op, ∀(x ∈ G, ∃(y ∈ G, isIdentityElement(G)(op)(op(x)(y)))))))
+  val associativity = DEF(λ(G, λ(op, 
+    ∀(x ∈ G, ∀(y ∈ G, ∀(z ∈ G, op(x)(op(y)(z)) === op(op(x)(y))(z))))
+  )))
 
-  val inverseOf = DEF(λ(G, λ(op, λ(x, ε(y, (y ∈ G) /\ (isIdentityElement(G)(op)(op(x)(y))))))))
+  val inverseElement = DEF(λ(G, λ(op, 
+    ∀(x ∈ G, ∃(y ∈ G, isIdentityElement(G)(op)(op(x)(y))))
+  )))
 
-  val group = DEF(
-    λ(
-      G,
-      λ(
-        op,
-        (binaryOperation(G)(op) /\
-          identityElement(G)(op)) /\
-          associativity(G)(op) /\
-          inverseElement(G)(op)
-      )
-    )
-  )
+  val inverseOf = DEF(λ(G, λ(op, λ(x, 
+    ε(y, (y ∈ G) /\ (isIdentityElement(G)(op)(op(x)(y))))
+  ))))
+
+  val group = DEF(λ(G, λ(op,
+    (binaryOperation(G)(op) /\
+      identityElement(G)(op)) /\
+      associativity(G)(op) /\
+      inverseElement(G)(op)
+  )))
 
   /*
   Subgroup
    */
 
-  val subgroup = DEF(
-    λ(
-      H,
-      λ(
-        G,
-        λ(
-          op,
-          group(G)(op) /\
-            H ⊆ G /\
-            group(H)(op)
-        )
-      )
-    )
-  )
+  val subgroup = DEF(λ(H, λ(G, λ(op,
+    group(G)(op) /\
+      H ⊆ G /\
+      group(H)(op)
+  ))))
 
   /*
   Cosets
    */
 
-  val leftCoset = DEF(
-    λ(
-      g,
-      λ(
-        op,
-        λ(
-          H,
-          (op(g)(h) | (h ∈ H))
-        )
-      )
-    )
-  )
+  val leftCoset = DEF(λ(g, λ(op, λ(H,
+    (op(g)(h) | (h ∈ H))
+  ))))
 
-  val rightCoset = DEF(
-    λ(
-      H,
-      λ(
-        op,
-        λ(
-          g,
-          (op(h)(g) | (h ∈ H))
-        )
-      )
-    )
-  )
+  val rightCoset = DEF(λ(H, λ(op, λ(g,
+    (op(h)(g) | (h ∈ H))
+  ))))
 
   /*
   Normal
    */
 
-  val normalizer = DEF(
-    λ(
-      H,
-      λ(
-        G,
-        λ(
-          op,
-          { g ∈ G | leftCoset(g)(op)(H) === rightCoset(H)(op)(g) }
-        )
-      )
-    )
-  )
+  val normalizer = DEF(λ(H, λ(G, λ(op,
+    { g ∈ G | leftCoset(g)(op)(H) === rightCoset(H)(op)(g) }
+  ))))
 
-  val conjugation = DEF(λ(G, λ(op, λ(x, λ(y, op(op(y)(x))(inverseOf(G)(op)(y)))))))
+  val conjugation = DEF(λ(G, λ(op, λ(x, λ(y, 
+    op(op(y)(x))(inverseOf(G)(op)(y))
+  )))))
   
-  val normalSubgroup = DEF(
-    λ(
-      H,
-      λ(
-        G,
-        λ(
-          op,
-          subgroup(H)(G)(op) /\
-          ∀(g ∈ G, leftCoset(g)(op)(H) === rightCoset(H)(op)(g))
-        )
-      )
-    )
-  )
+  val normalSubgroup = DEF(λ(H, λ(G, λ(op,
+    subgroup(H)(G)(op) /\
+    ∀(g ∈ G, leftCoset(g)(op)(H) === rightCoset(H)(op)(g))
+  ))))
 
   val quotientGroup = DEF(λ(G, λ(H, λ(op, 
     { leftCoset(g)(op)(H) | g ∈ G }
@@ -271,17 +237,11 @@ object Groups extends lisa.Main:
   /* Lagrange's Theorem */
 
   // P is a partition of G
-  val partition = DEF(
-    λ(
-      G,
-      λ(
-        Pr,
-        (∀(x ∈ Pr, x ⊆ G)) /\ // every set in P is a subset of G
-          (∀(x ∈ G, ∃(y ∈ Pr, x ∈ y))) /\ // every element of G is found in some set in P
-          (∀(x ∈ Pr, ∀(y ∈ Pr, x ≠ y ==> (x ∩ y === ∅)))) // the sets in P are disjoint
-      )
-    )
-  )
+  val partition = DEF(λ(G, λ(Pr,
+    (∀(x ∈ Pr, x ⊆ G)) /\ // every set in P is a subset of G
+      (∀(x ∈ G, ∃(y ∈ Pr, x ∈ y))) /\ // every element of G is found in some set in P
+      (∀(x ∈ Pr, ∀(y ∈ Pr, x ≠ y ==> (x ∩ y === ∅)))) // the sets in P are disjoint
+  )))
 
   val identityIsUnique = Theorem(
     (group(G)(op), isIdentityElement(G)(op)(x), isIdentityElement(G)(op)(y)) |- x === y
