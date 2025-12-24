@@ -1,6 +1,7 @@
 package lisa.maths.GroupTheory
 
 import lisa.maths.SetTheory.Base.Predef.{_, given}
+import Symbols._
 
 import lisa.kernel.proof.RunningTheoryJudgement._
 import lisa.maths.SetTheory.Base.Symbols._
@@ -28,31 +29,6 @@ import lisa.utils.prooflib.BasicStepTactic.RightForall
 import lisa.maths.GroupTheory.NormalSubgroups.normalSubgroupProperty
 
 object QuotientGroup extends lisa.Main:
-  val a = variable[Ind]
-  val b = variable[Ind]
-  val c = variable[Ind]
-  val d = variable[Ind]
-
-  val x = variable[Ind]
-  val y = variable[Ind]
-  val z = variable[Ind]
-
-  val h = variable[Ind]
-
-  val g = variable[Ind]
-  val e = variable[Ind]
-
-  val f = variable[Ind]
-
-  val P, Q = variable[Ind >>: Prop]
-  val R = variable[Ind >>: Ind >>: Prop]
-
-  val G = variable[Ind]
-  val Pr = variable[Ind]
-  val H = variable[Ind]
-  val C = variable[Ind]
-  val op = variable[Ind >>: Ind >>: Ind]
-  val op2 = variable[Ind >>: Ind >>: Ind]
 
   val quotientGroupMembership = Theorem(
     (x ∈ quotientGroup(G)(H)(op)) |- (equivalenceClass(G)(H)(op)(x) ∈ G) /\ (x === leftCoset(equivalenceClass(G)(H)(op)(x))(op)(H))
@@ -483,7 +459,7 @@ object QuotientGroup extends lisa.Main:
     val identityInst = have(A ∈ quotientGroup(G)(H)(op) |- ((op(e)(equivalenceClass(G)(H)(op)(A)) === equivalenceClass(G)(H)(op)(A)) /\ (op(equivalenceClass(G)(H)(op)(A))(e) === equivalenceClass(G)(H)(op)(A)))) by Tautology.from(
       identityProperty of (
         x := equivalenceClass(G)(H)(op)(A),
-        Groups.e := identityOf(G)(op)
+        Symbols.e := identityOf(G)(op)
       ),
       eIsIdentity,
       quotientGroupRestate,
@@ -533,7 +509,7 @@ object QuotientGroup extends lisa.Main:
       eIsIdentity,
       normalSubgroup.definition,
       leftCosetIdentity of (
-        Cosets.e := identityOf(G)(op)
+        Symbols.e := identityOf(G)(op)
       )
     )
 

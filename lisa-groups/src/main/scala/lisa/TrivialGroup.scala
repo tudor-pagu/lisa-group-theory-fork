@@ -1,6 +1,7 @@
 package lisa.maths.GroupTheory
 
 import lisa.maths.SetTheory.Base.Predef.{_, given}
+import Symbols._
 
 import lisa.kernel.proof.RunningTheoryJudgement._
 import lisa.maths.SetTheory.Base.Symbols._
@@ -50,7 +51,7 @@ object TrivialGroup extends lisa.Main:
     val thm4 = have(x ∈ G /\ y ∈ G ==> star(x)(y) ∈ G) by Tautology.from(thm3)
     thenHave(∀(y, x ∈ G /\ y ∈ G ==> star(x)(y) ∈ G)) by RightForall
     val thm5 = thenHave(∀(x, ∀(y, x ∈ G /\ y ∈ G ==> star(x)(y) ∈ G))) by RightForall
-    val thm6 = have(binaryOperation(G)(star)) by Tautology.from(thm5, binaryOperation.definition of (Groups.G := G, Groups.op := star))
+    val thm6 = have(binaryOperation(G)(star)) by Tautology.from(thm5, binaryOperation.definition of (Symbols.G := G, Symbols.op := star))
   }
 
   val everyPairIsE = Theorem(
@@ -76,7 +77,7 @@ object TrivialGroup extends lisa.Main:
     val thm2 = thenHave(∀(x, (x ∈ G) ==> ((star(x)(e) === x) /\ (star(e)(x) === x)))) by RightForall
     val thm3 = have(∀(x ∈ G, ((star(x)(e) === x) /\ (star(e)(x) === x)))) by Tautology.from(thm2)
     val thm4 = have(e ∈ G /\ ∀(x ∈ G, ((star(x)(e) === x) /\ (star(e)(x) === x)))) by Tautology.from(thm2, Singleton.membership of (x := e, y := e))
-    val thm5 = have(Groups.isIdentityElement(G)(star)(e)) by Tautology.from(thm4, Groups.isIdentityElement.definition of (Groups.G := G, Groups.op := star, Groups.x := e))
+    val thm5 = have(Groups.isIdentityElement(G)(star)(e)) by Tautology.from(thm4, Groups.isIdentityElement.definition of (Symbols.G := G, Symbols.op := star, x := e))
   }
 
   val trivialGroupHasIdentityElement = Theorem(
@@ -84,7 +85,7 @@ object TrivialGroup extends lisa.Main:
   ) {
     val thm5 = have(Groups.isIdentityElement(G)(star)(e)) by Restate.from(eIsIdentity)
     val thm6 = thenHave(∃(x, Groups.isIdentityElement(G)(star)(x))) by RightExists
-    val thm7 = have(Groups.identityElement(G)(star)) by Tautology.from(thm6, Groups.identityElement.definition of (Groups.G := G, Groups.op := star))
+    val thm7 = have(Groups.identityElement(G)(star)) by Tautology.from(thm6, Groups.identityElement.definition of (Symbols.G := G, Symbols.op := star))
   }
 
   val trivialGroupIsNotEmpty = Theorem(
@@ -103,7 +104,7 @@ object TrivialGroup extends lisa.Main:
       val thm1 = have(e === star(x)(y)) by Tautology.from(star.definition)
       val thm2 = have(isIdentityElement(G)(star)(star(x)(y))) by Tautology.from(
         eIsIdentity,
-        Groups.identityGetsTransferredByCongruence of (Groups.G := G, Groups.op := star, Groups.x := e, Groups.y := star(x)(y)),
+        Groups.identityGetsTransferredByCongruence of (Symbols.G := G, Symbols.op := star, x := e, y := star(x)(y)),
         thm1
       )
       val thm3 = have(y ∈ G /\ isIdentityElement(G)(star)(star(x)(y))) by Tautology.from(thm2)
@@ -111,7 +112,7 @@ object TrivialGroup extends lisa.Main:
       val thm5 = have(x ∈ G ==> ∃(y ∈ G, isIdentityElement(G)(star)(star(x)(y)))) by Tautology.from(thm4)
       val thm6 = thenHave(∀(x, x ∈ G ==> ∃(y ∈ G, isIdentityElement(G)(star)(star(x)(y))))) by RightForall
       val thm7 = thenHave(∀(x ∈ G, ∃(y ∈ G, isIdentityElement(G)(star)(star(x)(y))))) by Restate
-      val thm8 = have(Groups.inverseElement(G)(star)) by Tautology.from(thm7, Groups.inverseElement.definition of (Groups.G := G, Groups.op := star))
+      val thm8 = have(Groups.inverseElement(G)(star)) by Tautology.from(thm7, Groups.inverseElement.definition of (Symbols.G := G, Symbols.op := star))
     }
 
     val thm1 = thenHave((y ∈ G) |- Groups.inverseElement(G)(star)) by Restate
@@ -140,7 +141,7 @@ object TrivialGroup extends lisa.Main:
     val thm11 = thenHave(∀(x, x ∈ G ==> ∀(y ∈ G, ∀(z ∈ G, star(x)(star(y)(z)) === star(star(x)(y))(z))))) by RightForall
     val thm12 = have(∀(x ∈ G, ∀(y ∈ G, ∀(z ∈ G, star(x)(star(y)(z)) === star(star(x)(y))(z))))) by Restate.from(thm11)
 
-    val thm13 = have(Groups.associativity(G)(star)) by Tautology.from(thm12, Groups.associativity.definition of (Groups.G := G, Groups.op := star))
+    val thm13 = have(Groups.associativity(G)(star)) by Tautology.from(thm12, Groups.associativity.definition of (Symbols.G := G, Symbols.op := star))
   }
 
   val trivialGroupIsGroup = Theorem(
@@ -151,7 +152,7 @@ object TrivialGroup extends lisa.Main:
       trivialGroupIsAssociative,
       trivialGroupHasInverse,
       trivialGroupHasIdentityElement,
-      Groups.group.definition of (Groups.G := G, Groups.op := star)
+      Groups.group.definition of (Symbols.G := G, Symbols.op := star)
     )
   }
 

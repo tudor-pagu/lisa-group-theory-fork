@@ -1,6 +1,7 @@
 package lisa.maths.GroupTheory
 
 import lisa.maths.SetTheory.Base.Predef.{_, given}
+import Symbols._
 
 import lisa.kernel.proof.RunningTheoryJudgement._
 import lisa.maths.SetTheory.Base.Symbols._
@@ -23,29 +24,6 @@ import lisa.maths.GroupTheory.Utils.equalityTransitivity
 import lisa.utils.prooflib.SimpleDeducedSteps.InstantiateForall
 
 object Subgroups extends lisa.Main:
-  val a = variable[Ind]
-  val b = variable[Ind]
-  val c = variable[Ind]
-  val d = variable[Ind]
-
-  val x = variable[Ind]
-  val y = variable[Ind]
-  val z = variable[Ind]
-
-  val h = variable[Ind]
-
-  val g = variable[Ind]
-  val e = variable[Ind]
-
-  val f = variable[Ind]
-
-  val P, Q = variable[Ind >>: Prop]
-
-  val G = variable[Ind]
-  val Pr = variable[Ind]
-  val H = variable[Ind]
-  val C = variable[Ind]
-  val op = variable[Ind >>: Ind >>: Ind]
 
   val subgroupTestTwoStep = Theorem(
     (group(G)(op), H ≠ ∅, H ⊆ G, binaryOperation(H)(op), inverseElement(H)(op))

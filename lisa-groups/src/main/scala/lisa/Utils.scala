@@ -1,6 +1,7 @@
 package lisa.maths.GroupTheory
 
 import lisa.maths.SetTheory.Base.Predef.{_, given}
+import Symbols._
 
 import lisa.kernel.proof.RunningTheoryJudgement._
 import lisa.maths.SetTheory.Base.Symbols._
@@ -25,6 +26,11 @@ object Utils extends lisa.Main:
   val y = variable[Ind]
   val z = variable[Ind]
 
+  
+  val p = variable[Prop]
+  val Q = variable[Ind >>: Prop]
+  val R = variable[Ind >>: Ind >>: Prop]
+
   val equalityTransitivity = Lemma((x === y, y === z) |- x === z) {
     have(thesis) by Congruence
   }
@@ -48,11 +54,6 @@ object Utils extends lisa.Main:
         equalitySetMembership, equalitySetMembership of (A := B, B := A)
     )
   }
-
-  val P, Q = variable[Ind >>: Prop]
-  val p, q = variable[Prop]
-  val R = variable[Ind >>: Ind >>: Prop]
-  val op = variable[Ind >>: Ind >>: Ind]
 
   val equivalenceSubstitutionExists = Theorem(∀(x, P(x) <=> Q(x)) |-  ∃(x, P(x)) <=> ∃(x, Q(x))) {
     have(thesis) by Tableau
