@@ -28,6 +28,15 @@ import lisa.utils.prooflib.SimpleDeducedSteps.{InstantiateForall, Generalize}
 import lisa.utils.prooflib.BasicStepTactic.RightForall
 import lisa.maths.GroupTheory.NormalSubgroups.normalSubgroupProperty
 
+import lisa.maths.SetTheory.Functions.Function.{bijective, surjective, injective, ::, app, function, functionBetween}
+import lisa.maths.SetTheory.Functions.Operations.Restriction.{↾}
+import lisa.maths.SetTheory.Functions.Operations.Restriction
+import lisa.maths.SetTheory.Functions.BasicTheorems.*
+import lisa.maths.SetTheory.Base.CartesianProduct
+import lisa.maths.SetTheory.Base.Pair
+// import lisa.maths.SetTheory.Relations.Predef.{_, given}
+import lisa.maths.Quantifiers.∃!
+
 object QuotientGroup extends lisa.Main:
 
   val quotientGroupMembership = Theorem(
@@ -316,57 +325,35 @@ object QuotientGroup extends lisa.Main:
     |- binaryOperation(quotientGroup(G)(H)(*))(**)
   ) {
     assume(group(G)(*), normalSubgroup(H)(G)(*), isCosetOperation(G)(H)(*)(**))
-    val membFunc = λ(g,leftCoset(g)(*)(H))
-    val aInReplacement = have(A ∈ { leftCoset(g)(*)(H) | g ∈ G } |- ∃(g ∈ G, leftCoset(g)(*)(H) === A)) by Tautology.from(
-      Replacement.membership of (
-        F := membFunc,
-        A := G,
-        y := A
-      )
+    val G_H = quotientGroup(G)(H)(*)
+    
+    val x0 = equivalenceClass(G)(H)(*)(x)
+    val y0 = equivalenceClass(G)(H)(*)(y)
+    val x0H = leftCoset(x0)(*)(H)
+    val y0H = leftCoset(y0)(*)(H)
+    val _1 = have((x ∈ G_H, y ∈ G_H) |- x0 ∈ G /\ (x === x0H)) by Tautology.from(quotientGroupMembership)
+    val eqx = thenHave((x ∈ G_H, y ∈ G_H) |- x === x0H) by Tautology
+    val _2 = have((x ∈ G_H, y ∈ G_H) |- y0 ∈ G /\ (y === y0H)) by Tautology.from(quotientGroupMembership of (x := y))
+    val eqy = thenHave((x ∈ G_H, y ∈ G_H) |- y === y0H) by Tautology
+
+    have((x ∈ G_H, y ∈ G_H) |- op(x0H, **, y0H) === leftCoset(op(x0, *, y0))(*)(H)) by Tautology.from(_1, _2, cosetOperationProperty of (a := x0, b := y0))
+    thenHave((x ∈ G_H, y ∈ G_H) |- op(x, **, y0H) === leftCoset(op(x0, *, y0))(*)(H)) by Substitute(eqx)
+    val _3 = thenHave((x ∈ G_H, y ∈ G_H) |- op(x, **, y) === leftCoset(op(x0, *, y0))(*)(H)) by Substitute(eqy)
+    val x0y0inG = have((x ∈ G_H, y ∈ G_H) |- op(x0, *, y0) ∈ G) by Tautology.from(
+      _1, _2, binaryOperationThm of (x := x0, y := y0), group.definition
     )
-    val hasLeftCoset = thenHave(A ∈ quotientGroup(G)(H)(*) |- ∃(g ∈ G, leftCoset(g)(*)(H) === A)) by Substitution.Apply(quotientGroup.definition)
-    val hgA = λ(g, g ∈ G /\ (leftCoset(g)(*)(H) === A))
-    val eps1 = ε(g, hgA(g))
-    val epsCond1 = have(∃(g, hgA(g)) |- hgA(eps1)) by Tautology.from(Quantifiers.existsEpsilon of (x := g, P := hgA))
-    val epsValid1 = have((A ∈ quotientGroup(G)(H)(*)) |- hgA(eps1)) by Tautology.from(epsCond1, hasLeftCoset)
-    val epsEq1 = have((A ∈ quotientGroup(G)(H)(*)) |- (leftCoset(eps1)(*)(H) === A)) by Tautology.from(epsValid1)
-
-    val hgB = λ(g, g ∈ G /\ (leftCoset(g)(*)(H) === B))
-    val eps2 = ε(g, hgB(g))
-    val epsCond2 = have(∃(g, hgB(g)) |- hgB(eps2)) by Tautology.from(Quantifiers.existsEpsilon of (x := g, P := hgB))
-    val epsValid2 = have((B ∈ quotientGroup(G)(H)(*)) |- hgB(eps2)) by Tautology.from(epsCond2, hasLeftCoset of (A := B))
-    val epsEq2 = have((B ∈ quotientGroup(G)(H)(*)) |- (leftCoset(eps2)(*)(H) === B)) by Tautology.from(epsValid2)
-
-    val cosetOperationPropertyRestate = have((A ∈ quotientGroup(G)(H)(*), B ∈ quotientGroup(G)(H)(*)) |- op(eps1, *, eps2) ∈ G /\ (op(leftCoset(eps1)(*)(H), **, leftCoset(eps2)(*)(H)) === leftCoset(op(eps1, *, eps2))(*)(H))) by Tautology.from(
-      cosetOperationProperty of (a := eps1, b := eps2), 
-      epsValid1, 
-      epsValid2,
-      binaryOperationThm of (x := eps1, y := eps2),
-      group.definition
+    val _4 = have((x ∈ G_H, y ∈ G_H) |- op(x, **, y) ∈ G_H) by Tautology.from(
+      quotientGroupMembershipTest of (x := op(x, **, y), y := op(x0, *, y0)),
+      _3, x0y0inG
     )
 
-    val existsWitness = thenHave((A ∈ quotientGroup(G)(H)(*), B ∈ quotientGroup(G)(H)(*)) |- ∃(g ∈ G, op(leftCoset(eps1)(*)(H), **, leftCoset(eps2)(*)(H)) === leftCoset(g)(*)(H))) by RightExists.withParameters(op(eps1, *, eps2))
-    val op2InReplacement = have((A ∈ quotientGroup(G)(H)(*), B ∈ quotientGroup(G)(H)(*)) |- op(leftCoset(eps1)(*)(H), **, leftCoset(eps2)(*)(H)) ∈ { leftCoset(g)(*)(H) | g ∈ G }) by Tautology.from(
-      Replacement.membership of (
-        F := membFunc,
-        A := G,
-        y := op(leftCoset(eps1)(*)(H), **, leftCoset(eps2)(*)(H))
-      ),
-      existsWitness
+    val x_y = Pair.pair(x)(y)
+    val G_H2 = (G_H × G_H)
+    val _5 = have((x_y ∈ G_H2) <=> (x ∈ G_H /\ y ∈ G_H)) by Tautology.from(
+      CartesianProduct.pairMembership of (A := G_H, B := G_H)
     )
     
-    val op2InQuotient = thenHave((A ∈ quotientGroup(G)(H)(*), B ∈ quotientGroup(G)(H)(*)) |- op(leftCoset(eps1)(*)(H), **, leftCoset(eps2)(*)(H)) ∈ quotientGroup(G)(H)(*)) by Substitution.Apply(quotientGroup.definition)
-    thenHave((A ∈ quotientGroup(G)(H)(*), B ∈ quotientGroup(G)(H)(*)) |- op(A, **, leftCoset(eps2)(*)(H)) ∈ quotientGroup(G)(H)(*)) by Substitution.Apply(epsEq1)
-    thenHave((A ∈ quotientGroup(G)(H)(*), B ∈ quotientGroup(G)(H)(*)) |- op(A, **, B) ∈ quotientGroup(G)(H)(*)) by Substitution.Apply(epsEq2)
-    thenHave((A ∈ quotientGroup(G)(H)(*) /\ B ∈ quotientGroup(G)(H)(*)) ==> op(A, **, B) ∈ quotientGroup(G)(H)(*)) by Restate
-    val binaryOpCond = thenHave(∀(A, ∀(B, (A ∈ quotientGroup(G)(H)(*) /\ B ∈ quotientGroup(G)(H)(*)) ==> op(A, **, B) ∈ quotientGroup(G)(H)(*)))) by Generalize
-    have(thesis) by Tautology.from(
-      binaryOpCond,
-      binaryOperation.definition of (
-        G := quotientGroup(G)(H)(*),
-        * := **
-      )
-    )
+    sorry
   }
 
   val cosetOperationIsAssociative = Theorem(
