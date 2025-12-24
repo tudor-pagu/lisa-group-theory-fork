@@ -87,9 +87,9 @@ object Groups extends lisa.Main:
     { leftCoset(g)(*)(H) | g ∈ G }
   ))))
 
-  val isCosetOperation = DEF(λ(G, λ(H, λ(*, λ(op2,
+  val isCosetOperation = DEF(λ(G, λ(H, λ(*, λ(**,
     ∀(A ∈ quotientGroup(G)(H)(*), ∀(B ∈ quotientGroup(G)(H)(*),
-      op2(A)(B) === ⋃{ {op(a, *, b) | a ∈ A} | b ∈ B }
+      op(A, **, B) === ⋃{ {op(a, *, b) | a ∈ A} | b ∈ B }
     ))
   )))))
 
