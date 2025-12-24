@@ -11,6 +11,8 @@ import lisa.maths.SetTheory.Base.EmptySet
 import lisa.maths.SetTheory.Base.Singleton
 import lisa.maths.SetTheory.Base.Subset
 import lisa.Main
+import lisa.maths.SetTheory.Functions.Function.{bijective, surjective, injective, ::, app, function, functionBetween}
+import lisa.maths.SetTheory.Functions.Operations.Restriction.*
 
 import lisa.automation.Congruence
 import lisa.automation.Substitution.{Apply => Substitute}
@@ -22,7 +24,7 @@ import lisa.utils.prooflib.SimpleDeducedSteps.InstantiateForall
 object Groups extends lisa.Main:
   
   val binaryOperation = DEF(λ(G, λ(*,
-    ∀(x, ∀(y, x ∈ G /\ y ∈ G ==> op(x, *, y) ∈ G))
+    (* ↾ (G × G)) :: (G × G) -> G
   )))
 
   val isIdentityElement = DEF(λ(G, λ(*, λ(x,
@@ -197,11 +199,10 @@ object Groups extends lisa.Main:
       op(x, *, y) ∈ G
   ) {
     assume(binaryOperation(G)(*), x ∈ G, y ∈ G)
-    have(∀(x, ∀(y, x ∈ G /\ y ∈ G ==> op(x, *, y) ∈ G))) by Tautology.from(binaryOperation.definition)
-    thenHave(∀(y, x ∈ G /\ y ∈ G ==> op(x, *, y) ∈ G)) by InstantiateForall(x)
-    thenHave(x ∈ G /\ y ∈ G ==> op(x, *, y) ∈ G) by InstantiateForall(y)
-    thenHave(thesis) by Tautology
-  }  
+    have((* ↾ (G × G)) :: (G × G) -> G) by Tautology.from(binaryOperation.definition)
+    
+    sorry
+  }
 
   val identityIsUnique = Theorem(
     (group(G)(*), isIdentityElement(G)(*)(x), isIdentityElement(G)(*)(y)) |- x === y

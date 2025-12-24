@@ -568,11 +568,9 @@ object Lagrange extends lisa.Main:
           val epsSubsetAxiom = thenHave((H ⊆ G) |- (eps2 ∈ H) ==> (eps2 ∈ G)) by InstantiateForall(eps2)
           val eps2InG = have((h ∈ rel) |- eps2 ∈ G) by Tautology.from(epsInH2, hSubsG, epsSubsetAxiom)
 
-          val restateBinaryOp = have(∀(x, ∀(y, x ∈ G /\ y ∈ G ==> op(x, *, y) ∈ G))) by Tautology.from(binaryOperation.definition, group.definition)
-          val binaryOpInstX = thenHave(∀(y, eps2 ∈ G /\ y ∈ G ==> op(eps2, *, y) ∈ G)) by InstantiateForall(eps2)
-          val binaryOpInstY = thenHave(eps2 ∈ G /\ x ∈ G ==> op(eps2, *, x) ∈ G) by InstantiateForall(x)
+          val restateBinaryOp = have((eps2 ∈ G /\ x ∈ G) ==> (op(eps2, *, x) ∈ G)) by Tautology.from(binaryOperationThm of (x := eps2, y := x), group.definition)
 
-          val opInG = have((h ∈ rel) |- op(eps2, *, x) ∈ G) by Tautology.from(binaryOpInstY, eps2InG)
+          val opInG = have((h ∈ rel) |- op(eps2, *, x) ∈ G) by Tautology.from(restateBinaryOp, eps2InG)
 
           val sndInG = have(h ∈ rel |- snd(h) ∈ G) by Substitution.Apply(pairExtrEq)(opInG)
           val sndInCoset = have(h ∈ rel |- snd(h) ∈ rightCoset(H)(*)(x)) by Tautology.from(
