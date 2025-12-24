@@ -19,6 +19,15 @@ import lisa.automation.Tableau
 import lisa.utils.prooflib.BasicStepTactic.RightForall
 import lisa.maths.GroupTheory.Groups.*
 
+import lisa.maths.SetTheory.Functions.Function.{bijective, surjective, injective, ::, app, function, functionBetween}
+import lisa.maths.SetTheory.Functions.Operations.Restriction.{↾}
+import lisa.maths.SetTheory.Functions.Operations.Restriction
+import lisa.maths.SetTheory.Functions.BasicTheorems.*
+import lisa.maths.SetTheory.Base.CartesianProduct
+import lisa.maths.SetTheory.Base.Pair
+import lisa.maths.SetTheory.Relations.Predef.{_, given}
+import lisa.maths.Quantifiers.∃!
+
 object Utils extends lisa.Main:
   val x = variable[Ind]
   val y = variable[Ind]
@@ -54,6 +63,29 @@ object Utils extends lisa.Main:
 
   val equivalenceSubstitutionExists = Theorem(∀(x, P(x) <=> Q(x)) |-  ∃(x, P(x)) <=> ∃(x, Q(x))) {
     have(thesis) by Tableau
+  }
+
+  val equivalenceSubstitutionExistsOne = Theorem(∀(x, P(x) <=> Q(x)) |-  ∃!(x, P(x)) <=> ∃!(x, Q(x))) {
+    assume(∀(x, P(x) <=> Q(x)))
+    val _1 = have(∃!(x, P(x)) <=> ∃(x, P(x) /\ ∀(y, P(y) ==> (y === x)))) by Tautology.from(
+      ∃!.definition
+    )
+    val _2 = have(∃!(x, Q(x)) <=> ∃(x, Q(x) /\ ∀(y, Q(y) ==> (y === x)))) by Tautology.from(
+      ∃!.definition of (P := Q)
+    )
+    have(∀(x, P(x) <=> Q(x))) by Restate
+    thenHave(P(y) <=> Q(y)) by InstantiateForall(y)
+    thenHave((P(y) ==> (y === x)) <=> (Q(y) ==> (y === x))) by Tautology
+    thenHave(∀(y, (P(y) ==> (y === x)) <=> (Q(y) ==> (y === x)))) by RightForall
+    val _3 = thenHave(∀(y, (P(y) ==> (y === x))) <=> ∀(y, Q(y) ==> (y === x))) by Tableau
+    
+    have(∀(x, P(x) <=> Q(x))) by Restate
+    thenHave(P(x) <=> Q(x)) by InstantiateForall(x)
+    thenHave((P(x) /\ ∀(y, P(y) ==> (y === x))) <=> (Q(x) /\ ∀(y, Q(y) ==> (y === x)))) by Tautology.fromLastStep(_3)
+    thenHave(∀(x, (P(x) /\ ∀(y, P(y) ==> (y === x))) <=> (Q(x) /\ ∀(y, Q(y) ==> (y === x))))) by RightForall
+    val _4 = thenHave(∃(x, P(x) /\ ∀(y, P(y) ==> (y === x))) <=> ∃(x, Q(x) /\ ∀(y, Q(y) ==> (y === x)))) by Tableau
+
+    have(thesis) by Tautology.from(_1, _2, _4)
   }
 
   val equivalenceSubstitutionForall = Theorem(∀(x, P(x) <=> Q(x)) |-  ∀(x, P(x)) <=> ∀(x, Q(x))) {
@@ -266,4 +298,48 @@ object Utils extends lisa.Main:
         )
     }
     have(thesis) by Tautology.from(leftImplies, rightImplies)
+  }
+
+  val restrictedAppTheorem = Theorem(
+    ((f ↾ A) :: A -> B, x ∈ A) |- (app(f)(x) === app(f ↾ A)(x))
+  ) {
+    assume((f ↾ A) :: A -> B, x ∈ A)
+    val fA = (f ↾ A)
+    val _1 = have((app(fA)(x) === y) <=> (x, y) ∈ fA) by Tautology.from(
+      functionBetweenIsFunction of (f := fA),
+      functionBetweenDomain of (f := fA),
+      equalitySetMembership of (x := x, A := A, B := dom(fA)),
+      appDefinition of (f := fA)
+    )
+
+    val _2 = have(((x, y) ∈ fA) <=> ((x, y) ∈ f)) by Tautology.from(
+      Restriction.pairMembership
+    )
+    val auxP = lambda(y, (x, y) ∈ fA)
+    val auxQ = lambda(y, (x, y) ∈ f)
+    val _3 = thenHave(∀(y, auxP(y) <=> auxQ(y))) by RightForall
+    val fAx = app(fA)(x)
+    val _4 = have((x, fAx) ∈ f) by Tautology.from(
+      _1 of (y := fAx), _2 of (y := fAx)
+    )
+
+    have(∀(x ∈ A, ∃!(y, (x, y) ∈ fA))) by Tautology.from(
+      functionBetween.definition of (f := fA)
+    )
+    thenHave(x ∈ A ==> ∃!(y, (x, y) ∈ fA)) by InstantiateForall(x)
+    val _5 = thenHave(∃!(y, (x, y) ∈ fA)) by Tautology
+    val _6 = have(∃!(y, (x, y) ∈ f)) by Tautology.from(
+      _3, _5,
+      equivalenceSubstitutionExistsOne of (x := y, P := auxP, Q := auxQ)
+    )
+
+    val _7a = have(auxQ(y) <=> (y === ε(z, auxQ(z)))) by Tautology.from(
+      _4, _6, Quantifiers.existsOneEpsilonUniqueness of (x := z, P := auxQ)
+    )
+    val _7 = have(fAx === ε(z, auxQ(z))) by Tautology.from(
+      _4, _7a of (y := fAx)
+    )
+
+    val _8 = have(app(f)(x) === ε(z, auxQ(z))) by Tautology.from(app.definition of (y := z))
+    have(thesis) by Congruence.from(_7, _8)
   }

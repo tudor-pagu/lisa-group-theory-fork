@@ -9,7 +9,6 @@ object Symbols extends lisa.Main:
   val G = variable[Ind]
   val Pr = variable[Ind]
   val H = variable[Ind]
-  val C = variable[Ind]
 
   val * = variable[Ind]
   val ** = variable[Ind]

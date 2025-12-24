@@ -12,7 +12,12 @@ import lisa.maths.SetTheory.Base.Singleton
 import lisa.maths.SetTheory.Base.Subset
 import lisa.Main
 import lisa.maths.SetTheory.Functions.Function.{bijective, surjective, injective, ::, app, function, functionBetween}
-import lisa.maths.SetTheory.Functions.Operations.Restriction.*
+import lisa.maths.SetTheory.Functions.Operations.Restriction.{↾}
+import lisa.maths.SetTheory.Functions.Operations.Restriction
+import lisa.maths.SetTheory.Functions.BasicTheorems.*
+import lisa.maths.SetTheory.Base.CartesianProduct
+import lisa.maths.SetTheory.Base.Pair
+import lisa.maths.SetTheory.Relations.Predef.{_, given}
 
 import lisa.automation.Congruence
 import lisa.automation.Substitution.{Apply => Substitute}
@@ -199,9 +204,22 @@ object Groups extends lisa.Main:
       op(x, *, y) ∈ G
   ) {
     assume(binaryOperation(G)(*), x ∈ G, y ∈ G)
-    have((* ↾ (G × G)) :: (G × G) -> G) by Tautology.from(binaryOperation.definition)
+    val _1 = have((* ↾ (G × G)) :: (G × G) -> G) by Tautology.from(binaryOperation.definition)
     
-    sorry
+    val _2 = have((x, y) ∈ (G × G)) by Tautology.from(
+      CartesianProduct.pairMembership of (A := G, B := G)
+    )
+    val x_y = Pair.pair(x)(y)
+    val opG = (* ↾ (G × G))
+
+    val _3 = have(app(opG)(x_y) === op(x, *, y)) by Tautology.from(
+      _1, _2, restrictedAppTheorem of (f := *, x := x_y, A := (G × G), B := G)
+    )
+    val _4 = have(app(opG)(x_y) ∈ G) by Tautology.from(
+      _1, _2,
+      appTyping of (f := opG, x := x_y, A := (G × G), B := G)
+    )
+    thenHave(thesis) by Substitute(_3)
   }
 
   val identityIsUnique = Theorem(
