@@ -376,7 +376,7 @@ object BasicTheorems extends lisa.Main {
   val subset = Theorem(
     (function(f), g ⊆ f) |- function(g)
   ) {
-    assume(g ⊆ f)
+    assume(function(f), g ⊆ f)
 
     // First, we show that `g` is a relation
     val `g is relation between dom(g) and range(g)` = have(f :: A -> B |- relationBetween(g)(dom(g))(range(g))) subproof {
@@ -400,28 +400,42 @@ object BasicTheorems extends lisa.Main {
 
         have(x ∈ { fst(z) | z ∈ g } <=> ∃(z ∈ g, fst(z) === x)) by Replacement.apply
         thenHave(x ∈ dom(g) <=> ∃(z ∈ g, fst(z) === x)) by Substitute(dom.definition of (R := g))
-        thenHave(∃(z ∈ g, fst(z) === x)) by Tautology
-
-        /*
-        // Since `z ∈ g` implies that `z` is a pair, we have `z = (x, snd(z))`
-        have(z ∈ g |- (z === (fst(z), snd(z)))) by Tautology.from(
-          inversion,
-          functionBetweenIsFunction,
-          Subset.membership of (x := g, y := f)
+        val _1 = thenHave(∃(z ∈ g, fst(z) === x)) by Tautology
+        val auxP = lambda(z, z ∈ g /\ (fst(z) === x))
+        val z0 = ε(z, auxP(z))
+        val _2 = have(z0 ∈ g /\ (fst(z0) === x)) by Tautology.from(
+          _1, Quantifiers.existsEpsilon of (x := z, P := auxP)
         )
-        val eq1 = thenHave((z ∈ g, fst(z) === x) |- (z === (x, snd(z)))) by Congruence
+        have(∀(z, z ∈ g ==> z ∈ f)) by Tautology.from(
+          subsetAxiom of (x := g, y := f)
+        )
+        thenHave(z0 ∈ g ==> z0 ∈ f) by InstantiateForall(z0)
+        val _3 = thenHave(z0 ∈ f) by Tautology.fromLastStep(_2)
 
-        have((z ∈ g, fst(z) === x) |- (x, snd(z)) ∈ f) by Congruence.from(
-          lastStep,
-          Subset.membership of (x := g, y := f)
+        val xeq = have(x === fst(z0)) by Tautology.from(_2)
+        val y0 = snd(z0)
+        have(z0 === (fst(z0), snd(z0))) by Tautology.from(_3, inversion of (z := z0))
+        val _4 = thenHave(z0 === (x, y0)) by Substitute(xeq)
+        have(z0 ∈ f) by Tautology.from(_3)
+        val _5 = thenHave((x, y0) ∈ f) by Substitute(_4)
+
+        val _6 = have(x ∈ dom(f)) by Tautology.from(
+          domainMonotonic,
+          Subset.membership of (z := x, x := dom(g), y := dom(f))
         )
 
-        // Since `(x, snd(z)) ∈ f` and `(x, y) ∈ f` and `f` is functional, we must have
-        // `y = snd(z)`, i.e., `z = (x, y)`. Hence `(x, y) ∈ g`.
-        // have((z ∈ g, fst(z) === x) |- (y === snd(z)))
-         */
+        val _7 = have(f(x) === y0) by Tautology.from(
+          _5, _6, appDefinition of (y := y0)
+        )
+        val _8 = have(f(x) === y) by Tautology.from(
+          _6, appDefinition
+        )
+        val _9 = thenHave(y0 === y) by Substitute(_7)
+        have(z0 === (x, y0)) by Tautology.from(_4)
+        val _10 = thenHave(z0 === (x, y)) by Substitute(_9)
 
-        sorry
+        have(z0 ∈ g) by Tautology.from(_2)
+        thenHave(thesis) by Substitute(_10)
       }
 
       val `<==` = have((x, y) ∈ g |- (x, y) ∈ f) by Tautology.from(Subset.membership of (z := (x, y), x := g, y := f))

@@ -185,7 +185,34 @@ object Homomorphisms extends lisa.Main:
         (group(G)(*), group(H)(∘), f ::: (G, *) -> (H, ∘))
         |- binaryOperation(ker(f)(G)(*)(H)(∘))(*)
     ) {
-        sorry
+        assume(group(G)(*), group(H)(∘), f ::: (G, *) -> (H, ∘))
+        val K = ker(f)(G)(*)(H)(∘)
+        have((x ∈ K, y ∈ K) |- op(x, *, y) ∈ K) subproof {
+            assume(x ∈ K, y ∈ K)
+            val _1 = have(x ∈ G /\ isIdentityElement(H)(∘)(f(x))) by Tautology.from(kerProperty)
+            val _2 = have(y ∈ G /\ isIdentityElement(H)(∘)(f(y))) by Tautology.from(kerProperty of (x := y))
+
+            val fyinH = have(f(y) ∈ H) by Tautology.from(_2, homomorphismAppTyping of (x := y))
+            val _3 = have(f(op(x, *, y)) === op(f(x), ∘, f(y))) by Tautology.from(_1, _2, homomorphismProperty)
+            val _4 = have(op(f(x), ∘, f(y)) === f(y)) by Tautology.from(
+                _1, fyinH, identityProperty of (e := f(x), x := f(y), G := H, * := ∘),
+            )
+            val _5 = have(isIdentityElement(H)(∘)(f(y))) by Tautology.from(_2)
+            val _6 = have(isIdentityElement(H)(∘)(f(op(x, *, y)))) by Congruence.from(_3, _4, _5)
+            val _7 = have(op(x, *, y) ∈ G) by Tautology.from(
+                _1, _2, binaryOperationThm, group.definition
+            )
+            have(thesis) by Tautology.from(
+                _6, _7, kerMembershipTest of (x := op(x, *, y))
+            )
+        }
+        thenHave((x ∈ K /\ y ∈ K) ==> op(x, *, y) ∈ K) by Restate
+        thenHave(∀(x, ∀(y, (x ∈ K /\ y ∈ K) ==> op(x, *, y) ∈ K))) by Generalize
+        thenHave(thesis) by Tautology.fromLastStep(
+            kerIsSubset,
+            group.definition,
+            binaryOperationTestSubset of (H := K)
+        )
     }
 
     val kerIsClosedUnderInverse = Theorem(

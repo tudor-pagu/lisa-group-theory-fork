@@ -19,7 +19,7 @@ import lisa.automation.Tableau
 import lisa.utils.prooflib.BasicStepTactic.RightForall
 import lisa.maths.GroupTheory.Groups.*
 
-import lisa.maths.SetTheory.Functions.Function.{bijective, surjective, injective, ::, app, function, functionBetween}
+import lisa.maths.SetTheory.Functions.Function.{bijective, surjective, injective, ::, app, function, functionBetween, functionOn}
 import lisa.maths.SetTheory.Functions.Operations.Restriction.{↾}
 import lisa.maths.SetTheory.Functions.Operations.Restriction
 import lisa.maths.SetTheory.Functions.BasicTheorems.*
@@ -342,4 +342,220 @@ object Utils extends lisa.Main:
 
     val _8 = have(app(f)(x) === ε(z, auxQ(z))) by Tautology.from(app.definition of (y := z))
     have(thesis) by Congruence.from(_7, _8)
+  }
+
+  val functionAppLemma = Theorem(
+    (f :: A -> C, ∀(x ∈ A, app(f)(x) ∈ B))
+    |- f ⊆ (A × B)
+  ) {
+    assume(f :: A -> C, ∀(x ∈ A, app(f)(x) ∈ B))
+    val functionf = have(function(f)) by Tautology.from(functionBetweenIsFunction of (B := C))
+    val subst = have(dom(f) === A) by Tautology.from(functionBetweenDomain of (B := C))
+    have(x ∈ dom(f) |- (app(f)(x) === y) <=> (x, y) ∈ f) by Tautology.from(
+      appDefinition, functionf
+    )
+    val _1 = thenHave(x ∈ A |- (app(f)(x) === y) <=> (x, y) ∈ f) by Substitute(subst)
+    val _2 = have(z ∈ f |- z === (fst(z), snd(z))) by Tautology.from(
+      inversion,
+      functionf
+    )
+
+    have(∀(x ∈ A, app(f)(x) ∈ B)) by Restate
+    val _3 = thenHave(x ∈ A |- app(f)(x) ∈ B) by InstantiateForall(x)
+      
+    have(z ∈ f |- z ∈ (A × B)) subproof {
+      assume(z ∈ f)
+      val x0 = fst(z)
+      val y0 = snd(z)
+      val z0 = (x0, y0)
+      val step1 = have(z === (x0, y0)) by Tautology.from(_2)
+      have(z ∈ f) by Restate
+      val step2 = thenHave(z0 ∈ f) by Substitute(step1)
+      val step3 = have(x0 ∈ dom(f)) by Tautology.from(step2, domainMembership of (x := x0, y := y0), functionf)
+      val step4 = thenHave(x0 ∈ A) by Substitute(subst)
+
+      val step5 = have(app(f)(x0) === y0) by Tautology.from(
+        step2, step4,
+        _1 of (x := x0, y := y0)
+      )
+      have(app(f)(x0) ∈ B) by Tautology.from(_3 of (x := x0), step4)
+      val step6 = thenHave(y0 ∈ B) by Substitute(step5)
+      val step7 = have(z0 ∈ (A × B)) by Tautology.from(
+        step4, step6,
+        CartesianProduct.pairMembership of (x := x0, y := y0)
+      )
+      thenHave(thesis) by Substitute(step1)
+    }
+    thenHave((z ∈ f) ==> (z ∈ (A × B))) by Restate
+    thenHave(∀(z ∈ f, z ∈ (A × B))) by RightForall
+    thenHave(thesis) by Tautology.fromLastStep(
+      subsetAxiom of (x := f, y := (A × B))
+    )
+  }
+
+  val functionBetweenTest = Theorem(
+    (function(f), dom(f) === A, range(f) ⊆ B) |- f :: A -> B
+  ) {
+    assume(function(f), dom(f) === A, range(f) ⊆ B)
+    val _1 = have(functionOn(f)(A)) by Tautology.from(functionOnIffFunctionWithDomain)
+    
+    
+    val auxP = lambda(B, functionBetween(f)(A)(B))
+    val B0 = ε(B, auxP(B))
+    have(∃(B, auxP(B))) by Tautology.from(_1, functionOn.definition)
+    val _4 = thenHave(f :: A -> B0) by Tautology.fromLastStep(
+      Quantifiers.existsEpsilon of (x := B, P := auxP)
+    ) 
+    val _5 = have(relationBetween(f)(A)(B0) /\ ∀(x ∈ A, ∃!(y, (x, y) ∈ f))) by Tautology.from(
+      _4, functionBetween.definition of (f := f, B := B0)
+    )
+
+    have(x ∈ A |- app(f)(x) ∈ B) subproof {
+      assume(x ∈ A)
+      val subst = have(dom(f) === A) by Restate
+      have(x ∈ A) by Restate
+      val step1 = thenHave(x ∈ dom(f)) by Substitute(subst)
+      val step2 = have(app(f)(x) ∈ range(f)) by Tautology.from(
+        appInRange, step1
+      )
+      have(∀(y, y ∈ range(f) ==> y ∈ B)) by Tautology.from(
+        subsetAxiom of (z := y, x := range(f), y := B)
+      )
+      val step3 = thenHave(app(f)(x) ∈ range(f) ==> app(f)(x) ∈ B) by InstantiateForall(app(f)(x))
+      have(thesis) by Tautology.from(step2, step3)
+    }
+    thenHave(x ∈ A ==> app(f)(x) ∈ B) by Restate
+    val _6 = thenHave(∀(x ∈ A, app(f)(x) ∈ B)) by RightForall
+    val _7 = have(f ⊆ (A × B)) by Tautology.from(
+      _4, _6, functionAppLemma of (C := B0)
+    )
+    val _8 = have(relationBetween(f)(A)(B)) by Tautology.from(
+      _7, relationBetween.definition of (Relation.R := f, X := A, Y := B)
+    )
+    have(thesis) by Tautology.from(
+      _5, _8, functionBetween.definition
+    )
+  }
+
+  val restrictionRange = Theorem(
+    (function(f)) |- range(f ↾ A) ⊆ range(f)
+  ) {
+    assume(function(f))
+    have((f ↾ A) ⊆ f) by Tautology.from(Restriction.isSubset)
+    thenHave(range(f ↾ A) ⊆ range(f)) by Tautology.fromLastStep(
+      rangeMonotonic of (g := (f ↾ A))
+    )
+  }
+
+  val restrictionDomain = Theorem(
+    dom(f ↾ A) === (dom(f) ∩ A)
+  ) {
+    have(x ∈ { fst(z) | z ∈ f } <=> ∃(z ∈ f, fst(z) === x)) by Replacement.apply
+    val `x ∈ dom(f)` = thenHave(x ∈ dom(f) <=> ∃(z ∈ f, fst(z) === x)) by Substitute(dom.definition of (Relation.R := f))
+
+    have(∀(z, z ∈ (f ↾ A) <=> (z ∈ f) /\ (fst(z) ∈ A))) by RightForall(Restriction.membership)
+    val xdom = have(x ∈ dom(f ↾ A) <=> ∃(z ∈ f, fst(z) ∈ A /\ (fst(z) === x))) by Tableau.from(
+      lastStep,
+      `x ∈ dom(f)` of (f := f ↾ A)
+    )
+
+    val `==>` = have(x ∈ dom(f ↾ A) |- x ∈ (dom(f) ∩ A)) subproof {
+      assume(x ∈ dom(f ↾ A))
+      val _1 = have(∃(z ∈ f, fst(z) ∈ A /\ (fst(z) === x))) by Tautology.from(xdom)
+      val auxP = lambda(z, z ∈ f /\ fst(z) ∈ A /\ (fst(z) === x))
+      val z0 = ε(z, auxP(z))
+      val _2 = have(z0 ∈ f /\ fst(z0) ∈ A /\ (fst(z0) === x)) by Tautology.from(
+        _1, Quantifiers.existsEpsilon of (x := z, P := auxP)
+      )
+      val _3 = have(x ∈ A) by Tautology.from(
+        _2, equalitySetMembership2 of (x := fst(z0), y := x, A := A)
+      )
+      have(z0 ∈ f /\ (fst(z0) === x)) by Tautology.from(_2)
+      val _4 = thenHave(∃(z ∈ f, fst(z) === x)) by RightExists
+      val _5 = have(x ∈ dom(f)) by Tautology.from(
+        _4, `x ∈ dom(f)`
+      )
+      have(thesis) by Tautology.from(
+        _3, _5, Intersection.membership of (z := x, x := dom(f), y := A)
+      )
+    }
+    val `<==` = have(x ∈ (dom(f) ∩ A) |- x ∈ dom(f ↾ A)) subproof {
+      assume(x ∈ (dom(f) ∩ A))
+      val _1 = have(x ∈ dom(f) /\ x ∈ A) by Tautology.from(Intersection.membership of (z := x, x := dom(f), y := A))
+      val _2 = have(∃(z ∈ f, fst(z) === x)) by Tautology.from(_1, `x ∈ dom(f)`)
+      val auxP = lambda(z, z ∈ f /\ (fst(z) === x))
+      val z0 = ε(z, auxP(z))
+      val _3 = have(auxP(z0)) by Tautology.from(_2, Quantifiers.existsEpsilon of (x := z, P := auxP))
+      val subst = have(fst(z0) === x) by Tautology.from(_3)
+      have(x ∈ A) by Tautology.from(_1)
+      val _4 = thenHave(fst(z0) ∈ A) by Substitute(subst)
+      have(z0 ∈ f /\ fst(z0) ∈ A /\ (fst(z0) === x)) by Tautology.from(_3, _4)
+      thenHave(∃(z, z ∈ f /\ fst(z) ∈ A /\ (fst(z) === x))) by RightExists
+      thenHave(thesis) by Tautology.fromLastStep(xdom)
+    }
+    have((x ∈ dom(f ↾ A)) <=> (x ∈ (dom(f) ∩ A))) by Tautology.from(`==>`, `<==`)
+    thenHave(∀(x, (x ∈ dom(f ↾ A)) <=> (x ∈ (dom(f) ∩ A)))) by RightForall
+    thenHave(thesis) by Tautology.fromLastStep(
+      extensionalityAxiom of (z := x, x := dom(f ↾ A), y := (dom(f) ∩ A))
+    )
+  }
+
+  val restrictedAppTheorem2 = Theorem(
+    ((f ↾ A) :: A -> C, B ⊆ A) |- (f ↾ B) :: B -> C
+  ) {
+    assume((f ↾ A) :: A -> C, B ⊆ A)
+    val fA = (f ↾ A)
+    val _1 = have(relationBetween(fA)(A)(C) /\ ∀(x ∈ A, ∃!(y, (x, y) ∈ fA))) by Tautology.from(
+      functionBetween.definition of (f := fA, B := C)
+    )
+    val fB = (f ↾ B)
+    val fAB = ((f ↾ A) ↾ B)
+    val BAeq = have((B ∩ A) === B) by Tautology.from(Intersection.ofSubsets of (x := B, y := A))
+    val ABeq = have((A ∩ B) === B) by Congruence.from(BAeq, Intersection.commutativity of (x := B, y := A))
+    have(fAB === (f ↾ (A ∩ B))) by Tautology.from(Restriction.doubleRestriction)
+    val fABeq = thenHave(fAB === fB) by Substitute(ABeq)
+
+    val functionfA = have(function(fA)) by Tautology.from(functionBetweenIsFunction of (f := fA, B := C))
+    val domfA = have(dom(fA) === A) by Tautology.from(functionBetweenDomain of (f := fA, B := C))
+    
+    have(function(fAB)) by Tautology.from(Restriction.isFunction of (f := fA, A := B), functionfA)
+    val _2 = thenHave(function(fB)) by Substitute(fABeq)
+
+    have(dom(fAB) === (dom(fA) ∩ B)) by Tautology.from(restrictionDomain of (f := fA, A := B))
+    thenHave(dom(fB) === (dom(fA) ∩ B)) by Substitute(fABeq)
+    thenHave(dom(fB) === (A ∩ B)) by Substitute(domfA)
+    val _3 = thenHave(dom(fB) === B) by Substitute(ABeq)
+
+    have(range(fAB) ⊆ range(fA)) by Tautology.from(
+      restrictionRange of (f := fA, A := B),
+      functionfA
+    )
+    val _4 = thenHave(range(fB) ⊆ range(fA)) by Substitute(fABeq)
+    have(range(fA) ⊆ C) by Tautology.from(
+      functionBetweenRange of (f := fA, B := C)
+    )
+    val _5 = thenHave(range(fB) ⊆ C) by Tautology.fromLastStep(
+      _4, Subset.transitivity of (x := range(fB), y := range(fA), z := C)
+    )
+    
+    have(thesis) by Tautology.from(
+      _2, _3, _5,
+      functionBetweenTest of (f := fB, A := B, B := C)
+    )
+  }
+
+  val restrictedAppTheorem3 = Theorem(
+    (f :: A -> C, ∀(x ∈ A, app(f)(x) ∈ B)) |- f :: A -> B
+  ) {
+    assume(f :: A -> C, ∀(x ∈ A, app(f)(x) ∈ B))
+    val _1 = have(relationBetween(f)(A)(C) /\ ∀(x ∈ A, ∃!(y, (x, y) ∈ f))) by Tautology.from(
+      functionBetween.definition of (B := C)
+    )
+    val _2 = have(relationBetween(f)(A)(B)) by Tautology.from(
+      functionAppLemma, 
+      relationBetween.definition of (Relation.R := f, X := A, Y := B)
+    )
+    have(thesis) by Tautology.from(
+      _1, _2, functionBetween.definition
+    )
   }
