@@ -750,3 +750,32 @@ object Groups extends lisa.Main:
       _2, _3
     )
   }
+
+  val identityIsIdempotent = Theorem(
+    (group(G)(*)) |- isIdentityElement(G)(*)(e) <=> (e ∈ G /\ (op(e, *, e) === e))
+  ) {
+    assume(group(G)(*))
+    val `==>` = have(isIdentityElement(G)(*)(e) |- (op(e, *, e) === e) /\ e ∈ G) subproof {
+      have(thesis) by Tautology.from(
+        identityProperty of (x := e),
+        isIdentityElement.definition of (x := e)
+      )
+    }
+    val `<==` = have((e ∈ G, op(e, *, e) === e) |- isIdentityElement(G)(*)(e)) subproof {
+      assume(e ∈ G, op(e, *, e) === e)
+      val e0 = identityOf(G)(*)
+      val e0inG = have(e0 ∈ G) by Tautology.from(
+        identityOfIsIdentity, isIdentityElement.definition of (x := e0)
+      )
+      have(op(e0, *, e) === e) by Tautology.from(
+        identityOfIsIdentity, identityProperty of (e := e0, x := e)
+      )
+      thenHave(op(e0, *, e) === op(e, *, e)) by Congruence
+      val subst = thenHave(e0 === e) by Tautology.fromLastStep(
+        eliminateRight of (x := e0, y := e, z := e), e0inG
+      )
+      have(isIdentityElement(G)(*)(e0)) by Tautology.from(identityOfIsIdentity)
+      thenHave(thesis) by Substitute(subst)
+    }
+    have(thesis) by Tautology.from(`<==`, `==>`)
+  }

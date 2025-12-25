@@ -83,6 +83,37 @@ object Homomorphisms extends lisa.Main:
         thenHave(thesis) by Tautology
     }
 
+    val homomorphismAppTyping = Theorem(
+        (f ::: (G, *) -> (H, ∘), x ∈ G)
+        |- f(x) ∈ H
+    ) {
+        assume(f ::: (G, *) -> (H, ∘), x ∈ G)
+        have(f :: G -> H) by Tautology.from(groupHomomorphism.definition)
+        thenHave(f(x) ∈ H) by Tautology.fromLastStep(appTyping of (A := G, B := H))
+    }
+
+    val homomorphismAppIdentity = Theorem(
+        (group(G)(*), group(H)(∘), f ::: (G, *) -> (H, ∘), isIdentityElement(G)(*)(e))
+        |- isIdentityElement(H)(∘)(f(e))
+    ) {
+        assume(group(G)(*), group(H)(∘), f ::: (G, *) -> (H, ∘), isIdentityElement(G)(*)(e))
+        val _1 = have(isIdentityElement(G)(*)(e)) by Tautology
+        val einG = have(e ∈ G) by Tautology.from(_1, isIdentityElement.definition of (x := e))
+        val feinH = have(f(e) ∈ H) by Tautology.from(homomorphismAppTyping of (x := e), einG)
+        val _2 = have(op(e, *, e) === e) by Tautology.from(
+            _1, identityIsIdempotent of (e := e)
+        )
+
+        val _3 = have(f(op(e, *, e)) === op(f(e), ∘, f(e))) by Tautology.from(
+            homomorphismProperty of (x := e, y := e), einG
+        )
+        val _4 = have(f(e) === op(f(e), ∘, f(e))) by Congruence.from(_2, _3)
+        val _5 = have(isIdentityElement(H)(∘)(f(e))) by Tautology.from(
+            _4, identityIsIdempotent of (e := f(e), G := H, * := ∘),
+            einG, feinH
+        )
+    }
+
     val ker = DEF(λ(f, λ(G, λ(*, λ(H, λ(∘,
         { x ∈ G | isIdentityElement(H)(∘)(f(x)) }
     ))))))
@@ -110,18 +141,44 @@ object Homomorphisms extends lisa.Main:
         thenHave(thesis) by Tautology.fromLastStep(subsetAxiom of (x := K, y := G, z := x))
     }
 
+    val kerMembershipTest = Theorem(
+        (x ∈ G, isIdentityElement(H)(∘)(f(x))) |- x ∈ ker(f)(G)(*)(H)(∘)
+    ) {
+        assume(x ∈ G, isIdentityElement(H)(∘)(f(x)))
+        val K = ker(f)(G)(*)(H)(∘)
+        val auxP = lambda(x, isIdentityElement(H)(∘)(f(x)))
+        val subst = have(K === { x ∈ G | auxP(x) }) by Tautology.from(ker.definition) 
+        have(x ∈ { x ∈ G | isIdentityElement(H)(∘)(f(x)) }) by Tautology.from(
+            Comprehension.membership of (x := x, y := G, φ := auxP)
+        )
+        thenHave(x ∈ K) by Substitute(subst)
+    }
+
     val eIsInKer = Theorem(
         (group(G)(*), group(H)(∘), f ::: (G, *) -> (H, ∘))
         |- identityOf(G)(*) ∈ ker(f)(G)(*)(H)(∘)
     ) {
-        sorry
+        assume(group(G)(*), group(H)(∘), f ::: (G, *) -> (H, ∘))
+        val eG = identityOf(G)(*)
+        val eH = f(eG)
+
+        val _1 = have(isIdentityElement(G)(*)(eG)) by Tautology.from(identityOfIsIdentity)
+        val eGinG = have(eG ∈ G) by Tautology.from(_1, isIdentityElement.definition of (x := eG))
+        val _2 = have(isIdentityElement(H)(∘)(f(eG))) by Tautology.from(_1, homomorphismAppIdentity of (e := eG))
+        have(thesis) by Tautology.from(
+            eGinG, _2, kerMembershipTest of (x := eG)
+        )
     }
 
     val kerIsNonEmpty = Theorem(
         (group(G)(*), group(H)(∘), f ::: (G, *) -> (H, ∘))
         |- ker(f)(G)(*)(H)(∘) ≠ ∅
     ) {
-        sorry
+        val K = ker(f)(G)(*)(H)(∘)
+        have(thesis) by Tautology.from(
+            EmptySet.setWithElementNonEmpty of (x := identityOf(G)(*), y := K),
+            eIsInKer
+        )
     }
 
     val kerIsClosedUnderOperation = Theorem(
