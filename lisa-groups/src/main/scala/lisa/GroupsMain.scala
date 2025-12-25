@@ -27,6 +27,8 @@ import lisa.maths.GroupTheory.Utils.*
 import lisa.utils.prooflib.SimpleDeducedSteps.InstantiateForall
 
 object Groups extends lisa.Main:
+
+  case class Group(G: Expr[Ind], * : Expr[Ind])
   
   val binaryOperation = DEF(λ(G, λ(*,
     (* ↾ (G × G)) :: (G × G) -> G
