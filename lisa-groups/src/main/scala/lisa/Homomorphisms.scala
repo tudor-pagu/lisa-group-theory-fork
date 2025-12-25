@@ -82,3 +82,88 @@ object Homomorphisms extends lisa.Main:
         thenHave((x ∈ G, y ∈ G) |- f(op(x, *, y)) === op(f(x), ∘, f(y))) by InstantiateForall(y)
         thenHave(thesis) by Tautology
     }
+
+    val ker = DEF(λ(f, λ(G, λ(*, λ(H, λ(∘,
+        { x ∈ G | isIdentityElement(H)(∘)(f(x)) }
+    ))))))
+
+    val kerProperty = Theorem(
+        (x ∈ ker(f)(G)(*)(H)(∘))
+        |- x ∈ G /\ isIdentityElement(H)(∘)(f(x))
+    ) {
+        assume(x ∈ ker(f)(G)(*)(H)(∘))
+        val auxP = lambda(x, isIdentityElement(H)(∘)(f(x)))
+        val subst = have(ker(f)(G)(*)(H)(∘) === { x ∈ G | auxP(x) }) by Tautology.from(ker.definition)
+        have(x ∈ ker(f)(G)(*)(H)(∘)) by Tautology
+        thenHave(x ∈ { x ∈ G | auxP(x) }) by Substitute(subst)
+        thenHave(thesis) by Tautology.fromLastStep(
+            Comprehension.membership of (x := x, y := G, φ := auxP)
+        )
+    }
+
+    val kerIsSubset = Theorem(
+        ker(f)(G)(*)(H)(∘) ⊆ G
+    ) {
+        val K = ker(f)(G)(*)(H)(∘)
+        have(x ∈ K ==> x ∈ G) by Tautology.from(kerProperty)
+        thenHave(∀(x ∈ K, x ∈ G)) by RightForall
+        thenHave(thesis) by Tautology.fromLastStep(subsetAxiom of (x := K, y := G, z := x))
+    }
+
+    val eIsInKer = Theorem(
+        (group(G)(*), group(H)(∘), f ::: (G, *) -> (H, ∘))
+        |- identityOf(G)(*) ∈ ker(f)(G)(*)(H)(∘)
+    ) {
+        sorry
+    }
+
+    val kerIsNonEmpty = Theorem(
+        (group(G)(*), group(H)(∘), f ::: (G, *) -> (H, ∘))
+        |- ker(f)(G)(*)(H)(∘) ≠ ∅
+    ) {
+        sorry
+    }
+
+    val kerIsClosedUnderOperation = Theorem(
+        (group(G)(*), group(H)(∘), f ::: (G, *) -> (H, ∘))
+        |- binaryOperation(ker(f)(G)(*)(H)(∘))(*)
+    ) {
+        sorry
+    }
+
+    val kerIsClosedUnderInverse = Theorem(
+        (group(G)(*), group(H)(∘), f ::: (G, *) -> (H, ∘))
+        |- inverseElement(ker(f)(G)(*)(H)(∘))(*)
+    ) {
+        sorry
+    }
+
+    val kerIsSubgroup = Theorem(
+        (group(G)(*), group(H)(∘), f ::: (G, *) -> (H, ∘))
+        |- subgroup(ker(f)(G)(*)(H)(∘))(G)(*)
+    ) {
+        assume(group(G)(*), group(H)(∘), f ::: (G, *) -> (H, ∘))
+        val K = ker(f)(G)(*)(H)(∘)
+        have(thesis) by Tautology.from(
+            kerIsNonEmpty,
+            kerIsSubset,
+            kerIsClosedUnderInverse,
+            kerIsClosedUnderOperation,
+            subgroupTestTwoStep of (H := K)
+        )
+    }
+
+    val kerIsGroup = Theorem(
+        (group(G)(*), group(H)(∘), f ::: (G, *) -> (H, ∘))
+        |- group(ker(f)(G)(*)(H)(∘))(*)
+    ) {
+        val K = ker(f)(G)(*)(H)(∘)
+        have(thesis) by Tautology.from(kerIsSubgroup, subgroup.definition of (H := K))
+    }
+
+    val kerIsNormalSubgroup = Theorem(
+        (group(G)(*), group(H)(∘), f ::: (G, *) -> (H, ∘))
+        |- normalSubgroup(ker(f)(G)(*)(H)(∘))(G)(*)
+    ) {
+        sorry
+    }
