@@ -328,3 +328,12 @@ object Homomorphisms extends lisa.Main:
     ) {
         sorry
     }
+
+    val im = DEF(λ(f, range(f)))
+
+    val homomorphismImageIsSubgroup = Theorem(
+        (group(G)(*), group(H)(∘), f ::: (G, *) -> (H, ∘))
+        |- im(f) ≤ (H, ∘)
+    ) {
+        sorry
+    }

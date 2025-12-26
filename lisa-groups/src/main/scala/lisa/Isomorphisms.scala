@@ -23,6 +23,7 @@ import lisa.maths.GroupTheory.Subgroups.*
 import lisa.maths.GroupTheory.Cosets.*
 import lisa.maths.GroupTheory.NormalSubgroups.*
 import lisa.maths.GroupTheory.QuotientGroup.*
+import lisa.maths.GroupTheory.QuotientGroup.{/}
 import lisa.maths.GroupTheory.Homomorphisms.*
 import lisa.maths.GroupTheory.Homomorphisms.{:::}
 import lisa.maths.GroupTheory.Utils.equalityTransitivity
@@ -69,7 +70,11 @@ object Isomorphisms extends lisa.Main:
 
     val groupIsomorphic = DEF(λ(G, λ(*, λ(H, λ(∘,
         ∃(f, f ::~ (G, *) -> (H, ∘))
-    )))))
+    ))))).printAs(args => {
+        val G = args(0)
+        val H = args(2)
+        s"$G ≅ $H"
+    })
 
     extension(g1: (Expr[Ind], Expr[Ind])) {
         infix def ≅(g2: (Expr[Ind], Expr[Ind])) = {
@@ -101,3 +106,9 @@ object Isomorphisms extends lisa.Main:
         thenHave(thesis) by Tautology.fromLastStep(groupIsomorphic.definition)
     }
     
+    val firstIsomorphismTheorem = Theorem(
+        (group(G)(*), group(H)(*), f ::: (G, *) -> (H, ∘))
+        |- (G / ker(f), cosetOperation(G)(*)) ≅ (im(f), cosetOperation(H)(∘))
+    ) {
+        sorry
+    }
