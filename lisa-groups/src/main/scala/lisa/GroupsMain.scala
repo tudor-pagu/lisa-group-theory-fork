@@ -833,3 +833,23 @@ object Groups extends lisa.Main:
       binaryOperation.definition of (G := H)
     )
   }
+
+  val identityElementTestSubset = Theorem(
+    (isIdentityElement(G)(*)(e), e ∈ H, H ⊆ G)
+    |- isIdentityElement(H)(*)(e)
+  ) {
+    assume(isIdentityElement(G)(*)(e), e ∈ H, H ⊆ G)
+
+    have((e ∈ G) /\ (∀(y ∈ G, ((op(e, *, y) === y) /\ (op(y, *, e) === y))))) by Tautology.from(
+      isIdentityElement.definition of (x := e)
+    )
+    thenHave(∀(y ∈ G, ((op(e, *, y) === y) /\ (op(y, *, e) === y)))) by Tautology
+    thenHave(y ∈ G ==> ((op(e, *, y) === y) /\ (op(y, *, e) === y))) by InstantiateForall(y)
+    thenHave(y ∈ H ==> ((op(e, *, y) === y) /\ (op(y, *, e) === y))) by Tautology.fromLastStep(
+      Subset.membership of (z := y, x := H, y := G)
+    )
+    thenHave(∀(y ∈ H, ((op(e, *, y) === y) /\ (op(y, *, e) === y)))) by RightForall
+    thenHave(thesis) by Tautology.fromLastStep(
+      isIdentityElement.definition of (x := e, G := H)
+    )
+  }

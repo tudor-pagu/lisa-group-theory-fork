@@ -170,6 +170,21 @@ object Homomorphisms extends lisa.Main:
         )
     }
 
+    val identityElementIsInKer = Theorem(
+        (group(G)(*), group(H)(∘), f ::: (G, *) -> (H, ∘), isIdentityElement(G)(*)(e))
+        |- e ∈ ker(f)(G)(*)(H)(∘)
+    ) {
+        assume(group(G)(*), group(H)(∘), f ::: (G, *) -> (H, ∘), isIdentityElement(G)(*)(e))
+        val K = ker(f)(G)(*)(H)(∘)
+        val e0 = identityOf(G)(*)
+        val subst = have(e === e0) by Tautology.from(
+            identityIsUnique of (x := e, y := e0),
+            identityOfIsIdentity
+        )
+        have(e0 ∈ K) by Tautology.from(eIsInKer)
+        thenHave(e ∈ K) by Substitute(subst)
+    }
+
     val kerIsNonEmpty = Theorem(
         (group(G)(*), group(H)(∘), f ::: (G, *) -> (H, ∘))
         |- ker(f)(G)(*)(H)(∘) ≠ ∅
@@ -219,7 +234,62 @@ object Homomorphisms extends lisa.Main:
         (group(G)(*), group(H)(∘), f ::: (G, *) -> (H, ∘))
         |- inverseElement(ker(f)(G)(*)(H)(∘))(*)
     ) {
-        sorry
+        assume(group(G)(*), group(H)(∘), f ::: (G, *) -> (H, ∘))
+        val K = ker(f)(G)(*)(H)(∘)
+        val xi = inverseOf(G)(*)(x)
+        val _1 = have(x ∈ G |- isIdentityElement(G)(*)(op(x, *, xi))) by Tautology.from(inverseProperty2)
+        val _2 = have(isIdentityElement(G)(*)(op(x, *, xi)) |- isIdentityElement(K)(*)(op(x, *, xi))) subproof {
+            val e0 = op(x, *, xi)
+            assume(isIdentityElement(G)(*)(e0))
+            have(e0 ∈ K) by Tautology.from(identityElementIsInKer of (e := e0))
+            thenHave(isIdentityElement(K)(*)(e0)) by Tautology.fromLastStep(
+                identityElementTestSubset of (H := K, e := e0),
+                kerIsSubset
+            )
+        }
+        val _3 = have(x ∈ K |- xi ∈ K) subproof {
+            assume(x ∈ K)
+            val e0 = op(x, *, xi)
+            val xinG = have(x ∈ G) by Tautology.from(
+                kerIsSubset, Subset.membership of (z := x, x := K, y := G)
+            )
+            val xiinG = have(xi ∈ G) by Tautology.from(
+                xinG, inverseStaysInGroup
+            )
+            val step1 = have(isIdentityElement(H)(∘)(f(x))) by Tautology.from(kerProperty)
+            val step2 = have(f(xi) ∈ H) by Tautology.from(homomorphismAppTyping of (x := xi), xiinG)
+            
+            val step3 = have(op(f(x), ∘, f(xi)) === f(xi)) by Tautology.from(
+                step1, step2, identityProperty of (e := f(x), x := f(xi), G := H, * := ∘)
+            )
+            val step4 = have(f(e0) === op(f(x), ∘, f(xi))) by Tautology.from(
+                homomorphismProperty of (x := x, y := xi),
+                xinG, xiinG
+            )
+            val step5 = have(f(e0) === f(xi)) by Congruence.from(step3, step4)
+
+            val step6 = have(isIdentityElement(G)(*)(e0)) by Tautology.from(xinG, inverseProperty2)
+            val step7 = have(e0 ∈ K) by Tautology.from(step6, identityElementIsInKer of (e := e0))
+            val step8 = have(isIdentityElement(H)(∘)(f(e0))) by Tautology.from(
+                step7, kerProperty of (x := e0)
+            )
+            val step9 = thenHave(isIdentityElement(H)(∘)(f(xi))) by Substitute(step5)
+            have(thesis) by Tautology.from(
+                xiinG, step9,
+                kerMembershipTest of (x := xi)
+            )
+        }
+        val _4 = have(x ∈ K |- x ∈ G) by Tautology.from(
+            kerIsSubset,
+            Subset.membership of (z := x, x := K, y := G)
+        )
+        have(x ∈ K |- xi ∈ K /\ isIdentityElement(K)(*)(op(x, *, xi))) by Tautology.from(
+            _1, _2, _3, _4
+        )
+        thenHave(x ∈ K |- ∃(y ∈ K, isIdentityElement(K)(*)(op(x, *, y)))) by RightExists
+        thenHave(x ∈ K ==> ∃(y ∈ K, isIdentityElement(K)(*)(op(x, *, y)))) by Restate
+        thenHave(∀(x ∈ K, ∃(y ∈ K, isIdentityElement(K)(*)(op(x, *, y))))) by RightForall
+        thenHave(thesis) by Tautology.fromLastStep(inverseElement.definition of (G := K))
     }
 
     val kerIsSubgroup = Theorem(
