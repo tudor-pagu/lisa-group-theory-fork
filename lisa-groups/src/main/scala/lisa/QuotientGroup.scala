@@ -28,7 +28,7 @@ import lisa.utils.prooflib.SimpleDeducedSteps.{InstantiateForall, Generalize}
 import lisa.utils.prooflib.BasicStepTactic.RightForall
 import lisa.maths.GroupTheory.NormalSubgroups.normalSubgroupProperty
 
-import lisa.maths.SetTheory.Functions.Function.{bijective, surjective, injective, ::, app, function, functionBetween}
+import lisa.maths.SetTheory.Functions.Function.{bijective, surjective, injective, ::, app, function, functionBetween, functionOn}
 import lisa.maths.SetTheory.Functions.Operations.Restriction.{↾}
 import lisa.maths.SetTheory.Functions.Operations.Restriction
 import lisa.maths.SetTheory.Functions.BasicTheorems.*
@@ -38,6 +38,26 @@ import lisa.maths.SetTheory.Relations.Predef.{_, given}
 import lisa.maths.Quantifiers.∃!
 
 object QuotientGroup extends lisa.Main:
+
+  val quotientGroup = DEF(λ(G, λ(H, λ(*,
+    { leftCoset(g)(*)(H) | g ∈ G }
+  ))))
+
+  val isCosetOperation = DEF(λ(G, λ(H, λ(*, λ(**,
+    function(**) /\
+    ((quotientGroup(G)(H)(*) × quotientGroup(G)(H)(*)) ⊆ dom(**)) /\
+    ∀(A ∈ quotientGroup(G)(H)(*), ∀(B ∈ quotientGroup(G)(H)(*),
+      op(A, **, B) === ⋃{ {op(a, *, b) | a ∈ A} | b ∈ B }
+    ))
+  )))))
+
+  val cosetRep = DEF(λ(G, λ(H, λ(*, λ(x,
+    ε(y, (y ∈ G) /\ (x === leftCoset(y)(*)(H)))
+  )))))
+
+  val cosetOperation = DEF(λ(G, λ(*,
+    { (x, { op(fst(z), *, snd(z)) | z ∈ (fst(x) × snd(x)) }) | x ∈ (𝒫(G) × 𝒫(G)) }
+  )))
 
   val quotientGroupMembership = Theorem(
     (x ∈ quotientGroup(G)(H)(*)) |- (cosetRep(G)(H)(*)(x) ∈ G) /\ (x === leftCoset(cosetRep(G)(H)(*)(x))(*)(H))
@@ -144,6 +164,80 @@ object QuotientGroup extends lisa.Main:
         thenHave(thesis) by Tautology.fromLastStep(_h)
     }
     have(thesis) by Tautology.from(_h, leftImplies, rightImplies)
+  }
+
+  extension (f: Expr[Ind]) {
+    def apply(x: Expr[Ind]): Expr[Ind] = app(f)(x)
+  }
+
+  val cosetOperationIsCosetOperation = Theorem(
+    (group(G)(*), subgroup(H)(G)(*))
+    |- isCosetOperation(G)(H)(*)(cosetOperation(G)(*))
+  ) {
+    assume(group(G)(*), subgroup(H)(G)(*))
+    val A0 = (𝒫(G) × 𝒫(G))
+    val F0 = lambda(x, { op(fst(z), *, snd(z)) | z ∈ (fst(x) × snd(x)) })
+    val f0 = { (x, F0(x)) | x ∈ A0 }
+    val _1 = have(functionOn(f0)(A0) /\ ∀(x ∈ A0, app(f0)(x) === F0(x))) by Tautology.from(
+      functionBuilder of (f := f0, A := A0, F := F0)
+    )
+    val G_H = quotientGroup(G)(H)(*)
+    val G_H2 = (G_H × G_H)
+    val _2 = have(G_H ⊆ 𝒫(G)) subproof {
+      have(x ∈ G_H |- x ∈ 𝒫(G)) subproof {
+        assume(x ∈ G_H)
+        val x0 = cosetRep(G)(H)(*)(x)
+        val x0H = leftCoset(x0)(*)(H)
+        val step1 = have((x0 ∈ G) /\ (x === x0H)) by Tautology.from(quotientGroupMembership)
+        val x0inG = have(x0 ∈ G) by Tautology.from(step1)
+        val xsubst = have(x === x0H) by Tautology.from(step1)
+
+        have(x0H ⊆ G) by Tautology.from(
+          x0inG, leftCosetStaysInGroupLemma of (x := x0)
+        )
+        thenHave(x ⊆ G) by Substitute(xsubst)
+        thenHave(thesis) by Tautology.fromLastStep(powerSetAxiom of (y := G))
+      }
+      thenHave(x ∈ G_H ==> x ∈ 𝒫(G)) by Restate 
+      thenHave(∀(x ∈ G_H, x ∈ 𝒫(G))) by RightForall
+      thenHave(thesis) by Tautology.fromLastStep(
+        subsetAxiom of (z := x, x := G_H, y := 𝒫(G))
+      )
+    }
+
+    val _3 = have(function(f0) /\ (dom(f0) === A0)) by Tautology.from(
+      _1, functionOnIffFunctionWithDomain of (f := f0, A := A0)
+    )
+    val domeq = thenHave(dom(f0) === A0) by Tautology
+    val _4 = have(G_H2 ⊆ A0) by Tautology.from(CartesianProduct.monotonic of (A := G_H, B := G_H, C := 𝒫(G), D := 𝒫(G)), _2)
+    val _5 = thenHave(G_H2 ⊆ dom(f0)) by Substitute(domeq)
+
+    have((A ∈ G_H, B ∈ G_H) |- f0((A, B)) === { op(fst(z), *, snd(z)) | z ∈ (A × B) }) subproof {
+      assume(A ∈ G_H, B ∈ G_H)
+      val AinPG = have(A ∈ 𝒫(G)) by Tautology.from(_2, Subset.membership of (z := A, x := G_H, y := 𝒫(G)))
+      val BinPG = have(B ∈ 𝒫(G)) by Tautology.from(_2, Subset.membership of (z := B, x := G_H, y := 𝒫(G)))
+
+      val x0 = (A, B)
+      val step1 = have(x0 ∈ A0) by Tautology.from(
+        AinPG, BinPG, CartesianProduct.pairMembership of (x := A, y := B, A := 𝒫(G), B := 𝒫(G))
+      )
+      val step2 = have(fst(x0) === A) by Tautology.from(Pair.pairFst of (x := A, y := B))
+      val step3 = have(snd(x0) === B) by Tautology.from(Pair.pairSnd of (x := A, y := B))
+
+      have(∀(x ∈ A0, f0(x) === F0(x))) by Tautology.from(_1)
+      thenHave(x0 ∈ A0 ==> (app(f0)(x0) === F0(x0))) by InstantiateForall(x0)
+      val step4 = thenHave(f0(x0) === F0(x0)) by Tautology.fromLastStep(step1)
+      thenHave(f0(x0) === { op(fst(z), *, snd(z)) | z ∈ (A × snd(x0)) }) by Substitute(step2)
+      thenHave(f0(x0) === { op(fst(z), *, snd(z)) | z ∈ (A × B) }) by Substitute(step3)
+    }
+    thenHave(A ∈ G_H |- B ∈ G_H ==> (f0((A, B)) === { op(fst(z), *, snd(z)) | z ∈ (A × B) })) by Restate
+    thenHave(A ∈ G_H |- ∀(B ∈ G_H, f0((A, B)) === { op(fst(z), *, snd(z)) | z ∈ (A × B) })) by RightForall
+    thenHave(A ∈ G_H ==> ∀(B ∈ G_H, f0((A, B)) === { op(fst(z), *, snd(z)) | z ∈ (A × B) })) by Restate
+    val _6 = thenHave(∀(A ∈ G_H, ∀(B ∈ G_H, f0((A, B)) === { op(fst(z), *, snd(z)) | z ∈ (A × B) }))) by RightForall
+    
+    val f0eq = have(f0 === cosetOperation(G)(*)) by Tautology.from(cosetOperation.definition)
+    have(isCosetOperation(G)(H)(*)(f0)) by Tautology.from(_3, _5, _6, isCosetOperationAlternativeDefinition of (** := f0))
+    thenHave(thesis) by Substitute(f0eq)
   }
 
   val cosetOperationProperty = Theorem(
@@ -586,4 +680,14 @@ object QuotientGroup extends lisa.Main:
         cosetOperationHasInverseElement,
         group.definition of (G := quotientGroup(G)(H)(*), * := **)
     )
+  }
+
+  val quotientGroupIsGroup2 = Theorem(
+    (group(G)(*), normalSubgroup(H)(G)(*))
+    |- group(quotientGroup(G)(H)(*))(cosetOperation(G)(*))
+  ) {
+    assume(group(G)(*), normalSubgroup(H)(G)(*))
+    val *** = cosetOperation(G)(*)
+    have(isCosetOperation(G)(H)(*)(***)) by Tautology.from(normalSubgroup.definition, cosetOperationIsCosetOperation)
+    thenHave(thesis) by Tautology.fromLastStep(quotientGroupIsGroup of (** := ***))
   }

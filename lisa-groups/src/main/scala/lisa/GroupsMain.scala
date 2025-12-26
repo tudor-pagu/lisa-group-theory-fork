@@ -92,22 +92,6 @@ object Groups extends lisa.Main:
     ∀(g ∈ G, leftCoset(g)(*)(H) === rightCoset(H)(*)(g))
   ))))
 
-  val quotientGroup = DEF(λ(G, λ(H, λ(*,
-    { leftCoset(g)(*)(H) | g ∈ G }
-  ))))
-
-  val isCosetOperation = DEF(λ(G, λ(H, λ(*, λ(**,
-    function(**) /\
-    ((quotientGroup(G)(H)(*) × quotientGroup(G)(H)(*)) ⊆ dom(**)) /\
-    ∀(A ∈ quotientGroup(G)(H)(*), ∀(B ∈ quotientGroup(G)(H)(*),
-      op(A, **, B) === ⋃{ {op(a, *, b) | a ∈ A} | b ∈ B }
-    ))
-  )))))
-
-  val cosetRep = DEF(λ(G, λ(H, λ(*, λ(x,
-    ε(y, (y ∈ G) /\ (x === leftCoset(y)(*)(H)))
-  )))))
-
 
   /* Lagrange's Theorem */
   // P is a partition of G
