@@ -34,7 +34,7 @@ import lisa.maths.SetTheory.Functions.Operations.Restriction
 import lisa.maths.SetTheory.Functions.BasicTheorems.*
 import lisa.maths.SetTheory.Base.CartesianProduct
 import lisa.maths.SetTheory.Base.Pair
-// import lisa.maths.SetTheory.Relations.Predef.{_, given}
+import lisa.maths.SetTheory.Relations.Predef.{_, given}
 import lisa.maths.Quantifiers.∃!
 
 object QuotientGroup extends lisa.Main:
@@ -95,6 +95,8 @@ object QuotientGroup extends lisa.Main:
 
   val isCosetOperationAlternativeDefinition = Theorem(
     isCosetOperation(G)(H)(*)(**) <=> 
+        function(**) /\
+        ((quotientGroup(G)(H)(*) × quotientGroup(G)(H)(*)) ⊆ dom(**)) /\
         ∀(A ∈ quotientGroup(G)(H)(*), ∀(B ∈ quotientGroup(G)(H)(*), 
             op(A, **, B) === { op(fst(z), *, snd(z)) | z ∈ (A × B) }
         ))
@@ -104,9 +106,11 @@ object QuotientGroup extends lisa.Main:
     val S1 = ⋃{ {op(c, *, d) | c ∈ A} | d ∈ B }
     val S2 = { op(fst(z), *, snd(z)) | z ∈ (A × B) }
 
-    val _h = have(LHS <=> ∀(A ∈ G_H, ∀(B ∈ G_H, 
-      op(A, **, B) === S1
-    ))) by Tautology.from(isCosetOperation.definition of (a := c, b := d))
+    val _h = have(LHS <=>
+      function(**) /\
+      ((quotientGroup(G)(H)(*) × quotientGroup(G)(H)(*)) ⊆ dom(**)) /\
+      ∀(A ∈ G_H, ∀(B ∈ G_H, op(A, **, B) === S1))
+    ) by Tautology.from(isCosetOperation.definition of (a := c, b := d))
 
     val _1 = have(S1 === S2) subproof {
         have(x ∈ S1 <=> x ∈ S2) by Tautology.from(doubleSetMembership, doubleSetMembership2)
@@ -127,7 +131,7 @@ object QuotientGroup extends lisa.Main:
         thenHave((A ∈ G_H) ==> ∀(B ∈ G_H, op(A, **, B) === S2)) by Restate
         thenHave(thesis) by RightForall
     }
-    val rightImplies = have(∀(A ∈ G_H, ∀(B ∈ G_H, op(A, **, B) === S2)) |- LHS) subproof {
+    val rightImplies = have(∀(A ∈ G_H, ∀(B ∈ G_H, op(A, **, B) === S2)) |- ∀(A ∈ G_H, ∀(B ∈ G_H, op(A, **, B) === S1))) subproof {
         assume(∀(A ∈ G_H, ∀(B ∈ G_H, op(A, **, B) === S2)))
         have(∀(A ∈ G_H, ∀(B ∈ G_H, op(A, **, B) === S2))) by Restate
         thenHave(A ∈ G_H |- ∀(B ∈ G_H, op(A, **, B) === S2)) by InstantiateForall(A)
@@ -139,7 +143,7 @@ object QuotientGroup extends lisa.Main:
         thenHave(∀(A ∈ G_H, ∀(B ∈ G_H, op(A, **, B) === S1))) by RightForall
         thenHave(thesis) by Tautology.fromLastStep(_h)
     }
-    have(thesis) by Tautology.from(leftImplies, rightImplies)
+    have(thesis) by Tautology.from(_h, leftImplies, rightImplies)
   }
 
   val cosetOperationProperty = Theorem(
@@ -346,14 +350,11 @@ object QuotientGroup extends lisa.Main:
       quotientGroupMembershipTest of (x := op(x, **, y), y := op(x0, *, y0)),
       _3, x0y0inG
     )
-
-    val x_y = Pair.pair(x)(y)
-    val G_H2 = (G_H × G_H)
-    val _5 = have((x_y ∈ G_H2) <=> (x ∈ G_H /\ y ∈ G_H)) by Tautology.from(
-      CartesianProduct.pairMembership of (A := G_H, B := G_H)
-    )
+    thenHave((x ∈ G_H /\ y ∈ G_H) ==> op(x, **, y) ∈ G_H) by Restate
+    val _5 = thenHave(∀(x, ∀(y, (x ∈ G_H /\ y ∈ G_H) ==> op(x, **, y) ∈ G_H))) by Generalize
+    val _6 = have(function(**) /\ ((G_H × G_H) ⊆ dom(**))) by Tautology.from(isCosetOperation.definition)
     
-    sorry
+    have(thesis) by Tautology.from(binaryOperationTest of (G := G_H, * := **), _5, _6)
   }
 
   val cosetOperationIsAssociative = Theorem(

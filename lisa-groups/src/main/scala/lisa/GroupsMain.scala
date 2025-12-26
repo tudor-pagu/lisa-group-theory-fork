@@ -97,6 +97,8 @@ object Groups extends lisa.Main:
   ))))
 
   val isCosetOperation = DEF(λ(G, λ(H, λ(*, λ(**,
+    function(**) /\
+    ((quotientGroup(G)(H)(*) × quotientGroup(G)(H)(*)) ⊆ dom(**)) /\
     ∀(A ∈ quotientGroup(G)(H)(*), ∀(B ∈ quotientGroup(G)(H)(*),
       op(A, **, B) === ⋃{ {op(a, *, b) | a ∈ A} | b ∈ B }
     ))
@@ -852,4 +854,11 @@ object Groups extends lisa.Main:
     thenHave(thesis) by Tautology.fromLastStep(
       isIdentityElement.definition of (x := e, G := H)
     )
+  }
+
+  val binaryOperationTest = Theorem(
+    (function(*), (G × G) ⊆ dom(*), ∀(x, ∀(y, (x ∈ G /\ y ∈ G) ==> op(x, *, y) ∈ G)))
+    |- binaryOperation(G)(*)
+  ) {
+    sorry
   }
