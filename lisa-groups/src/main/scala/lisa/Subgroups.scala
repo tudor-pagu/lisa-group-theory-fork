@@ -23,9 +23,32 @@ import lisa.utils.prooflib.SimpleDeducedSteps.InstantiateForall
 
 object Subgroups extends lisa.Main:
 
+  val subgroup = DEF(λ(H, λ(G, λ(*,
+    group(G)(*) /\
+      H ⊆ G /\
+      group(H)(*)
+  )))).printAs(args => {
+    val H = args(0)
+    val G = args(1)
+    val op = args(2)
+    s"$H ≤ $G"
+  })
+
+  extension(H: Expr[Ind]) {
+    infix def ≤(g2: (Expr[Ind], Expr[Ind])): Expr[Prop] = {
+      val G = g2._1
+      val * = g2._2
+      subgroup(H)(G)(*)
+    }
+
+    private [GroupTheory] infix def ≤(G: Expr[Ind]): Expr[Prop] = {
+      subgroup(H)(G)(*)
+    }
+  }
+
   val subgroupTestTwoStep = Theorem(
     (group(G)(*), H ≠ ∅, H ⊆ G, binaryOperation(H)(*), inverseElement(H)(*))
-      |- subgroup(H)(G)(*)
+      |- H ≤ G
   ) {
     assume(group(G)(*), H ≠ ∅, H ⊆ G, binaryOperation(H)(*), inverseElement(H)(*))
     val thm1 = have(binaryOperation(H)(*) /\ inverseElement(H)(*)) by Restate
@@ -71,13 +94,13 @@ object Subgroups extends lisa.Main:
       have(associativity(H)(*)) by Tautology.from(obs2, associativityAlternateForm of (G := H, * := *))
     }
     val thm2 = have(group(H)(*)) by Tautology.from(group.definition of (G := H, * := *), subthm1, subthm3, thm1)
-    val thm3 = have(subgroup(H)(G)(*)) by Tautology.from(subgroup.definition of (G := G, H := H, * := *), thm2)
+    val thm3 = have(H ≤ G) by Tautology.from(subgroup.definition of (G := G, H := H, * := *), thm2)
   }
 
   val elementInSubgroupMeansItsInGroup = Theorem(
-    (group(G)(*), subgroup(H)(G)(*), x ∈ H) |- x ∈ G
+    (group(G)(*), H ≤ G, x ∈ H) |- x ∈ G
   ) {
-    assume(group(G)(*), subgroup(H)(G)(*), x ∈ H)
+    assume(group(G)(*), H ≤ G, x ∈ H)
 
     // From subgroup definition, we have H ⊆ G
     val step1 = have(H ⊆ G) by Tautology.from(subgroup.definition)
@@ -95,9 +118,9 @@ object Subgroups extends lisa.Main:
   }
 
   val groupHasTheSameIdentityAsSubgroup = Theorem(
-    (group(G)(*), subgroup(H)(G)(*), isIdentityElement(H)(*)(e)) |- isIdentityElement(G)(*)(e)
+    (group(G)(*), H ≤ G, isIdentityElement(H)(*)(e)) |- isIdentityElement(G)(*)(e)
   ) {
-    assume(group(G)(*), subgroup(H)(G)(*), isIdentityElement(H)(*)(e))
+    assume(group(G)(*), H ≤ G, isIdentityElement(H)(*)(e))
     
     val step1 = have(group(H)(*)) by Tautology.from(subgroup.definition)
     
@@ -197,9 +220,9 @@ object Subgroups extends lisa.Main:
   }
 
   val subgroupHasTheSameIdentity = Theorem(
-    (group(G)(*), subgroup(H)(G)(*), isIdentityElement(G)(*)(e)) |- isIdentityElement(H)(*)(e)
+    (group(G)(*), H ≤ G, isIdentityElement(G)(*)(e)) |- isIdentityElement(H)(*)(e)
   ) {
-    assume(group(G)(*), subgroup(H)(G)(*), isIdentityElement(G)(*)(e))
+    assume(group(G)(*), H ≤ G, isIdentityElement(G)(*)(e))
     // T.P. (e ∈ H) /\ (∀(y ∈ H, ((op(e, *, y) === y) /\ (op(y, *, e) === y))))
 
     // H is a group, so it has inverse elements
@@ -240,9 +263,9 @@ object Subgroups extends lisa.Main:
   }
 
   val identityInSubgroupIsTheSame = Theorem(
-    (group(G)(*), subgroup(H)(G)(*), isIdentityElement(H)(*)(x), isIdentityElement(G)(*)(y)) |- x === y
+    (group(G)(*), H ≤ G, isIdentityElement(H)(*)(x), isIdentityElement(G)(*)(y)) |- x === y
   ) {
-    assume(group(G)(*), subgroup(H)(G)(*), isIdentityElement(H)(*)(x), isIdentityElement(G)(*)(y))
+    assume(group(G)(*), H ≤ G, isIdentityElement(H)(*)(x), isIdentityElement(G)(*)(y))
     have(isIdentityElement(G)(*)(x)) by Tautology.from(
         groupHasTheSameIdentityAsSubgroup of (e := x)
     )
@@ -252,9 +275,9 @@ object Subgroups extends lisa.Main:
   }
 
   val identityOfInSubgroup = Theorem(
-    (group(G)(*), subgroup(H)(G)(*)) |- identityOf(G)(*) === identityOf(H)(*)
+    (group(G)(*), H ≤ G) |- identityOf(G)(*) === identityOf(H)(*)
   ) {
-    assume(group(G)(*), subgroup(H)(G)(*))
+    assume(group(G)(*), H ≤ G)
     val e1 = identityOf(H)(*)
     val e2 = identityOf(G)(*)
     have(thesis) by Tautology.from(
@@ -266,9 +289,9 @@ object Subgroups extends lisa.Main:
   }
 
   val inverseInSubgroupIsTheSame = Theorem(
-    (group(G)(*), subgroup(H)(G)(*), x ∈ H) |- inverseOf(H)(*)(x) === inverseOf(G)(*)(x)
+    (group(G)(*), H ≤ G, x ∈ H) |- inverseOf(H)(*)(x) === inverseOf(G)(*)(x)
   ) {
-    assume(group(G)(*), subgroup(H)(G)(*), x ∈ H)
+    assume(group(G)(*), H ≤ G, x ∈ H)
     
     val invh = inverseOf(H)(*)(x)
     val invg = inverseOf(G)(*)(x)

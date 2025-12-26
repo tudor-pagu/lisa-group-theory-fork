@@ -27,6 +27,14 @@ import lisa.maths.GroupTheory.Subgroups.groupHasTheSameIdentityAsSubgroup
 
 object Cosets extends lisa.Main:
 
+  val leftCoset = DEF(λ(g, λ(*, λ(H,
+    (op(g, *, h) | (h ∈ H))
+  ))))
+
+  val rightCoset = DEF(λ(H, λ(*, λ(g,
+    (op(h, *, g) | (h ∈ H))
+  ))))
+
   val leftCosetStaysInGroupLemma = Theorem(
     (group(G)(*), subgroup(H)(G)(*), x ∈ G) |-
       (leftCoset(x)(*)(H) ⊆ G)
