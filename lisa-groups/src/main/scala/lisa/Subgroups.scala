@@ -27,12 +27,17 @@ object Subgroups extends lisa.Main:
     group(G)(*) /\
       H ⊆ G /\
       group(H)(*)
-  ))))
+  )))).printAs(args => {
+    val H = args(0)
+    val G = args(1)
+    val op = args(2)
+    s"$H ≤ $G"
+  })
 
   extension(H: Expr[Ind]) {
     infix def ≤(g2: (Expr[Ind], Expr[Ind])): Expr[Prop] = {
       val G = g2._1
-      val op = g2._2
+      val * = g2._2
       subgroup(H)(G)(*)
     }
 

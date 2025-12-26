@@ -37,13 +37,30 @@ object NormalSubgroups extends lisa.Main:
   val normalSubgroup = DEF(λ(H, λ(G, λ(*,
     subgroup(H)(G)(*) /\
     ∀(g ∈ G, leftCoset(g)(*)(H) === rightCoset(H)(*)(g))
-  ))))
+  )))).printAs(args => {
+    val H = args(0)
+    val G = args(1)
+    val op = args(2)
+    s"$H ◁  $G"
+  })
+
+  extension(H: Expr[Ind]) {
+    infix def ◁(g2: (Expr[Ind], Expr[Ind])): Expr[Prop] = {
+      val G = g2._1
+      val * = g2._2
+      normalSubgroup(H)(G)(*)
+    }
+
+    private [GroupTheory] infix def ◁(G: Expr[Ind]): Expr[Prop] = {
+      normalSubgroup(H)(G)(*)
+    }
+  }
 
   val normalSubgroupProperty = Theorem(
-    (group(G)(*), normalSubgroup(H)(G)(*), x ∈ G, y ∈ H)
+    (group(G)(*), H ◁ G, x ∈ G, y ∈ H)
     |- conjugation(G)(*)(y)(x) ∈ H
   ) {
-    assume(group(G)(*), normalSubgroup(H)(G)(*), x ∈ G, y ∈ H)
+    assume(group(G)(*), H ◁ G, x ∈ G, y ∈ H)
     val xH = leftCoset(x)(*)(H)
     val Hx = rightCoset(H)(*)(x)
 
@@ -201,10 +218,10 @@ object NormalSubgroups extends lisa.Main:
   }
 
   val leftRightCosetEquivalenceNormalSubgroup = Theorem(
-    (group(G)(*), normalSubgroup(H)(G)(*), x ∈ G) 
+    (group(G)(*), H ◁ G, x ∈ G) 
     |- leftCoset(x)(*)(H) === rightCoset(H)(*)(x)
   ) {
-    assume(group(G)(*), normalSubgroup(H)(G)(*), x ∈ G)
+    assume(group(G)(*), H ◁ G, x ∈ G)
     val xH = leftCoset(x)(*)(H)
     val Hx = rightCoset(H)(*)(x)
 
@@ -305,11 +322,11 @@ object NormalSubgroups extends lisa.Main:
   }
 
   val leftCosetMultiplicationWellDefined = Theorem(
-    (group(G)(*), normalSubgroup(H)(G)(*), a ∈ G, b ∈ G, c ∈ G, d ∈ G,
+    (group(G)(*), H ◁ G, a ∈ G, b ∈ G, c ∈ G, d ∈ G,
     leftCoset(a)(*)(H) === leftCoset(c)(*)(H), leftCoset(b)(*)(H) === leftCoset(d)(*)(H))
     |- leftCoset(op(a, *, b))(*)(H) === leftCoset(op(c, *, d))(*)(H)
   ) {
-    assume(group(G)(*), normalSubgroup(H)(G)(*), a ∈ G, b ∈ G, c ∈ G, d ∈ G,
+    assume(group(G)(*), H ◁ G, a ∈ G, b ∈ G, c ∈ G, d ∈ G,
     leftCoset(a)(*)(H) === leftCoset(c)(*)(H), leftCoset(b)(*)(H) === leftCoset(d)(*)(H))
 
     val aH = leftCoset(a)(*)(H)

@@ -7,6 +7,7 @@ object Predef {
     export lisa.maths.GroupTheory.Subgroups.{≤}
     export lisa.maths.GroupTheory.Cosets
     export lisa.maths.GroupTheory.NormalSubgroups
+    export lisa.maths.GroupTheory.NormalSubgroups.{◁}
     export lisa.maths.GroupTheory.Lagrange
     export lisa.maths.GroupTheory.QuotientGroup
     export lisa.maths.GroupTheory.Homomorphisms
