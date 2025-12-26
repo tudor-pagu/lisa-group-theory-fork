@@ -27,6 +27,8 @@ import lisa.maths.GroupTheory.Utils.*
 import lisa.utils.prooflib.SimpleDeducedSteps.InstantiateForall
 
 object Groups extends lisa.Main:
+
+  case class Group(G: Expr[Ind], * : Expr[Ind])
   
   val binaryOperation = DEF(λ(G, λ(*,
     (* ↾ (G × G)) :: (G × G) -> G
@@ -746,5 +748,108 @@ object Groups extends lisa.Main:
     )
     have(thesis) by Congruence.from(
       _2, _3
+    )
+  }
+
+  val identityIsIdempotent = Theorem(
+    (group(G)(*)) |- isIdentityElement(G)(*)(e) <=> (e ∈ G /\ (op(e, *, e) === e))
+  ) {
+    assume(group(G)(*))
+    val `==>` = have(isIdentityElement(G)(*)(e) |- (op(e, *, e) === e) /\ e ∈ G) subproof {
+      have(thesis) by Tautology.from(
+        identityProperty of (x := e),
+        isIdentityElement.definition of (x := e)
+      )
+    }
+    val `<==` = have((e ∈ G, op(e, *, e) === e) |- isIdentityElement(G)(*)(e)) subproof {
+      assume(e ∈ G, op(e, *, e) === e)
+      val e0 = identityOf(G)(*)
+      val e0inG = have(e0 ∈ G) by Tautology.from(
+        identityOfIsIdentity, isIdentityElement.definition of (x := e0)
+      )
+      have(op(e0, *, e) === e) by Tautology.from(
+        identityOfIsIdentity, identityProperty of (e := e0, x := e)
+      )
+      thenHave(op(e0, *, e) === op(e, *, e)) by Congruence
+      val subst = thenHave(e0 === e) by Tautology.fromLastStep(
+        eliminateRight of (x := e0, y := e, z := e), e0inG
+      )
+      have(isIdentityElement(G)(*)(e0)) by Tautology.from(identityOfIsIdentity)
+      thenHave(thesis) by Substitute(subst)
+    }
+    have(thesis) by Tautology.from(`<==`, `==>`)
+  }
+
+  val binaryOperationTestSubset = Theorem(
+    (binaryOperation(G)(*), H ⊆ G, 
+      ∀(x, ∀(y, (x ∈ H /\ y ∈ H) ==> op(x, *, y) ∈ H))
+    )
+    |- binaryOperation(H)(*)
+  ) {
+    assume(binaryOperation(G)(*), H ⊆ G, 
+      ∀(x, ∀(y, (x ∈ H /\ y ∈ H) ==> op(x, *, y) ∈ H))
+    )
+    val G2 = G × G
+    val fG2 = * ↾ (G × G)
+    val H2 = H × H
+    val fH2 = * ↾ (H × H)
+
+    val H2sub = have(H2 ⊆ G2) by Tautology.from(
+      CartesianProduct.monotonic of (A := H, B := H, C := G, D := G)
+    )
+
+    val _1 = have(fG2 :: G2 -> G) by Tautology.from(binaryOperation.definition)
+    val _2 = have(fH2 :: H2 -> G) by Tautology.from(
+      _1, H2sub, restrictedAppTheorem2 of (f := *, A := G2, B := H2, C := G)
+    )
+    val _3 = have((z ∈ H2) |- app(fH2)(z) ∈ H) subproof {
+      assume(z ∈ H2)
+      val x0 = fst(z)
+      val y0 = snd(z)
+      val _1a = have(z === (x0, y0)) by Tautology.from(
+        CartesianProduct.inversion of (A := H, B := H)
+      )
+      val _2a = have(x0 ∈ H /\ y0 ∈ H) by Tautology.from(
+        CartesianProduct.fstMembership of (A := H, B := H),
+        CartesianProduct.sndMembership of (A := H, B := H)
+      )
+      val _3a = have(app(fH2)(z) === app(*)(z)) by Tautology.from(
+        _2, restrictedAppTheorem of (x := z, f := *, A := H2, B := G)
+      )
+      val _4a = have(app(fH2)(z) === op(x0, *, y0)) by Congruence.from(_3a, _1a)
+      have(∀(x, ∀(y, (x ∈ H /\ y ∈ H) ==> op(x, *, y) ∈ H))) by Restate
+      thenHave((x0 ∈ H /\ y0 ∈ H) ==> op(x0, *, y0) ∈ H) by InstantiateForall(x0, y0)
+      thenHave(op(x0, *, y0) ∈ H) by Tautology.fromLastStep(_2a)
+      thenHave(thesis) by Substitute(_4a)
+    }
+    val _4 = thenHave(z ∈ H2 ==> app(fH2)(z) ∈ H) by Restate
+    val _5 = thenHave(∀(z ∈ H2, app(fH2)(z) ∈ H)) by RightForall
+
+    have(fH2 :: H2 -> H) by Tautology.from(
+      _2, _5, 
+      restrictedAppTheorem3 of (A := H2, B := H, C := G, f := fH2)
+    )
+    thenHave(thesis) by Tautology.fromLastStep(
+      binaryOperation.definition of (G := H)
+    )
+  }
+
+  val identityElementTestSubset = Theorem(
+    (isIdentityElement(G)(*)(e), e ∈ H, H ⊆ G)
+    |- isIdentityElement(H)(*)(e)
+  ) {
+    assume(isIdentityElement(G)(*)(e), e ∈ H, H ⊆ G)
+
+    have((e ∈ G) /\ (∀(y ∈ G, ((op(e, *, y) === y) /\ (op(y, *, e) === y))))) by Tautology.from(
+      isIdentityElement.definition of (x := e)
+    )
+    thenHave(∀(y ∈ G, ((op(e, *, y) === y) /\ (op(y, *, e) === y)))) by Tautology
+    thenHave(y ∈ G ==> ((op(e, *, y) === y) /\ (op(y, *, e) === y))) by InstantiateForall(y)
+    thenHave(y ∈ H ==> ((op(e, *, y) === y) /\ (op(y, *, e) === y))) by Tautology.fromLastStep(
+      Subset.membership of (z := y, x := H, y := G)
+    )
+    thenHave(∀(y ∈ H, ((op(e, *, y) === y) /\ (op(y, *, e) === y)))) by RightForall
+    thenHave(thesis) by Tautology.fromLastStep(
+      isIdentityElement.definition of (x := e, G := H)
     )
   }

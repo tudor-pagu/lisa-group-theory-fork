@@ -12,6 +12,7 @@ object Symbols extends lisa.Main:
 
   val * = variable[Ind]
   val ** = variable[Ind]
+  val ∘ = variable[Ind]
 
   inline def op(x: Expr[Ind], * : Expr[Ind], y: Expr[Ind]) = app(*)((x, y))
 
