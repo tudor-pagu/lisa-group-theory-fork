@@ -65,45 +65,6 @@ object Groups extends lisa.Main:
       inverseElement(G)(*)
   )))
 
-  val subgroup = DEF(λ(H, λ(G, λ(*,
-    group(G)(*) /\
-      H ⊆ G /\
-      group(H)(*)
-  ))))
-
-  val leftCoset = DEF(λ(g, λ(*, λ(H,
-    (op(g, *, h) | (h ∈ H))
-  ))))
-
-  val rightCoset = DEF(λ(H, λ(*, λ(g,
-    (op(h, *, g) | (h ∈ H))
-  ))))
-
-  val normalizer = DEF(λ(H, λ(G, λ(*,
-    { g ∈ G | leftCoset(g)(*)(H) === rightCoset(H)(*)(g) }
-  ))))
-
-  val conjugation = DEF(λ(G, λ(*, λ(x, λ(y,
-    op(op(y, *, x), *, inverseOf(G)(*)(y))
-  )))))
-
-  val normalSubgroup = DEF(λ(H, λ(G, λ(*,
-    subgroup(H)(G)(*) /\
-    ∀(g ∈ G, leftCoset(g)(*)(H) === rightCoset(H)(*)(g))
-  ))))
-
-
-  /* Lagrange's Theorem */
-  // P is a partition of G
-  val partition = DEF(λ(G, λ(Pr,
-    (∀(x ∈ Pr, x ⊆ G)) /\ // every set in P is a subset of G
-      (∀(x ∈ G, ∃(y ∈ Pr, x ∈ y))) /\ // every element of G is found in some set in P
-      (∀(x ∈ Pr, ∀(y ∈ Pr, x ≠ y ==> (x ∩ y === ∅)))) // the sets in P are disjoint
-  )))
-  /*
-  Functions on groups
-   */
-
   /* Lemmas */
   val identityGetsTransferredByCongruence = Theorem(
     (x === y, isIdentityElement(G)(*)(x)) |- isIdentityElement(G)(*)(y)

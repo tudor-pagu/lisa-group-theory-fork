@@ -23,6 +23,12 @@ import lisa.utils.prooflib.SimpleDeducedSteps.InstantiateForall
 
 object Subgroups extends lisa.Main:
 
+  val subgroup = DEF(λ(H, λ(G, λ(*,
+    group(G)(*) /\
+      H ⊆ G /\
+      group(H)(*)
+  ))))
+
   val subgroupTestTwoStep = Theorem(
     (group(G)(*), H ≠ ∅, H ⊆ G, binaryOperation(H)(*), inverseElement(H)(*))
       |- subgroup(H)(G)(*)

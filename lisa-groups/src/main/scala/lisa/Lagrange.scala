@@ -35,6 +35,14 @@ import lisa.utils.prooflib.SimpleDeducedSteps.{InstantiateForall, Generalize}
 
 object Lagrange extends lisa.Main:
 
+  /* Lagrange's Theorem */
+  // P is a partition of G
+  val partition = DEF(λ(G, λ(Pr,
+    (∀(x ∈ Pr, x ⊆ G)) /\ // every set in P is a subset of G
+      (∀(x ∈ G, ∃(y ∈ Pr, x ∈ y))) /\ // every element of G is found in some set in P
+      (∀(x ∈ Pr, ∀(y ∈ Pr, x ≠ y ==> (x ∩ y === ∅)))) // the sets in P are disjoint
+  )))
+
   val lagrangesLemma1 = Theorem(
     (group(G)(*), subgroup(H)(G)(*))
       |- partition(G)((rightCoset(H)(*)(x) | x ∈ G))

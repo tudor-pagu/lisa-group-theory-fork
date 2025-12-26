@@ -26,6 +26,19 @@ import lisa.utils.prooflib.SimpleDeducedSteps.InstantiateForall
 
 object NormalSubgroups extends lisa.Main:
 
+  val normalizer = DEF(λ(H, λ(G, λ(*,
+    { g ∈ G | leftCoset(g)(*)(H) === rightCoset(H)(*)(g) }
+  ))))
+
+  val conjugation = DEF(λ(G, λ(*, λ(x, λ(y,
+    op(op(y, *, x), *, inverseOf(G)(*)(y))
+  )))))
+
+  val normalSubgroup = DEF(λ(H, λ(G, λ(*,
+    subgroup(H)(G)(*) /\
+    ∀(g ∈ G, leftCoset(g)(*)(H) === rightCoset(H)(*)(g))
+  ))))
+
   val normalSubgroupProperty = Theorem(
     (group(G)(*), normalSubgroup(H)(G)(*), x ∈ G, y ∈ H)
     |- conjugation(G)(*)(y)(x) ∈ H
