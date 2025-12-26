@@ -44,10 +44,10 @@ object Lagrange extends lisa.Main:
   )))
 
   val lagrangesLemma1 = Theorem(
-    (group(G)(*), subgroup(H)(G)(*))
+    (group(G)(*), H ≤ G)
       |- partition(G)((rightCoset(H)(*)(x) | x ∈ G))
   ) {
-    assume(group(G)(*), subgroup(H)(G)(*))
+    assume(group(G)(*), H ≤ G)
 
     val subthm1 = have(y ∈ (rightCoset(H)(*)(x) | x ∈ G) |- y ⊆ G) subproof {
       assume(y ∈ (rightCoset(H)(*)(x) | x ∈ G))
@@ -350,12 +350,12 @@ object Lagrange extends lisa.Main:
   }
 
   val lagrangesLemma2 = Theorem(
-    (group(G)(*), subgroup(H)(G)(*), x ∈ G) |-
+    (group(G)(*), H ≤ G, x ∈ G) |-
       ∃(f, bijective(f)(H)(rightCoset(H)(*)(x)))
   ) {
 
-    val pairInReplacement = have((group(G)(*), subgroup(H)(G)(*), x ∈ G, y ∈ H) |- (y,op(y, *, x)) ∈ ((h,op(h, *, x)) | (h ∈ H))) subproof {
-      assume(group(G)(*), subgroup(H)(G)(*), x ∈ G, y ∈ H)
+    val pairInReplacement = have((group(G)(*), H ≤ G, x ∈ G, y ∈ H) |- (y,op(y, *, x)) ∈ ((h,op(h, *, x)) | (h ∈ H))) subproof {
+      assume(group(G)(*), H ≤ G, x ∈ G, y ∈ H)
       val func = ((h,op(h, *, x)) | (h ∈ H))
       val membFunc = λ(h, (h,op(h, *, x)))
       val yPair = (y, op(y, *, x))
@@ -377,29 +377,29 @@ object Lagrange extends lisa.Main:
     }
     
     val functionF = have(
-      (group(G)(*), subgroup(H)(G)(*), x ∈ G) |- (((h,op(h, *, x)) | (h ∈ H)) :: H -> rightCoset(H)(*)(x))
+      (group(G)(*), H ≤ G, x ∈ G) |- (((h,op(h, *, x)) | (h ∈ H)) :: H -> rightCoset(H)(*)(x))
       ) subproof {
         //prove relation
-        val step1 = have((group(G)(*), subgroup(H)(G)(*), x ∈ G) |- ∀(z, z ∈ rightCoset(H)(*)(x) <=> z ∈ (op(h, *, x) | (h ∈ H))) <=> (rightCoset(H)(*)(x) === (op(h, *, x) | (h ∈ H)))) by Tautology.from(
+        val step1 = have((group(G)(*), H ≤ G, x ∈ G) |- ∀(z, z ∈ rightCoset(H)(*)(x) <=> z ∈ (op(h, *, x) | (h ∈ H))) <=> (rightCoset(H)(*)(x) === (op(h, *, x) | (h ∈ H)))) by Tautology.from(
           extensionalityAxiom of (x := rightCoset(H)(*)(x), y := (op(h, *, x) | (h ∈ H)))
         )
-        val step2 = have((group(G)(*), subgroup(H)(G)(*), x ∈ G) |- ∀(z, z ∈ rightCoset(H)(*)(x) <=> z ∈ (op(h, *, x) | (h ∈ H)))) by Tautology.from(
+        val step2 = have((group(G)(*), H ≤ G, x ∈ G) |- ∀(z, z ∈ rightCoset(H)(*)(x) <=> z ∈ (op(h, *, x) | (h ∈ H)))) by Tautology.from(
           step1,
           rightCoset.definition of (g := x)
         )
-        val step3 = thenHave((group(G)(*), subgroup(H)(G)(*), x ∈ G) |- z ∈ rightCoset(H)(*)(x) <=> z ∈ (op(h, *, x) | (h ∈ H))) by InstantiateForall(z)
-        val step4 = have((group(G)(*), subgroup(H)(G)(*), x ∈ G) |- ((h ∈ H) ==> (h ∈ H /\ op(h, *, x) ∈ rightCoset(H)(*)(x)))) by Tautology.from(
+        val step3 = thenHave((group(G)(*), H ≤ G, x ∈ G) |- z ∈ rightCoset(H)(*)(x) <=> z ∈ (op(h, *, x) | (h ∈ H))) by InstantiateForall(z)
+        val step4 = have((group(G)(*), H ≤ G, x ∈ G) |- ((h ∈ H) ==> (h ∈ H /\ op(h, *, x) ∈ rightCoset(H)(*)(x)))) by Tautology.from(
           map of (x := h, F := λ(h, op(h, *, x)), A := H),
           step3 of (z := op(h, *, x))
         )
-        val step5 = have((group(G)(*), subgroup(H)(G)(*), x ∈ G) |- (h ∈ H) ==> (h,op(h, *, x)) ∈ (H × rightCoset(H)(*)(x))) by Tautology.from(
+        val step5 = have((group(G)(*), H ≤ G, x ∈ G) |- (h ∈ H) ==> (h,op(h, *, x)) ∈ (H × rightCoset(H)(*)(x))) by Tautology.from(
           membershipSufficientCondition of (x := h, y := op(h, *, x), A := H, B := rightCoset(H)(*)(x)),
           step4
         )
-        val step6 = thenHave((group(G)(*), subgroup(H)(G)(*), x ∈ G) |- ∀(h, (h ∈ H) ==> (h,op(h, *, x)) ∈ (H × rightCoset(H)(*)(x)))) by RightForall
-        val step7 = thenHave((group(G)(*), subgroup(H)(G)(*), x ∈ G) |- ∀((h ∈ H), (h,op(h, *, x)) ∈ (H × rightCoset(H)(*)(x)))) by Tautology
-        val step8 = have((group(G)(*), subgroup(H)(G)(*), x ∈ G) |- ∃(h ∈ H, (h,op(h, *, x)) === z) ==> (z ∈ (H × rightCoset(H)(*)(x)))) subproof {
-          assume(group(G)(*), subgroup(H)(G)(*), x ∈ G, ∃(h ∈ H, (h,op(h, *, x)) === z))
+        val step6 = thenHave((group(G)(*), H ≤ G, x ∈ G) |- ∀(h, (h ∈ H) ==> (h,op(h, *, x)) ∈ (H × rightCoset(H)(*)(x)))) by RightForall
+        val step7 = thenHave((group(G)(*), H ≤ G, x ∈ G) |- ∀((h ∈ H), (h,op(h, *, x)) ∈ (H × rightCoset(H)(*)(x)))) by Tautology
+        val step8 = have((group(G)(*), H ≤ G, x ∈ G) |- ∃(h ∈ H, (h,op(h, *, x)) === z) ==> (z ∈ (H × rightCoset(H)(*)(x)))) subproof {
+          assume(group(G)(*), H ≤ G, x ∈ G, ∃(h ∈ H, (h,op(h, *, x)) === z))
           val hxz = λ(h, h ∈ H /\ ((h,op(h, *, x)) === z))
           val eps = ε(h, hxz(h))
           have(∃(h, hxz(h)) |- hxz(eps)) by Tautology.from(Quantifiers.existsEpsilon of (x := h, P := hxz))
@@ -410,7 +410,7 @@ object Lagrange extends lisa.Main:
           val epsInCross = have((eps,op(eps, *, x)) ∈ (H × rightCoset(H)(*)(x))) by Tautology.from(epsInH, epsInCrossCond)
           val zInCross = have(z ∈ (H × rightCoset(H)(*)(x))) by Substitution.Apply(epsEq)(epsInCross)
         }
-        val step9 = have((group(G)(*), subgroup(H)(G)(*), x ∈ G) |- z ∈ ((h,op(h, *, x)) | (h ∈ H)) ==> z ∈ (H × rightCoset(H)(*)(x))) by Tautology.from(
+        val step9 = have((group(G)(*), H ≤ G, x ∈ G) |- z ∈ ((h,op(h, *, x)) | (h ∈ H)) ==> z ∈ (H × rightCoset(H)(*)(x))) by Tautology.from(
           step8,
           Replacement.membership of (
             y := z, 
@@ -419,15 +419,15 @@ object Lagrange extends lisa.Main:
             x := h
           )
         )
-        val step10 = thenHave((group(G)(*), subgroup(H)(G)(*), x ∈ G) |- ∀(z, z ∈ ((h,op(h, *, x)) | (h ∈ H)) ==> z ∈ (H × rightCoset(H)(*)(x)))) by RightForall
-        val step11 = have((group(G)(*), subgroup(H)(G)(*), x ∈ G) |- ((h,op(h, *, x)) | (h ∈ H)) ⊆ (H × rightCoset(H)(*)(x))) by Tautology.from(step10, subsetAxiom of (x := ((h,op(h, *, x)) | (h ∈ H)), y := (H × rightCoset(H)(*)(x))))
-        val isRelation = have((group(G)(*), subgroup(H)(G)(*), x ∈ G) |- relationBetween(((h,op(h, *, x)) | (h ∈ H)))(H)(rightCoset(H)(*)(x))) by Tautology.from(step11, relationBetween.definition of (Relation.R := ((h,op(h, *, x)) | (h ∈ H)), X := H, Y := rightCoset(H)(*)(x)))
+        val step10 = thenHave((group(G)(*), H ≤ G, x ∈ G) |- ∀(z, z ∈ ((h,op(h, *, x)) | (h ∈ H)) ==> z ∈ (H × rightCoset(H)(*)(x)))) by RightForall
+        val step11 = have((group(G)(*), H ≤ G, x ∈ G) |- ((h,op(h, *, x)) | (h ∈ H)) ⊆ (H × rightCoset(H)(*)(x))) by Tautology.from(step10, subsetAxiom of (x := ((h,op(h, *, x)) | (h ∈ H)), y := (H × rightCoset(H)(*)(x))))
+        val isRelation = have((group(G)(*), H ≤ G, x ∈ G) |- relationBetween(((h,op(h, *, x)) | (h ∈ H)))(H)(rightCoset(H)(*)(x))) by Tautology.from(step11, relationBetween.definition of (Relation.R := ((h,op(h, *, x)) | (h ∈ H)), X := H, Y := rightCoset(H)(*)(x)))
 
 
         // prove uniqueness
         val func = ((h,op(h, *, x)) | (h ∈ H))
         val membFunc = λ(h, (h, op(h, *, x)))
-        assume(group(G)(*), subgroup(H)(G)(*), x ∈ G)
+        assume(group(G)(*), H ≤ G, x ∈ G)
         have(y ∈ H |- (y,op(y, *, x)) ∈ func) by Tautology.from(pairInReplacement)
         val existsPair = thenHave(y ∈ H |- ∃(z, (y,z) ∈ func)) by RightExists.withParameters(op(y, *, x))
 
@@ -481,9 +481,9 @@ object Lagrange extends lisa.Main:
       }
 
     val surjectiveF = have(
-      (group(G)(*), subgroup(H)(G)(*), x ∈ G) |- surjective(((h,op(h, *, x)) | (h ∈ H)))(rightCoset(H)(*)(x))
+      (group(G)(*), H ≤ G, x ∈ G) |- surjective(((h,op(h, *, x)) | (h ∈ H)))(rightCoset(H)(*)(x))
       ) subproof {
-        assume(group(G)(*), subgroup(H)(G)(*), x ∈ G)
+        assume(group(G)(*), H ≤ G, x ∈ G)
         val rel = ((h,op(h, *, x)) | (h ∈ H))
         val relFunc = λ(h, (h, op(h, *, x)))
         val rangeDef = have({ snd(h) | h ∈ rel } === range(rel)) by Tautology.from(range.definition of (Relation.R := rel, z := h))
@@ -601,9 +601,9 @@ object Lagrange extends lisa.Main:
       }
 
     val injectiveF = have(
-      (group(G)(*), subgroup(H)(G)(*), x ∈ G) |- injective(((h,op(h, *, x)) | (h ∈ H)))(H)
+      (group(G)(*), H ≤ G, x ∈ G) |- injective(((h,op(h, *, x)) | (h ∈ H)))(H)
       ) subproof {
-        assume(group(G)(*), subgroup(H)(G)(*), x ∈ G)
+        assume(group(G)(*), H ≤ G, x ∈ G)
         val func = ((h,op(h, *, x)) | (h ∈ H))
 
         val funcBridge = have(y ∈ H |- ((app(func)(y) === op(y, *, x)))) subproof {
@@ -642,10 +642,10 @@ object Lagrange extends lisa.Main:
         have(thesis) by Tautology.from(fEq, injective.definition of (f := func, A := H, x := y, y := z))
       }
     val bijectiveF = have(
-      (group(G)(*), subgroup(H)(G)(*), x ∈ G) |- bijective(((h,op(h, *, x)) | (h ∈ H)))(H)(rightCoset(H)(*)(x))
+      (group(G)(*), H ≤ G, x ∈ G) |- bijective(((h,op(h, *, x)) | (h ∈ H)))(H)(rightCoset(H)(*)(x))
       ) subproof {
         have(thesis) by Tautology.from(functionF, surjectiveF,injectiveF, bijective.definition of (f := ((h,op(h, *, x)) | (h ∈ H)), A := H, B := rightCoset(H)(*)(x)))
       }
-    have((group(G)(*), subgroup(H)(G)(*), x ∈ G) |- bijective(((h,op(h, *, x)) | (h ∈ H)))(H)(rightCoset(H)(*)(x))) by Restate.from(bijectiveF)
+    have((group(G)(*), H ≤ G, x ∈ G) |- bijective(((h,op(h, *, x)) | (h ∈ H)))(H)(rightCoset(H)(*)(x))) by Restate.from(bijectiveF)
     thenHave(thesis) by RightExists
   }

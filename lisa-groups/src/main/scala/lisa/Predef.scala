@@ -4,6 +4,7 @@ object Predef {
     export lisa.maths.GroupTheory.Symbols.*
     export lisa.maths.GroupTheory.Groups
     export lisa.maths.GroupTheory.Subgroups
+    export lisa.maths.GroupTheory.Subgroups.{≤}
     export lisa.maths.GroupTheory.Cosets
     export lisa.maths.GroupTheory.NormalSubgroups
     export lisa.maths.GroupTheory.Lagrange

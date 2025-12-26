@@ -171,10 +171,10 @@ object QuotientGroup extends lisa.Main:
   }
 
   val cosetOperationIsCosetOperation = Theorem(
-    (group(G)(*), subgroup(H)(G)(*))
+    (group(G)(*), H ≤ G)
     |- isCosetOperation(G)(H)(*)(cosetOperation(G)(*))
   ) {
-    assume(group(G)(*), subgroup(H)(G)(*))
+    assume(group(G)(*), H ≤ G)
     val A0 = (𝒫(G) × 𝒫(G))
     val F0 = lambda(x, { op(fst(z), *, snd(z)) | z ∈ (fst(x) × snd(x)) })
     val f0 = { (x, F0(x)) | x ∈ A0 }
