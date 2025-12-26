@@ -102,7 +102,7 @@ object Groups extends lisa.Main:
     ))
   )))))
 
-  val equivalenceClass = DEF(λ(G, λ(H, λ(*, λ(x,
+  val cosetRep = DEF(λ(G, λ(H, λ(*, λ(x,
     ε(y, (y ∈ G) /\ (x === leftCoset(y)(*)(H)))
   )))))
 

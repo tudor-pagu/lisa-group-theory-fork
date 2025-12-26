@@ -40,7 +40,7 @@ import lisa.maths.Quantifiers.∃!
 object QuotientGroup extends lisa.Main:
 
   val quotientGroupMembership = Theorem(
-    (x ∈ quotientGroup(G)(H)(*)) |- (equivalenceClass(G)(H)(*)(x) ∈ G) /\ (x === leftCoset(equivalenceClass(G)(H)(*)(x))(*)(H))
+    (x ∈ quotientGroup(G)(H)(*)) |- (cosetRep(G)(H)(*)(x) ∈ G) /\ (x === leftCoset(cosetRep(G)(H)(*)(x))(*)(H))
   ) {
     assume(x ∈ quotientGroup(G)(H)(*))
     val G_H = quotientGroup(G)(H)(*)
@@ -58,17 +58,17 @@ object QuotientGroup extends lisa.Main:
         _1, _3
     )
     val eps = ε(y, (y ∈ G) /\ (x === leftCoset(y)(*)(H)))
-    val eq = equivalenceClass(G)(H)(*)(x)
+    val eq = cosetRep(G)(H)(*)(x)
     val _5 = have(auxP(eps)) by Tautology.from(
         _4, Quantifiers.existsEpsilon of (x := y, P := auxP)
     )
     val _6 = have(eq ∈ G) by Tautology.from(
         equalitySetMembership2 of (x := eps, y := eq, A := G),
-        equivalenceClass.definition, _5
+        cosetRep.definition, _5
     )
     val _7 = have(x === leftCoset(eps)(*)(H)) by Tautology.from(_5)
     val _8 = have(x === leftCoset(eq)(*)(H)) by Congruence.from(
-        _7, equivalenceClass.definition
+        _7, cosetRep.definition
     )
     have(thesis) by Tautology.from(_6, _8)
   }
@@ -327,8 +327,8 @@ object QuotientGroup extends lisa.Main:
     assume(group(G)(*), normalSubgroup(H)(G)(*), isCosetOperation(G)(H)(*)(**))
     val G_H = quotientGroup(G)(H)(*)
     
-    val x0 = equivalenceClass(G)(H)(*)(x)
-    val y0 = equivalenceClass(G)(H)(*)(y)
+    val x0 = cosetRep(G)(H)(*)(x)
+    val y0 = cosetRep(G)(H)(*)(y)
     val x0H = leftCoset(x0)(*)(H)
     val y0H = leftCoset(y0)(*)(H)
     val _1 = have((x ∈ G_H, y ∈ G_H) |- x0 ∈ G /\ (x === x0H)) by Tautology.from(quotientGroupMembership)
@@ -364,9 +364,9 @@ object QuotientGroup extends lisa.Main:
     val G_H = quotientGroup(G)(H)(*)
     val assoc = have((x ∈ G_H, y ∈ G_H, z ∈ G_H) |- op(x, **, op(y, **, z)) === op(op(x, **, y), **, z)) subproof {
         assume(x ∈ G_H, y ∈ G_H, z ∈ G_H)
-        val x0 = equivalenceClass(G)(H)(*)(x)
-        val y0 = equivalenceClass(G)(H)(*)(y)
-        val z0 = equivalenceClass(G)(H)(*)(z)
+        val x0 = cosetRep(G)(H)(*)(x)
+        val y0 = cosetRep(G)(H)(*)(y)
+        val z0 = cosetRep(G)(H)(*)(z)
 
         val x0H = leftCoset(x0)(*)(H)
         val y0H = leftCoset(y0)(*)(H)
@@ -435,48 +435,48 @@ object QuotientGroup extends lisa.Main:
       eInG
     )
 
-    val quotientGroupRestate = have(A ∈ quotientGroup(G)(H)(*) |- (equivalenceClass(G)(H)(*)(A) ∈ G) /\ (A === leftCoset(equivalenceClass(G)(H)(*)(A))(*)(H))) by Tautology.from(
+    val quotientGroupRestate = have(A ∈ quotientGroup(G)(H)(*) |- (cosetRep(G)(H)(*)(A) ∈ G) /\ (A === leftCoset(cosetRep(G)(H)(*)(A))(*)(H))) by Tautology.from(
       quotientGroupMembership of (x := A)
     )
 
-    val quotientGroupRestateEq = have(A ∈ quotientGroup(G)(H)(*) |- (A === leftCoset(equivalenceClass(G)(H)(*)(A))(*)(H))) by Tautology.from(
+    val quotientGroupRestateEq = have(A ∈ quotientGroup(G)(H)(*) |- (A === leftCoset(cosetRep(G)(H)(*)(A))(*)(H))) by Tautology.from(
       quotientGroupRestate
     )
 
-    val identityInst = have(A ∈ quotientGroup(G)(H)(*) |- ((op(e, *, equivalenceClass(G)(H)(*)(A)) === equivalenceClass(G)(H)(*)(A)) /\ (op(equivalenceClass(G)(H)(*)(A), *, e) === equivalenceClass(G)(H)(*)(A)))) by Tautology.from(
+    val identityInst = have(A ∈ quotientGroup(G)(H)(*) |- ((op(e, *, cosetRep(G)(H)(*)(A)) === cosetRep(G)(H)(*)(A)) /\ (op(cosetRep(G)(H)(*)(A), *, e) === cosetRep(G)(H)(*)(A)))) by Tautology.from(
       identityProperty of (
-        x := equivalenceClass(G)(H)(*)(A),
+        x := cosetRep(G)(H)(*)(A),
         Symbols.e := identityOf(G)(*)
       ),
       eIsIdentity,
       quotientGroupRestate,
     )
 
-    val identityInst1 = have(A ∈ quotientGroup(G)(H)(*) |- ((op(e, *, equivalenceClass(G)(H)(*)(A)) === equivalenceClass(G)(H)(*)(A)))) by Tautology.from(identityInst)
-    val identityInst2 = have(A ∈ quotientGroup(G)(H)(*) |- ((op(equivalenceClass(G)(H)(*)(A), *, e)) === equivalenceClass(G)(H)(*)(A))) by Tautology.from(identityInst)
+    val identityInst1 = have(A ∈ quotientGroup(G)(H)(*) |- ((op(e, *, cosetRep(G)(H)(*)(A)) === cosetRep(G)(H)(*)(A)))) by Tautology.from(identityInst)
+    val identityInst2 = have(A ∈ quotientGroup(G)(H)(*) |- ((op(cosetRep(G)(H)(*)(A), *, e)) === cosetRep(G)(H)(*)(A))) by Tautology.from(identityInst)
 
-    val step1_a = have(A ∈ quotientGroup(G)(H)(*) |- op(E, **, leftCoset(equivalenceClass(G)(H)(*)(A))(*)(H)) === leftCoset(op(e, *, equivalenceClass(G)(H)(*)(A)))(*)(H)) by Tautology.from(
+    val step1_a = have(A ∈ quotientGroup(G)(H)(*) |- op(E, **, leftCoset(cosetRep(G)(H)(*)(A))(*)(H)) === leftCoset(op(e, *, cosetRep(G)(H)(*)(A)))(*)(H)) by Tautology.from(
       quotientGroupRestate,
       cosetOperationProperty of (
         a := e, 
-        b := equivalenceClass(G)(H)(*)(A)
+        b := cosetRep(G)(H)(*)(A)
       ),
       eInG
     )
-    val step1_b = thenHave(A ∈ quotientGroup(G)(H)(*) |- op(E, **, leftCoset(equivalenceClass(G)(H)(*)(A))(*)(H)) === leftCoset(equivalenceClass(G)(H)(*)(A))(*)(H)) by Substitution.Apply(identityInst1)
-    val step1_c = thenHave(A ∈ quotientGroup(G)(H)(*) |- op(E, **, leftCoset(equivalenceClass(G)(H)(*)(A))(*)(H)) === A) by Substitution.Apply(quotientGroupRestateEq)
+    val step1_b = thenHave(A ∈ quotientGroup(G)(H)(*) |- op(E, **, leftCoset(cosetRep(G)(H)(*)(A))(*)(H)) === leftCoset(cosetRep(G)(H)(*)(A))(*)(H)) by Substitution.Apply(identityInst1)
+    val step1_c = thenHave(A ∈ quotientGroup(G)(H)(*) |- op(E, **, leftCoset(cosetRep(G)(H)(*)(A))(*)(H)) === A) by Substitution.Apply(quotientGroupRestateEq)
     val step1_d = thenHave(A ∈ quotientGroup(G)(H)(*) |- op(E, **, A) === A) by Substitution.Apply(quotientGroupRestateEq)
     
-    val step2_a = have(A ∈ quotientGroup(G)(H)(*) |- op(leftCoset(equivalenceClass(G)(H)(*)(A))(*)(H), **, E) === leftCoset(op(equivalenceClass(G)(H)(*)(A), *, e))(*)(H)) by Tautology.from(
+    val step2_a = have(A ∈ quotientGroup(G)(H)(*) |- op(leftCoset(cosetRep(G)(H)(*)(A))(*)(H), **, E) === leftCoset(op(cosetRep(G)(H)(*)(A), *, e))(*)(H)) by Tautology.from(
       quotientGroupRestate,
       cosetOperationProperty of (
         b := e, 
-        a := equivalenceClass(G)(H)(*)(A)
+        a := cosetRep(G)(H)(*)(A)
       ),
       eInG
     )
-    val step2_b = thenHave(A ∈ quotientGroup(G)(H)(*) |- op(leftCoset(equivalenceClass(G)(H)(*)(A))(*)(H), **, E) === leftCoset(equivalenceClass(G)(H)(*)(A))(*)(H)) by Substitution.Apply(identityInst2)
-    val step2_c = thenHave(A ∈ quotientGroup(G)(H)(*) |- op(leftCoset(equivalenceClass(G)(H)(*)(A))(*)(H), **, E) === A) by Substitution.Apply(quotientGroupRestateEq)
+    val step2_b = thenHave(A ∈ quotientGroup(G)(H)(*) |- op(leftCoset(cosetRep(G)(H)(*)(A))(*)(H), **, E) === leftCoset(cosetRep(G)(H)(*)(A))(*)(H)) by Substitution.Apply(identityInst2)
+    val step2_c = thenHave(A ∈ quotientGroup(G)(H)(*) |- op(leftCoset(cosetRep(G)(H)(*)(A))(*)(H), **, E) === A) by Substitution.Apply(quotientGroupRestateEq)
     val step2_d = thenHave(A ∈ quotientGroup(G)(H)(*) |- op(A, **, E) === A) by Substitution.Apply(quotientGroupRestateEq)
 
     val step3_a = have(A ∈ quotientGroup(G)(H)(*) |- (op(E, **, A) === A) /\ (op(A, **, E) === A)) by Tautology.from(step1_d, step2_d)
@@ -551,7 +551,7 @@ object QuotientGroup extends lisa.Main:
   ) {
     assume(group(G)(*), normalSubgroup(H)(G)(*), isCosetOperation(G)(H)(*)(**))
     val G_H = quotientGroup(G)(H)(*)
-    val x0 = equivalenceClass(G)(H)(*)(x)
+    val x0 = cosetRep(G)(H)(*)(x)
     val x0H = leftCoset(x0)(*)(H)
     val xi = inverseOf(G)(*)(x0)
     val xiH = leftCoset(xi)(*)(H)
