@@ -114,18 +114,25 @@ object Homomorphisms extends lisa.Main:
         )
     }
 
-    val ker = DEF(λ(f, λ(G, λ(*, λ(H, λ(∘,
+    val kernel = DEF(λ(f, λ(G, λ(*, λ(H, λ(∘,
         { x ∈ G | isIdentityElement(H)(∘)(f(x)) }
-    ))))))
+    )))))).printAs( args => {
+        val f = args(0)
+        s"ker($f)"
+    })
+
+    private [GroupTheory] def ker(f: Expr[Ind]) = {
+        kernel(f)(G)(*)(H)(∘)
+    }
 
     val kerProperty = Theorem(
-        (x ∈ ker(f)(G)(*)(H)(∘))
+        (x ∈ ker(f))
         |- x ∈ G /\ isIdentityElement(H)(∘)(f(x))
     ) {
-        assume(x ∈ ker(f)(G)(*)(H)(∘))
+        assume(x ∈ ker(f))
         val auxP = lambda(x, isIdentityElement(H)(∘)(f(x)))
-        val subst = have(ker(f)(G)(*)(H)(∘) === { x ∈ G | auxP(x) }) by Tautology.from(ker.definition)
-        have(x ∈ ker(f)(G)(*)(H)(∘)) by Tautology
+        val subst = have(ker(f) === { x ∈ G | auxP(x) }) by Tautology.from(kernel.definition)
+        have(x ∈ ker(f)) by Tautology
         thenHave(x ∈ { x ∈ G | auxP(x) }) by Substitute(subst)
         thenHave(thesis) by Tautology.fromLastStep(
             Comprehension.membership of (x := x, y := G, φ := auxP)
@@ -133,21 +140,21 @@ object Homomorphisms extends lisa.Main:
     }
 
     val kerIsSubset = Theorem(
-        ker(f)(G)(*)(H)(∘) ⊆ G
+        ker(f) ⊆ G
     ) {
-        val K = ker(f)(G)(*)(H)(∘)
+        val K = ker(f)
         have(x ∈ K ==> x ∈ G) by Tautology.from(kerProperty)
         thenHave(∀(x ∈ K, x ∈ G)) by RightForall
         thenHave(thesis) by Tautology.fromLastStep(subsetAxiom of (x := K, y := G, z := x))
     }
 
     val kerMembershipTest = Theorem(
-        (x ∈ G, isIdentityElement(H)(∘)(f(x))) |- x ∈ ker(f)(G)(*)(H)(∘)
+        (x ∈ G, isIdentityElement(H)(∘)(f(x))) |- x ∈ ker(f)
     ) {
         assume(x ∈ G, isIdentityElement(H)(∘)(f(x)))
-        val K = ker(f)(G)(*)(H)(∘)
+        val K = ker(f)
         val auxP = lambda(x, isIdentityElement(H)(∘)(f(x)))
-        val subst = have(K === { x ∈ G | auxP(x) }) by Tautology.from(ker.definition) 
+        val subst = have(K === { x ∈ G | auxP(x) }) by Tautology.from(kernel.definition) 
         have(x ∈ { x ∈ G | isIdentityElement(H)(∘)(f(x)) }) by Tautology.from(
             Comprehension.membership of (x := x, y := G, φ := auxP)
         )
@@ -156,7 +163,7 @@ object Homomorphisms extends lisa.Main:
 
     val eIsInKer = Theorem(
         (group(G)(*), group(H)(∘), f ::: (G, *) -> (H, ∘))
-        |- identityOf(G)(*) ∈ ker(f)(G)(*)(H)(∘)
+        |- identityOf(G)(*) ∈ ker(f)
     ) {
         assume(group(G)(*), group(H)(∘), f ::: (G, *) -> (H, ∘))
         val eG = identityOf(G)(*)
@@ -172,10 +179,10 @@ object Homomorphisms extends lisa.Main:
 
     val identityElementIsInKer = Theorem(
         (group(G)(*), group(H)(∘), f ::: (G, *) -> (H, ∘), isIdentityElement(G)(*)(e))
-        |- e ∈ ker(f)(G)(*)(H)(∘)
+        |- e ∈ ker(f)
     ) {
         assume(group(G)(*), group(H)(∘), f ::: (G, *) -> (H, ∘), isIdentityElement(G)(*)(e))
-        val K = ker(f)(G)(*)(H)(∘)
+        val K = ker(f)
         val e0 = identityOf(G)(*)
         val subst = have(e === e0) by Tautology.from(
             identityIsUnique of (x := e, y := e0),
@@ -187,9 +194,9 @@ object Homomorphisms extends lisa.Main:
 
     val kerIsNonEmpty = Theorem(
         (group(G)(*), group(H)(∘), f ::: (G, *) -> (H, ∘))
-        |- ker(f)(G)(*)(H)(∘) ≠ ∅
+        |- ker(f) ≠ ∅
     ) {
-        val K = ker(f)(G)(*)(H)(∘)
+        val K = ker(f)
         have(thesis) by Tautology.from(
             EmptySet.setWithElementNonEmpty of (x := identityOf(G)(*), y := K),
             eIsInKer
@@ -198,10 +205,10 @@ object Homomorphisms extends lisa.Main:
 
     val kerIsClosedUnderOperation = Theorem(
         (group(G)(*), group(H)(∘), f ::: (G, *) -> (H, ∘))
-        |- binaryOperation(ker(f)(G)(*)(H)(∘))(*)
+        |- binaryOperation(ker(f))(*)
     ) {
         assume(group(G)(*), group(H)(∘), f ::: (G, *) -> (H, ∘))
-        val K = ker(f)(G)(*)(H)(∘)
+        val K = ker(f)
         have((x ∈ K, y ∈ K) |- op(x, *, y) ∈ K) subproof {
             assume(x ∈ K, y ∈ K)
             val _1 = have(x ∈ G /\ isIdentityElement(H)(∘)(f(x))) by Tautology.from(kerProperty)
@@ -232,10 +239,10 @@ object Homomorphisms extends lisa.Main:
 
     val kerIsClosedUnderInverse = Theorem(
         (group(G)(*), group(H)(∘), f ::: (G, *) -> (H, ∘))
-        |- inverseElement(ker(f)(G)(*)(H)(∘))(*)
+        |- inverseElement(ker(f))(*)
     ) {
         assume(group(G)(*), group(H)(∘), f ::: (G, *) -> (H, ∘))
-        val K = ker(f)(G)(*)(H)(∘)
+        val K = ker(f)
         val xi = inverseOf(G)(*)(x)
         val _1 = have(x ∈ G |- isIdentityElement(G)(*)(op(x, *, xi))) by Tautology.from(inverseProperty2)
         val _2 = have(isIdentityElement(G)(*)(op(x, *, xi)) |- isIdentityElement(K)(*)(op(x, *, xi))) subproof {
@@ -294,10 +301,10 @@ object Homomorphisms extends lisa.Main:
 
     val kerIsSubgroup = Theorem(
         (group(G)(*), group(H)(∘), f ::: (G, *) -> (H, ∘))
-        |- subgroup(ker(f)(G)(*)(H)(∘))(G)(*)
+        |- ker(f) ≤ G
     ) {
         assume(group(G)(*), group(H)(∘), f ::: (G, *) -> (H, ∘))
-        val K = ker(f)(G)(*)(H)(∘)
+        val K = ker(f)
         have(thesis) by Tautology.from(
             kerIsNonEmpty,
             kerIsSubset,
@@ -309,15 +316,15 @@ object Homomorphisms extends lisa.Main:
 
     val kerIsGroup = Theorem(
         (group(G)(*), group(H)(∘), f ::: (G, *) -> (H, ∘))
-        |- group(ker(f)(G)(*)(H)(∘))(*)
+        |- group(ker(f))(*)
     ) {
-        val K = ker(f)(G)(*)(H)(∘)
+        val K = ker(f)
         have(thesis) by Tautology.from(kerIsSubgroup, subgroup.definition of (H := K))
     }
 
     val kerIsNormalSubgroup = Theorem(
         (group(G)(*), group(H)(∘), f ::: (G, *) -> (H, ∘))
-        |- normalSubgroup(ker(f)(G)(*)(H)(∘))(G)(*)
+        |- ker(f) ◁ G
     ) {
         sorry
     }
