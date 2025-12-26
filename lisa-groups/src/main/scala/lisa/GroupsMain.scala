@@ -56,7 +56,10 @@ object Groups extends lisa.Main:
 
   val inverseOf = DEF(λ(G, λ(*, λ(x,
     ε(y, (y ∈ G) /\ (isIdentityElement(G)(*)(op(x, *, y))))
-  ))))
+  )))).printAs(args => {
+    val x = args(2)
+    s"$x⁻¹"
+  })
 
   val group = DEF(λ(G, λ(*,
     (binaryOperation(G)(*) /\
