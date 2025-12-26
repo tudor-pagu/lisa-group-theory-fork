@@ -559,3 +559,84 @@ object Utils extends lisa.Main:
       _1, _2, functionBetween.definition
     )
   }
+
+  val functionBuilder = Theorem(
+    (f === {(x, F(x)) | x ∈ A}) |- functionOn(f)(A) /\ ∀(x ∈ A, app(f)(x) === F(x))
+  ) {
+    assume(f === {(x, F(x)) | x ∈ A})
+    val subst = have(f === {(x, F(x)) | x ∈ A}) by Restate
+
+    have(z ∈ {(x, F(x)) | x ∈ A} <=> ∃(a ∈ A, z === (a, F(a)))) by Replacement.apply
+    val _1 = thenHave(z ∈ f <=> ∃(a ∈ A, z === (a, F(a)))) by Substitute(subst)
+    val B0 = { F(x) | x ∈ A }
+    
+    have(z ∈ f |- z ∈ (A × B0)) subproof {
+      assume(z ∈ f)
+      val _a1 = have(∃(a ∈ A, z === (a, F(a)))) by Tautology.from(_1)
+      val auxP = lambda(a, a ∈ A /\ (z === (a, F(a))))
+      val a0 = ε(a, auxP(a))
+      val _a2 = have(a0 ∈ A /\ (z === (a0, F(a0)))) by Tautology.from(_a1, Quantifiers.existsEpsilon of (x := a, P := auxP))
+      val subst = thenHave(z === (a0, F(a0))) by Tautology
+      val _a3 = have(F(a0) ∈ B0) by Tautology.from(_a2, Replacement.map of (x := a0))
+      val _a4 = have((a0, F(a0)) ∈ (A × B0)) by Tautology.from(_a2, _a3, CartesianProduct.pairMembership of (x := a0, y := F(a0), B := B0))
+      thenHave(thesis) by Substitute(subst)
+    }
+    thenHave(z ∈ f ==> z ∈ (A × B0)) by Restate
+    thenHave(∀(z, z ∈ f ==> z ∈ (A × B0))) by RightForall
+    thenHave(f ⊆ (A × B0)) by Tautology.fromLastStep(subsetAxiom of (x := f, y := (A × B0)))
+    val _2 = thenHave(relationBetween(f)(A)(B0)) by Tautology.fromLastStep(relationBetween.definition of (Relation.R := f, X := A, Y := B0))
+
+    have(x ∈ A |- ∃!(y, (x, y) ∈ f) /\ (app(f)(x) === F(x))) subproof {
+      assume(x ∈ A)
+      val step1 = have((x, y) ∈ f <=> ∃(a ∈ A, (x, y) === (a, F(a)))) by Tautology.from(_1 of (z := (x, y)))
+      have(((x, y) === (a, F(a))) <=> ((y === F(a)) /\ (x === a))) by Tautology.from(
+        Pair.extensionality of (a := x, b := y, c := a, d := F(a))
+      )
+      thenHave((a ∈ A /\ ((x, y) === (a, F(a)))) <=> (a ∈ A /\ ((y === F(a)) /\ (x === a)))) by Tautology
+      thenHave(∀(a, (a ∈ A /\ ((x, y) === (a, F(a)))) <=> (a ∈ A /\ ((y === F(a)) /\ (x === a))))) by RightForall
+      val step2 = thenHave(∃(a, a ∈ A /\ ((x, y) === (a, F(a)))) <=> ∃(a, a ∈ A /\ ((y === F(a)) /\ (x === a)))) by Tautology.fromLastStep(
+        equivalenceSubstitutionExists of (
+          x := a, 
+          P := lambda(a, a ∈ A /\ ((x, y) === (a, F(a)))),
+          Q := lambda(a, a ∈ A /\ ((y === F(a)) /\ (x === a)))
+        )
+      )
+
+      val step3 = have((x, y) ∈ f <=> ∃(a, a ∈ A /\ ((y === F(a)) /\ (x === a)))) by Tautology.from(step1, step2)
+      val step4 = have((x, y) ∈ f <=> (x ∈ A /\ (y === F(x)))) by Tautology.from(
+        step3, Quantifiers.onePointRule of (x := a, y := x, P := lambda(a, a ∈ A /\ (y === F(a))))
+      )
+      val step5 = have((x, y) ∈ f <=> (y === F(x))) by Tautology.from(step4)
+      val auxP = lambda(y, (x, y) ∈ f)
+      have((auxP(y) /\ auxP(z)) |- y === z) subproof {
+        assume(auxP(y), auxP(z))
+        val _a = have(y === F(x)) by Tautology.from(step5)
+        val _b = have(z === F(x)) by Tautology.from(step5 of (y := z))
+        have(thesis) by Congruence.from(_a, _b)
+      }
+      thenHave((auxP(y) /\ auxP(z)) ==> (y === z)) by Restate
+      val step6 = thenHave(∀(y, ∀(z, (auxP(y) /\ auxP(z)) ==> (y === z)))) by Generalize
+      val auxpf = have(auxP(F(x))) by Tautology.from(step5 of (y := F(x)))
+      val step7 = thenHave(∃(y, auxP(y))) by RightExists
+      have(∃!(y, auxP(y))) by Tautology.from(
+        step6, step7, Quantifiers.existsOneAlternativeDefinition of (x := y, y := z, P := auxP)
+      )
+      val step8 = thenHave(∃!(z, auxP(z))) by Restate
+      val step9 = have(auxP(F(x)) <=> (F(x) === ε(z, auxP(z)))) by Tautology.from(
+        step8, Quantifiers.existsOneEpsilonUniqueness of (x := z, y := F(x), P := auxP)
+      )
+      val step10 = have(F(x) === ε(z, auxP(z))) by Tautology.from(step9, auxpf)
+      thenHave(F(x) === ε(y, (x, y) ∈ f)) by Restate
+      val step11 = thenHave(F(x) === app(f)(x)) by Substitute(app.definition)
+      have(thesis) by Tautology.from(step8, step11)
+    }
+    val _3 = thenHave(x ∈ A ==> ((∃!(y, (x, y) ∈ f) /\ (app(f)(x) === F(x))))) by Restate
+    val _4a = thenHave(x ∈ A ==> (∃!(y, (x, y) ∈ f))) by Tautology
+    val _4 = thenHave(∀(x ∈ A, ∃!(y, (x, y) ∈ f))) by RightForall
+    val _5a = have(x ∈ A ==> (app(f)(x) === F(x))) by Tautology.from(_3)
+    val _5 = thenHave(∀(x ∈ A, (app(f)(x) === F(x)))) by RightForall
+    have(f :: A -> B0) by Tautology.from(_2, _4, functionBetween.definition of (B := B0))
+    thenHave(thesis) by Tautology.fromLastStep(
+      functionBetweenIsFunctionOn of (B := B0), _5
+    )
+  }
