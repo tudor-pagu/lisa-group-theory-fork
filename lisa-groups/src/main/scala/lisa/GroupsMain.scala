@@ -11,7 +11,7 @@ import lisa.maths.SetTheory.Base.EmptySet
 import lisa.maths.SetTheory.Base.Singleton
 import lisa.maths.SetTheory.Base.Subset
 import lisa.Main
-import lisa.maths.SetTheory.Functions.Function.{bijective, surjective, injective, ::, app, function, functionBetween}
+import lisa.maths.SetTheory.Functions.Function.{bijective, surjective, injective, ::, app, function, functionBetween, functionOn}
 import lisa.maths.SetTheory.Functions.Operations.Restriction.{↾}
 import lisa.maths.SetTheory.Functions.Operations.Restriction
 import lisa.maths.SetTheory.Functions.BasicTheorems.*
@@ -91,20 +91,6 @@ object Groups extends lisa.Main:
     subgroup(H)(G)(*) /\
     ∀(g ∈ G, leftCoset(g)(*)(H) === rightCoset(H)(*)(g))
   ))))
-
-  val quotientGroup = DEF(λ(G, λ(H, λ(*,
-    { leftCoset(g)(*)(H) | g ∈ G }
-  ))))
-
-  val isCosetOperation = DEF(λ(G, λ(H, λ(*, λ(**,
-    ∀(A ∈ quotientGroup(G)(H)(*), ∀(B ∈ quotientGroup(G)(H)(*),
-      op(A, **, B) === ⋃{ {op(a, *, b) | a ∈ A} | b ∈ B }
-    ))
-  )))))
-
-  val equivalenceClass = DEF(λ(G, λ(H, λ(*, λ(x,
-    ε(y, (y ∈ G) /\ (x === leftCoset(y)(*)(H)))
-  )))))
 
 
   /* Lagrange's Theorem */
@@ -852,4 +838,54 @@ object Groups extends lisa.Main:
     thenHave(thesis) by Tautology.fromLastStep(
       isIdentityElement.definition of (x := e, G := H)
     )
+  }
+
+  val binaryOperationTest = Theorem(
+    (function(*), (G × G) ⊆ dom(*), ∀(x, ∀(y, (x ∈ G /\ y ∈ G) ==> op(x, *, y) ∈ G)))
+    |- binaryOperation(G)(*)
+  ) {
+    assume(function(*), (G × G) ⊆ dom(*), ∀(x, ∀(y, (x ∈ G /\ y ∈ G) ==> op(x, *, y) ∈ G)))
+    val fR = (* ↾ (G × G))
+    val _1 = have(dom(fR) === dom(*) ∩ (G × G)) by Tautology.from(
+      restrictionDomain of (f := *, A := (G × G))
+    )
+    val _2 = have(dom(*) ∩ (G × G) === (G × G) ∩ dom(*)) by Tautology.from(
+      Intersection.commutativity of (x := dom(*), y := (G × G))
+    )
+    val _3 = have((G × G) ∩ dom(*) === (G × G)) by Tautology.from(
+      Intersection.ofSubsets of (x := (G × G), y := dom(*))
+    )
+    val _4 = have(dom(fR) === (G × G)) by Congruence.from(_1, _2, _3)
+    val _5 = have(function(fR)) by Tautology.from(Restriction.isFunction of (f := *, A := (G × G)))
+    have(functionOn(fR)(G × G)) by Tautology.from(_4, _5, functionOnIffFunctionWithDomain of (f := fR, A := (G × G)))
+    thenHave(∃(B, fR :: (G × G) -> B)) by Tautology.fromLastStep(functionOn.definition of (f := fR, A := (G × G)))
+    val auxP = lambda(B, fR :: (G × G) -> B)
+    val B0 = ε(B, auxP(B))
+    val _6 = thenHave(fR :: (G × G) -> B0) by Tautology.fromLastStep(Quantifiers.existsEpsilon of (x := B, P := auxP))
+    
+    have(z ∈ (G × G) |- app(fR)(z) ∈ G) subproof {
+      assume(z ∈ (G × G))
+      val step1 = have(app(*)(z) === app(fR)(z)) by Tautology.from(
+        _6, restrictedAppTheorem of (f := *, A := (G × G), B := B0, x := z)
+      )
+      val x0 = fst(z)
+      val y0 = snd(z)
+      val step2 = have(x0 ∈ G /\ y0 ∈ G) by Tautology.from(
+        CartesianProduct.fstMembership of (A := G, B := G),
+        CartesianProduct.sndMembership of (A := G, B := G)
+      )
+      val step3 = have(z === (x0, y0)) by Tautology.from(CartesianProduct.inversion of (A := G, B := G))
+      val step4 = have(op(x0, *, y0) === app(fR)(z)) by Congruence.from(step1, step3)
+      have(∀(x, ∀(y, (x ∈ G /\ y ∈ G) ==> op(x, *, y) ∈ G))) by Restate
+      thenHave((x0 ∈ G /\ y0 ∈ G) ==> op(x0, *, y0) ∈ G) by InstantiateForall(x0, y0)
+      thenHave(op(x0, *, y0) ∈ G) by Tautology.fromLastStep(step2)
+      thenHave(thesis) by Substitute(step4)
+    }
+    thenHave(z ∈ (G × G) ==> app(fR)(z) ∈ G) by Restate
+    val _7 = thenHave(∀(z ∈ (G × G), app(fR)(z) ∈ G)) by RightForall
+    have(fR :: (G × G) -> G) by Tautology.from(
+      _6, _7,
+      restrictedAppTheorem3 of (f := fR, A := (G × G), C := B0, B := G)
+    )
+    thenHave(thesis) by Tautology.fromLastStep(binaryOperation.definition)
   }
