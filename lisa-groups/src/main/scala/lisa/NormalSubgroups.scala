@@ -430,3 +430,107 @@ object NormalSubgroups extends lisa.Main:
         abinG, cdinG
     )
   }
+
+  val normalSubgroupAlternativeDefinition = Theorem(
+    (H ◁ G) <=> (H ≤ G /\ ∀(x, ∀(h, (x ∈ G /\ h ∈ H) ==> conjugation(G)(*)(h)(x) ∈ H)))
+  ) {
+    val `==>` = have((H ◁ G) |- (H ≤ G /\ ∀(x, ∀(h, (x ∈ G /\ h ∈ H) ==> conjugation(G)(*)(h)(x) ∈ H)))) subproof {
+        assume(H ◁ G)
+        val groupG = have(group(G)(*)) by Tautology.from(normalSubgroup.definition, subgroup.definition)
+        have((x ∈ G, h ∈ H) |- conjugation(G)(*)(h)(x) ∈ H) by Tautology.from(groupG, normalSubgroupProperty of (y := h))
+        thenHave((x ∈ G /\ h ∈ H) ==> conjugation(G)(*)(h)(x) ∈ H) by Restate
+        thenHave(∀(x, ∀(h, (x ∈ G /\ h ∈ H) ==> conjugation(G)(*)(h)(x) ∈ H))) by Generalize
+        thenHave(thesis) by Tautology.fromLastStep(normalSubgroup.definition)
+    }
+    val `<==` = have((H ≤ G, ∀(x, ∀(h, (x ∈ G /\ h ∈ H) ==> conjugation(G)(*)(h)(x) ∈ H))) |- (H ◁ G)) subproof {
+        assume(H ≤ G, ∀(x, ∀(h, (x ∈ G /\ h ∈ H) ==> conjugation(G)(*)(h)(x) ∈ H)))
+        val groupG = have(group(G)(*)) by Tautology.from(subgroup.definition)
+        val xH = leftCoset(x)(*)(H)
+        val Hx = rightCoset(H)(*)(x)
+
+        val _1 = have((x ∈ G, y ∈ xH) |- y ∈ Hx) subproof {
+            assume(x ∈ G, y ∈ xH)
+            have(∃(h ∈ H, y === op(x, *, h))) by Tautology.from(groupG, leftCosetMembership of (a := y, b := x))
+            val auxP = lambda(h, h ∈ H /\ (y === op(x, *, h)))
+            val h0 = ε(h, auxP(h))
+            val step1 = thenHave(h0 ∈ H /\ (y === op(x, *, h0))) by Tautology.fromLastStep(Quantifiers.existsEpsilon of (x := h, P := auxP))
+            val h0inG = have(h0 ∈ G) by Tautology.from(groupG, step1, elementInSubgroupMeansItsInGroup of (x := h0))
+            val xhxi = conjugation(G)(*)(h0)(x)
+            val step2 = have(op(x, *, h0) === op(xhxi, *, x)) by Tautology.from(groupG, h0inG, conjugationInversionLeft of (h := h0))
+            have(∀(x, ∀(h, (x ∈ G /\ h ∈ H) ==> conjugation(G)(*)(h)(x) ∈ H))) by Restate
+            thenHave((x ∈ G /\ h0 ∈ H) ==> xhxi ∈ H) by InstantiateForall(x, h0)
+            val step3 = thenHave(xhxi ∈ H) by Tautology.fromLastStep(step1)
+            have(y === op(x, *, h0)) by Tautology.from(step1)
+            val step4 = thenHave(y === op(xhxi, *, x)) by Substitute(step2)
+            have(y ∈ Hx) by Tautology.from(groupG, step4, step3, rightCosetMembershipTest of (a := y, b := x, h := xhxi))
+        }
+        val _2 = have((x ∈ G, y ∈ Hx) |- y ∈ xH) subproof {
+            assume(x ∈ G, y ∈ Hx)
+
+            have(∃(h ∈ H, y === op(h, *, x))) by Tautology.from(
+                groupG, rightCosetMembership of (a := y, b := x)
+            )
+
+            val auxP = lambda(h, h ∈ H /\ (y === op(h, *, x)))
+            val h0 = ε(h, auxP(h))
+
+            val step1 = thenHave(h0 ∈ H /\ (y === op(h0, *, x))) by Tautology.fromLastStep(
+                Quantifiers.existsEpsilon of (x := h, P := auxP)
+            )
+
+            val h0inG = have(h0 ∈ G) by Tautology.from(
+                groupG,
+                step1,
+                elementInSubgroupMeansItsInGroup of (x := h0)
+            )
+
+            val xinG = assume(x ∈ G)
+
+            val xi = inverseOf(G)(*)(x)
+            val xiInG = have(xi ∈ G) by Tautology.from(groupG, xinG, inverseStaysInGroup)
+
+            val xih0 = conjugation(G)(*)(h0)(xi)
+
+            val step2 = have(op(h0, *, x) === op(x, *, xih0)) by Tautology.from(
+                groupG,
+                h0inG,
+                xiInG,
+                conjugationInversionRight of (h := h0, x := x)
+            )
+
+            have(∀(x, ∀(h, (x ∈ G /\ h ∈ H) ==> conjugation(G)(*)(h)(x) ∈ H))) by Restate
+            thenHave((xi ∈ G /\ h0 ∈ H) ==> xih0 ∈ H) by InstantiateForall(xi, h0)
+            val step3 = thenHave(xih0 ∈ H) by Tautology.fromLastStep(xiInG, step1)
+
+            have(y === op(h0, *, x)) by Tautology.from(step1)
+            val step4 = thenHave(y === op(x, *, xih0)) by Substitute(step2)
+
+            have(y ∈ xH) by Tautology.from(
+                groupG,
+                step4,
+                step3,
+                leftCosetMembershipTest of (a := y, b := x, h := xih0)
+            )
+        }
+
+        have(x ∈ G |- (y ∈ xH) <=> (y ∈ Hx)) by Tautology.from(_1, _2)
+        thenHave(x ∈ G |- xH === Hx) by Extensionality
+        thenHave(x ∈ G ==> (xH === Hx)) by Restate
+        thenHave(∀(x ∈ G, xH === Hx)) by RightForall
+        thenHave(thesis) by Tautology.fromLastStep(normalSubgroup.definition)
+    }
+    have(thesis) by Tautology.from(`==>`, `<==`)
+  }
+
+  val conjugationInGroup = Theorem(
+    (group(G)(*), x ∈ G, y ∈ G) |- conjugation(G)(*)(x)(y) ∈ G
+  ) {
+    assume(group(G)(*), x ∈ G, y ∈ G)
+    have(op(op(y, *, x), *, inverseOf(G)(*)(y)) ∈ G) by Tautology.from(
+        group.definition,
+        inverseStaysInGroup of (x := y),
+        binaryOperationThm of (x := y, y := x),
+        binaryOperationThm of (x := op(y, *, x), y := inverseOf(G)(*)(y))
+    )
+    thenHave(conjugation(G)(*)(x)(y) ∈ G) by Substitute(conjugation.definition)
+  }

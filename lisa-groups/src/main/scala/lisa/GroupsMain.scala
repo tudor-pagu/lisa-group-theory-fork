@@ -25,6 +25,7 @@ import lisa.automation.Tableau
 import lisa.utils.prooflib.BasicStepTactic.RightForall
 import lisa.maths.GroupTheory.Utils.*
 import lisa.utils.prooflib.SimpleDeducedSteps.InstantiateForall
+import lisa.maths.Quantifiers.∃!
 
 object Groups extends lisa.Main:
 
@@ -852,4 +853,62 @@ object Groups extends lisa.Main:
       restrictedAppTheorem3 of (f := fR, A := (G × G), C := B0, B := G)
     )
     thenHave(thesis) by Tautology.fromLastStep(binaryOperation.definition)
+  }
+
+  val identityUniqueness = Theorem(
+    (group(G)(*)) |- isIdentityElement(G)(*)(x) <=> (x === identityOf(G)(*))
+  ) {
+    assume(group(G)(*))
+    val e0 = identityOf(G)(*)
+    have(isIdentityElement(G)(*)(e0)) by Tautology.from(identityOfIsIdentity)
+    val _1 = thenHave(isIdentityElement(G)(*)(x) ==> (x === e0)) by Tautology.fromLastStep(
+      identityIsUnique of (y := e0)
+    )
+    val _2 = have(x === e0 |- isIdentityElement(G)(*)(x)) subproof {
+      assume(x === e0)
+      val subst = have(x === e0) by Restate
+      have(isIdentityElement(G)(*)(e0)) by Tautology.from(identityOfIsIdentity)
+      thenHave(thesis) by Substitute(subst)
+    }
+    have(thesis) by Tautology.from(_1, _2)
+  }
+
+  val inverseUniqueness = Theorem(
+    (group(G)(*), x ∈ G) |- ∃!(y, y ∈ G /\ isIdentityElement(G)(*)(op(x, *, y)))
+  ) {
+    assume(group(G)(*), x ∈ G)
+    val isInv = lambda(y, y ∈ G /\ isIdentityElement(G)(*)(op(x, *, y)))
+    have((isInv(y), isInv(z)) |- y === z) subproof {
+      assume(isInv(y), isInv(z))
+      val e0 = identityOf(G)(*)
+      val step1 = have(op(x, *, y) === e0) by Tautology.from(identityUniqueness of (x := op(x, *, y)))
+      val step2 = have(op(x, *, z) === e0) by Tautology.from(identityUniqueness of (x := op(x, *, z)))
+      thenHave(op(x, *, z) === op(x, *, y)) by Substitute(step1)
+      thenHave(thesis) by Tautology.fromLastStep(eliminateLeft of (z := x, x := y, y := z)) 
+    }
+    thenHave((isInv(y) /\ isInv(z)) ==> (y === z)) by Restate
+    val _1 = thenHave(∀(y, ∀(z, (isInv(y) /\ isInv(z)) ==> (y === z)))) by Generalize
+    have(∀(x ∈ G, ∃(y, isInv(y)))) by Tautology.from(group.definition, inverseElement.definition)
+    thenHave(x ∈ G ==> ∃(y, isInv(y))) by InstantiateForall(x)
+    val _2 = thenHave(∃(y, isInv(y))) by Tautology
+    have(thesis) by Tautology.from(_1, _2, Quantifiers.existsOneAlternativeDefinition of (x := y, y := z, P := isInv))
+  }
+
+  val inverseTest = Theorem(
+    (group(G)(*), x ∈ G, y ∈ G, isIdentityElement(G)(*)(op(x, *, y)))
+    |- (y === inverseOf(G)(*)(x)) /\ (x === inverseOf(G)(*)(y))
+  ) {
+    assume(group(G)(*), x ∈ G, y ∈ G)
+    val thm = have(isIdentityElement(G)(*)(op(x, *, y)) |- y === inverseOf(G)(*)(x)) subproof {
+      assume(isIdentityElement(G)(*)(op(x, *, y)))
+      val unique = have(∃!(y, y ∈ G /\ isIdentityElement(G)(*)(op(x, *, y)))) by Tautology.from(inverseUniqueness)
+      val auxP = lambda(y, (y ∈ G) /\ (isIdentityElement(G)(*)(op(x, *, y))))
+      val yieps = ε(y, (y ∈ G) /\ (isIdentityElement(G)(*)(op(x, *, y))))
+
+      have(y === yieps) by Tautology.from(unique, Quantifiers.existsOneEpsilonUniqueness of (x := y, P := auxP))
+      thenHave(thesis) by Substitute(inverseOf.definition)
+    }
+    have(thesis) by Tautology.from(
+      thm, thm of (x := y, y := x), inverseCommutability
+    )
   }
