@@ -44,6 +44,8 @@ object Homomorphisms extends lisa.Main:
     }
 
     val groupHomomorphism = DEF(λ(f, λ(G, λ(*, λ(H, λ(∘,
+        group(G)(*) /\
+        group(H)(∘) /\
         (f :: G -> H) /\
         ∀(x ∈ G, ∀(y ∈ G, 
             f(op(x, *, y)) === op(f(x), ∘, f(y))
