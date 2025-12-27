@@ -116,6 +116,25 @@ object Homomorphisms extends lisa.Main:
         )
     }
 
+    val homomorphismAppInverse = Theorem(
+        (group(G)(*), group(H)(∘), f ::: (G, *) -> (H, ∘), x ∈ G)
+        |- f(inverseOf(G)(*)(x)) === inverseOf(H)(∘)(f(x))
+    ) {
+        val xi = inverseOf(G)(*)(x)
+        val fxi = inverseOf(H)(∘)(f(x))
+        assume(group(G)(*), group(H)(∘), f ::: (G, *) -> (H, ∘), x ∈ G)
+
+        val xiinG = have(xi ∈ G) by Tautology.from(inverseStaysInGroup)
+        have(isIdentityElement(G)(*)(op(x, *, xi))) by Tautology.from(inverseProperty2)
+        val _1 = thenHave(isIdentityElement(H)(∘)(f(op(x, *, xi)))) by Tautology.fromLastStep(homomorphismAppIdentity of (e := op(x, *, xi)))
+        val _2a = have(f(op(x, *, xi)) === op(f(x), ∘, f(xi))) by Tautology.from(homomorphismProperty of (y := xi), xiinG)
+        val _2 = have(isIdentityElement(H)(∘)(op(f(x), ∘, f(xi)))) by Congruence.from(_1, _2a)
+        have(f(xi) === fxi) by Tautology.from(
+            _2, inverseTest of (x := f(x), y := f(xi), G := H, * := ∘), 
+            xiinG, homomorphismAppTyping, homomorphismAppTyping of (x := xi)
+        )
+    }
+
     val kernel = DEF(λ(f, λ(G, λ(*, λ(H, λ(∘,
         { x ∈ G | isIdentityElement(H)(∘)(f(x)) }
     )))))).printAs( args => {
@@ -328,7 +347,48 @@ object Homomorphisms extends lisa.Main:
         (group(G)(*), group(H)(∘), f ::: (G, *) -> (H, ∘))
         |- ker(f) ◁ G
     ) {
-        sorry
+        assume(group(G)(*), group(H)(∘), f ::: (G, *) -> (H, ∘))
+        val _1 = have(ker(f) ≤ G) by Tautology.from(kerIsSubgroup)
+        have((x ∈ G, h ∈ ker(f)) |- conjugation(G)(*)(h)(x) ∈ ker(f)) subproof {
+            assume(x ∈ G, h ∈ ker(f))
+            val step1 = have(h ∈ G /\ isIdentityElement(H)(∘)(f(h))) by Tautology.from(kerProperty of (x := h))
+            val conj = conjugation(G)(*)(h)(x)
+            val xi = inverseOf(G)(*)(x)
+            val xiinG = have(xi ∈ G) by Tautology.from(inverseStaysInGroup)
+            have(conj === op(op(x, *, h), *, xi)) by Tautology.from(conjugation.definition of (x := h, y := x))
+            val step2 = thenHave(f(conj) === f(op(op(x, *, h), *, xi))) by Congruence
+            val xhinG = have(op(x, *, h) ∈ G) by Tautology.from(step1, binaryOperationThm of (y := h), group.definition)
+            have(f(op(op(x, *, h), *, xi)) === op(f(op(x, *, h)), ∘, f(xi))) by Tautology.from(
+                xhinG, xiinG, homomorphismProperty of (x := op(x, *, h), y := xi)
+            )
+            val step3 = thenHave(f(conj) === op(f(op(x, *, h)), ∘, f(xi))) by Substitute(step2)
+            val step4a = have(f(op(x, *, h)) === op(f(x), ∘, f(h))) by Tautology.from(homomorphismProperty of (y := h), step1)
+            val step4 = have(f(conj) === op(op(f(x), ∘, f(h)), ∘, f(xi))) by Congruence.from(step3, step4a)
+            
+            val fxinH = have(f(x) ∈ H) by Tautology.from(homomorphismAppTyping)
+            val fhinH = have(f(h) ∈ H) by Tautology.from(homomorphismAppTyping of (x := h), step1)
+            
+            val step5a = have(op(f(x), ∘, f(h)) === f(x)) by Tautology.from(
+                fxinH, fhinH, step1, identityProperty of (x := f(x), e := f(h), G := H, * := ∘)
+            )
+            val step5 = have(f(conj) === op(f(x), ∘, f(xi))) by Congruence.from(step4, step5a)
+            
+            val step6a = have(f(xi) === inverseOf(H)(∘)(f(x))) by Tautology.from(homomorphismAppInverse)
+            val step6 = have(f(conj) === op(f(x), ∘, inverseOf(H)(∘)(f(x)))) by Congruence.from(step5, step6a)
+
+            val step7a = have(isIdentityElement(H)(∘)(op(f(x), ∘, inverseOf(H)(∘)(f(x))))) by Tautology.from(
+                inverseProperty2 of (x := f(x), G := H, * := ∘), fxinH
+            )
+            val step7 = thenHave(isIdentityElement(H)(∘)(f(conj))) by Substitute(step6)
+            
+            have(thesis) by Tautology.from(
+                step1, step7, conjugationInGroup of (x := h, y := x), kerMembershipTest of (x := conj)
+            )
+        }
+        thenHave((x ∈ G /\ h ∈ ker(f)) ==> conjugation(G)(*)(h)(x) ∈ ker(f)) by Restate
+        val _2 = thenHave(∀(x, ∀(h, (x ∈ G /\ h ∈ ker(f)) ==> conjugation(G)(*)(h)(x) ∈ ker(f)))) by Generalize
+
+        have(thesis) by Tautology.from(_1, _2, normalSubgroupAlternativeDefinition of (H := ker(f)))
     }
 
     val im = DEF(λ(f, range(f)))

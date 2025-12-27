@@ -521,3 +521,16 @@ object NormalSubgroups extends lisa.Main:
     }
     have(thesis) by Tautology.from(`==>`, `<==`)
   }
+
+  val conjugationInGroup = Theorem(
+    (group(G)(*), x ∈ G, y ∈ G) |- conjugation(G)(*)(x)(y) ∈ G
+  ) {
+    assume(group(G)(*), x ∈ G, y ∈ G)
+    have(op(op(y, *, x), *, inverseOf(G)(*)(y)) ∈ G) by Tautology.from(
+        group.definition,
+        inverseStaysInGroup of (x := y),
+        binaryOperationThm of (x := y, y := x),
+        binaryOperationThm of (x := op(y, *, x), y := inverseOf(G)(*)(y))
+    )
+    thenHave(conjugation(G)(*)(x)(y) ∈ G) by Substitute(conjugation.definition)
+  }
