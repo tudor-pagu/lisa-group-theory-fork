@@ -393,9 +393,161 @@ object Homomorphisms extends lisa.Main:
 
     val im = DEF(λ(f, range(f)))
 
-    val homomorphismImageIsSubgroup = Theorem(
+    val imageMembership = Theorem(
+        (group(G)(*), group(H)(∘), f ::: (G, *) -> (H, ∘)) |- y ∈ im(f) <=> ∃(x, (x ∈ G) /\ (f(x) === y))
+    ) {
+        assume(group(G)(*), group(H)(∘), f ::: (G, *) -> (H, ∘))
+        have(y ∈ range(f) <=> ∃(x, (x ∈ G) /\ (f(x) === y))) by Tautology.from(
+            functionBetweenRangeMembership of (A := G, B := H),
+            groupHomomorphism.definition
+        )
+        thenHave(thesis) by Substitute(im.definition)
+    }
+
+    val imageAppMembership = Theorem(
+        (group(G)(*), group(H)(∘), f ::: (G, *) -> (H, ∘), x ∈ G) |- f(x) ∈ im(f)
+    ) {
+        assume(group(G)(*), group(H)(∘), f ::: (G, *) -> (H, ∘), x ∈ G)
+        val domeq = have(dom(f) === G) by Tautology.from(
+            groupHomomorphism.definition,
+            functionBetweenDomain of (A := G, B := H)
+        )
+        have(x ∈ G) by Restate
+        thenHave(x ∈ dom(f)) by Substitute(domeq)
+        thenHave(f(x) ∈ range(f)) by Tautology.fromLastStep(
+            appInRange, groupHomomorphism.definition, functionBetweenIsFunction of (A := G, B := H)
+        )
+        thenHave(f(x) ∈ im(f)) by Substitute(im.definition)
+    }
+
+    val imIsNonEmpty = Theorem(
+        (group(G)(*), group(H)(∘), f ::: (G, *) -> (H, ∘)) |- im(f) ≠ ∅
+    ) {
+        assume(group(G)(*), group(H)(∘), f ::: (G, *) -> (H, ∘))
+        val e0 = identityOf(G)(*)
+        have(e0 ∈ G) by Tautology.from(identityOfIsIdentity, isIdentityElement.definition of (x := e0))
+        thenHave(f(e0) ∈ im(f)) by Tautology.fromLastStep(imageAppMembership of (x := e0))
+        thenHave(thesis) by Tautology.fromLastStep(
+            EmptySet.setWithElementNonEmpty of (x := f(e0), y := im(f))
+        )
+    }
+
+    val imIsSubset = Theorem(
+        f ::: (G, *) -> (H, ∘) |- im(f) ⊆ H
+    ) {
+        assume(f ::: (G, *) -> (H, ∘))
+        have(f :: G -> H) by Tautology.from(groupHomomorphism.definition)
+        thenHave(range(f) ⊆ H) by Tautology.fromLastStep(functionBetweenRange of (A := G, B := H))
+        thenHave(im(f) ⊆ H) by Substitute(im.definition)
+    }
+
+    val imIsClosedUnderOperation = Theorem(
+        (group(G)(*), group(H)(∘), f ::: (G, *) -> (H, ∘)) |- binaryOperation(im(f))(∘)
+    ) {
+        assume(group(G)(*), group(H)(∘), f ::: (G, *) -> (H, ∘))
+        have((x ∈ im(f), y ∈ im(f)) |- op(x, ∘, y) ∈ im(f)) subproof {
+            assume(x ∈ im(f), y ∈ im(f))
+            have(∃(y, y ∈ G /\ (f(y) === x))) by Tautology.from(imageMembership of (x := y, y := x))
+            val auxP = lambda(a, a ∈ G /\ (f(a) === x))
+            val x0 = ε(a, auxP(a))
+            val _1 = thenHave(x0 ∈ G /\ (f(x0) === x)) by Tautology.fromLastStep(Quantifiers.existsEpsilon of (x := a, P := auxP))
+            
+            have(∃(x, x ∈ G /\ (f(x) === y))) by Tautology.from(imageMembership)
+            val auxP2 = lambda(a, a ∈ G /\ (f(a) === y))
+            val y0 = ε(a, auxP2(a))
+            val _2 = thenHave(y0 ∈ G /\ (f(y0) === y)) by Tautology.fromLastStep(Quantifiers.existsEpsilon of (x := a, P := auxP2))
+            
+            val eqx = have(f(x0) === x) by Tautology.from(_1)
+            val eqy = have(f(y0) === y) by Tautology.from(_2)
+            have(f(op(x0, *, y0)) === op(f(x0), ∘, f(y0))) by Tautology.from(_1, _2, homomorphismProperty of (x := x0, y := y0))
+            thenHave(f(op(x0, *, y0)) === op(x, ∘, f(y0))) by Substitute(eqx)
+            val _3 = thenHave(f(op(x0, *, y0)) === op(x, ∘, y)) by Substitute(eqy)
+
+            have(op(x0, *, y0) ∈ G) by Tautology.from(
+                group.definition, binaryOperationThm of (x := x0, y := y0), _1, _2
+            )
+            thenHave(f(op(x0, *, y0)) ∈ im(f)) by Tautology.fromLastStep(
+                imageAppMembership of (x := op(x0, *, y0))
+            )
+            thenHave(op(x, ∘, y) ∈ im(f)) by Substitute(_3)
+        }
+        thenHave((x ∈ im(f) /\ y ∈ im(f)) ==> op(x, ∘, y) ∈ im(f)) by Restate
+        thenHave(∀(x, ∀(y, (x ∈ im(f) /\ y ∈ im(f)) ==> op(x, ∘, y) ∈ im(f)))) by Generalize
+        thenHave(thesis) by Tautology.fromLastStep(
+            binaryOperationTestSubset of (G := H, * := ∘, H := im(f)), imIsSubset, 
+            group.definition of (G := H, * := ∘)
+        )
+    }
+
+    val imIsClosedUnderInverse = Theorem(
+        (group(G)(*), group(H)(∘), f ::: (G, *) -> (H, ∘)) |- inverseElement(im(f))(∘)
+    ) {
+        assume(group(G)(*), group(H)(∘), f ::: (G, *) -> (H, ∘))
+        val I = im(f)
+        val xi = inverseOf(H)(∘)(x)
+        val eG = identityOf(G)(*)
+        val eH = identityOf(H)(∘)
+        have(x ∈ I |- xi ∈ I) subproof {
+            assume(x ∈ I)
+            have(∃(y ∈ G, f(y) === x)) by Tautology.from(imageMembership of (x := y, y := x))
+            val auxP = lambda(a, a ∈ G /\ (f(a) === x))
+            val x0 = ε(a, auxP(a))
+            val step1 = thenHave(x0 ∈ G /\ (f(x0) === x)) by Tautology.fromLastStep(Quantifiers.existsEpsilon of (x := a, P := auxP))
+            val xeq = thenHave(f(x0) === x) by Tautology
+            val x0i = inverseOf(G)(*)(x0)
+            have(f(x0i) === inverseOf(H)(∘)(f(x0))) by Tautology.from(
+                step1, homomorphismAppInverse of (x := x0)
+            )
+            val step2 = thenHave(f(x0i) === inverseOf(H)(∘)(x)) by Substitute(xeq)
+
+            have(x0i ∈ G) by Tautology.from(inverseStaysInGroup of (x := x0), step1)
+            thenHave(f(x0i) ∈ I) by Tautology.fromLastStep(imageAppMembership of (x := x0i))
+            thenHave(thesis) by Substitute(step2)
+        }
+        thenHave(x ∈ I ==> xi ∈ I) by Restate
+        val _1 = thenHave(∀(x ∈ I, xi ∈ I)) by RightForall
+        val _2 = have(eH ∈ I) subproof {
+            val step1 = have(isIdentityElement(G)(*)(eG)) by Tautology.from(
+                identityOfIsIdentity
+            )
+            val step2 = have(isIdentityElement(H)(∘)(f(eG))) by Tautology.from(
+                step1, homomorphismAppIdentity of (e := eG)
+            )
+            val step3 = have(f(eG) === eH) by Tautology.from(
+                step2, identityUniqueness of (G := H, * := ∘, x := f(eG))
+            )
+            val step4 = have(f(eG) ∈ I) by Tautology.from(
+                imageAppMembership of (x := eG),
+                identityOfIsIdentity,
+                isIdentityElement.definition of (x := eG)
+            )
+            have(eH ∈ I) by Substitute(step3)(step4)
+        }
+        have(thesis) by Tautology.from(
+            _1, _2, imIsSubset,
+            inverseTestSubset of (G := H, * := ∘, H := I)
+        )
+    }
+
+    val imIsSubgroup = Theorem(
         (group(G)(*), group(H)(∘), f ::: (G, *) -> (H, ∘))
         |- im(f) ≤ (H, ∘)
     ) {
-        sorry
+        assume(group(G)(*), group(H)(∘), f ::: (G, *) -> (H, ∘))
+        have(thesis) by Tautology.from(
+            imIsNonEmpty,
+            imIsSubset,
+            imIsClosedUnderInverse,
+            imIsClosedUnderOperation,
+            subgroupTestTwoStep of (G := H, * := ∘, H := im(f))
+        )
+    }
+
+    val imIsGroup = Theorem(
+        (group(G)(*), group(H)(∘), f ::: (G, *) -> (H, ∘))
+        |- group(im(f))(∘)
+    ) {
+        assume(group(G)(*), group(H)(∘), f ::: (G, *) -> (H, ∘))
+        have(im(f) ≤ (H, ∘)) by Tautology.from(imIsSubgroup)
+        thenHave(thesis) by Tautology.fromLastStep(subgroup.definition of (G := H, * := ∘, H := im(f)))
     }
