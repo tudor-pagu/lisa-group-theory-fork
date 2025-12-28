@@ -108,7 +108,7 @@ object Isomorphisms extends lisa.Main:
     
     val firstIsomorphismTheorem = Theorem(
         (group(G)(*), group(H)(*), f ::: (G, *) -> (H, ∘))
-        |- (G / ker(f), cosetOperation(G)(*)) ≅ (im(f), cosetOperation(H)(∘))
+        |- (G / ker(f), cosetOperation(G)(*)) ≅ (im(f), ∘)
     ) {
         sorry
     }
