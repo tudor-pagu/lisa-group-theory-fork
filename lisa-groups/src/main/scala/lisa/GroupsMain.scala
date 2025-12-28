@@ -912,3 +912,42 @@ object Groups extends lisa.Main:
       thm, thm of (x := y, y := x), inverseCommutability
     )
   }
+
+  val inverseTestSubset = Theorem(
+    (group(G)(*), H ⊆ G, identityOf(G)(*) ∈ H, ∀(x ∈ H, inverseOf(G)(*)(x) ∈ H))
+    |- inverseElement(H)(*)
+  ) {
+    assume(group(G)(*), H ⊆ G, identityOf(G)(*) ∈ H, ∀(x ∈ H, inverseOf(G)(*)(x) ∈ H))
+    val identityElementIsInH = have(isIdentityElement(G)(*)(e) |- e ∈ H) subproof {
+      assume(isIdentityElement(G)(*)(e))
+      val eq = have(e === identityOf(G)(*)) by Tautology.from(identityUniqueness of (x := e))
+      have(identityOf(G)(*) ∈ H) by Restate
+      thenHave(e ∈ H) by Substitute(eq)
+    }
+    val xi = inverseOf(G)(*)(x)
+    val _1 = have(x ∈ G |- isIdentityElement(G)(*)(op(x, *, xi))) by Tautology.from(inverseProperty2)
+    val _2 = have(isIdentityElement(G)(*)(op(x, *, xi)) |- isIdentityElement(H)(*)(op(x, *, xi))) subproof {
+        val e0 = op(x, *, xi)
+        assume(isIdentityElement(G)(*)(e0))
+        have(e0 ∈ H) by Tautology.from(identityElementIsInH of (e := e0))
+        thenHave(isIdentityElement(H)(*)(e0)) by Tautology.fromLastStep(
+            identityElementTestSubset of (H := H, e := e0)
+        )
+    }
+    val _3 = have(x ∈ H |- xi ∈ H) subproof {
+        assume(x ∈ H)
+        have(∀(x ∈ H, xi ∈ H)) by Restate
+        thenHave(x ∈ H ==> xi ∈ H) by InstantiateForall(x)
+        thenHave(thesis) by Restate
+    }
+    val _4 = have(x ∈ H |- x ∈ G) by Tautology.from(
+        Subset.membership of (z := x, x := H, y := G)
+    )
+    have(x ∈ H |- xi ∈ H /\ isIdentityElement(H)(*)(op(x, *, xi))) by Tautology.from(
+        _1, _2, _3, _4
+    )
+    thenHave(x ∈ H |- ∃(y ∈ H, isIdentityElement(H)(*)(op(x, *, y)))) by RightExists
+    thenHave(x ∈ H ==> ∃(y ∈ H, isIdentityElement(H)(*)(op(x, *, y)))) by Restate
+    thenHave(∀(x ∈ H, ∃(y ∈ H, isIdentityElement(H)(*)(op(x, *, y))))) by RightForall
+    thenHave(thesis) by Tautology.fromLastStep(inverseElement.definition of (G := H))
+  }

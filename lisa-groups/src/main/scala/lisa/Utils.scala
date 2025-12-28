@@ -640,3 +640,57 @@ object Utils extends lisa.Main:
       functionBetweenIsFunctionOn of (B := B0), _5
     )
   }
+
+  extension (f: Expr[Ind]) {
+      def apply(x: Expr[Ind]): Expr[Ind] = app(f)(x)
+  }
+
+  val functionBetweenRangeMembership = Theorem(
+    f :: A -> B |- y ∈ range(f) <=> ∃(x, (x ∈ A) /\ (f(x) === y))
+  ) {
+    assume(f :: A -> B)
+    have(functionOn(f)(A)) by Tautology.from(functionBetweenIsFunctionOn)
+    val ff = thenHave(function(f) /\ (dom(f) === A)) by Tautology.fromLastStep(functionOnIffFunctionWithDomain)
+    val _1 = have(function(f)) by Tautology.from(ff)
+    val _2 = have(dom(f) === A) by Tautology.from(ff)
+
+    val `==>` = have(y ∈ range(f) |- ∃(x, (x ∈ A) /\ (f(x) === y))) subproof {
+      assume(y ∈ range(f))
+      have(y ∈ range(f)) by Restate
+      val step1 = thenHave(y ∈ {snd(z) | z ∈ f}) by Substitute(range.definition of (Relation.R := f))
+      val step2 = have(y ∈ { snd(z) | z ∈ f } <=> ∃(z ∈ f, snd(z) === y)) by Replacement.apply
+      val auxP = lambda(z, z ∈ f /\ (snd(z) === y))
+      val z0 = ε(z, auxP(z))
+      val step3 = have(z0 ∈ f /\ (snd(z0) === y)) by Tautology.from(step1, step2, Quantifiers.existsEpsilon of (x := z, P := auxP))
+      val eqy = thenHave(snd(z0) === y) by Tautology
+      
+      val x0 = fst(z0)
+      have(z0 === (fst(z0), snd(z0))) by Tautology.from(_1, step3, inversion of (z := z0))
+      val step4 = thenHave(z0 === (x0, y)) by Substitute(eqy)
+      have(z0 ∈ f) by Tautology.from(step3)
+      val step5 = thenHave((x0, y) ∈ f) by Substitute(step4)
+      val step6 = have(x0 ∈ dom(f)) by Tautology.from(step5, domainMembership of (x := x0))
+      val step7 = thenHave(x0 ∈ A) by Substitute(_2)
+      val step8 = have(f(x0) === y) by Tautology.from(
+        _1, step5, step6, appDefinition of (x := x0)
+      )
+
+      have(x0 ∈ A /\ (f(x0) === y)) by Tautology.from(step7, step8)
+      thenHave(thesis) by RightExists
+    }
+
+    val `<==` = have(∃(x, (x ∈ A) /\ (f(x) === y)) |- y ∈ range(f)) subproof {
+      assume(∃(x, (x ∈ A) /\ (f(x) === y)))
+      val auxP = lambda(x, (x ∈ A) /\ (f(x) === y))
+      val x0 = ε(x, auxP(x))
+
+      have(x0 ∈ A /\ (f(x0) === y)) by Tautology.from(Quantifiers.existsEpsilon of (P := auxP))
+      thenHave(x0 ∈ dom(f) /\ (f(x0) === y)) by Substitute(_2)
+      thenHave((x0, y) ∈ f) by Tautology.fromLastStep(
+        _1, appDefinition of (x := x0)
+      )
+      thenHave(y ∈ range(f)) by Tautology.fromLastStep(rangeMembership of (x := x0))
+    }
+
+    have(thesis) by Tautology.from(`<==`, `==>`)
+  }
