@@ -108,14 +108,14 @@ object Isomorphisms extends lisa.Main:
 
     val FITisomorphism = Lemma(
         (group(G)(*), group(H)(∘), f ::: (G, *) -> (H, ∘))
-        |- { (x, cosetRep(G)(ker(f))(*)(x)) | x ∈ (G / ker(f)) } ::~ (G / ker(f), cosetOperation(G)(*)) -> (im(f), ∘)
+        |- { (x, f(cosetRep(G)(ker(f))(*)(x))) | x ∈ (G / ker(f)) } ::~ (G / ker(f), cosetOperation(G)(*)) -> (im(f), ∘)
     ) {
         assume(group(G)(*), group(H)(∘), f ::: (G, *) -> (H, ∘))
-        val f0 = { (x, cosetRep(G)(ker(f))(*)(x)) | x ∈ (G / ker(f)) }
+        val f0 = { (x, f(cosetRep(G)(ker(f))(*)(x))) | x ∈ (G / ker(f)) }
         val GK = G / ker(f)
 
-        val _1 = have(functionOn(f0)(GK) /\ ∀(x ∈ GK, app(f0)(x) === cosetRep(G)(ker(f))(*)(x))) by Tautology.from(
-            functionBuilder of (f := f0, A := GK, F := cosetRep(G)(ker(f))(*))
+        val _1 = have(functionOn(f0)(GK) /\ ∀(x ∈ GK, app(f0)(x) === f(cosetRep(G)(ker(f))(*)(x)))) by Tautology.from(
+            functionBuilder of (f := f0, A := GK, F := lambda(x, f(cosetRep(G)(ker(f))(*)(x))))
         )
         val _2 = have(function(f0) /\ (dom(f0) === GK)) by Tautology.from(_1, functionOnIffFunctionWithDomain of (f := f0, A := GK))
         
@@ -176,7 +176,7 @@ object Isomorphisms extends lisa.Main:
         |- (G / ker(f), cosetOperation(G)(*)) ≅ (im(f), ∘)
     ) {
         assume(group(G)(*), group(H)(∘), f ::: (G, *) -> (H, ∘))
-        val f0 = { (x, cosetRep(G)(ker(f))(*)(x)) | x ∈ (G / ker(f)) }
+        val f0 = { (x, f(cosetRep(G)(ker(f))(*)(x))) | x ∈ (G / ker(f)) }
         have(f0 ::~ (G / ker(f), cosetOperation(G)(*)) -> (im(f), ∘)) by Tautology.from(FITisomorphism)
         thenHave(∃(g, g ::~ (G / ker(f), cosetOperation(G)(*)) -> (im(f), ∘))) by RightExists
         thenHave(thesis) by Tautology.fromLastStep(
