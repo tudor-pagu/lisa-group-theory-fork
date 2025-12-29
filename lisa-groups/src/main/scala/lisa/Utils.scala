@@ -694,3 +694,9 @@ object Utils extends lisa.Main:
 
     have(thesis) by Tautology.from(`<==`, `==>`)
   }
+
+  val functionOnIsFunctionBetweenRange = Theorem(
+    functionOn(f)(A) |- f :: A -> range(f)
+  ) {
+    sorry
+  }

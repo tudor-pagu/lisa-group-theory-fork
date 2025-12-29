@@ -105,10 +105,87 @@ object Isomorphisms extends lisa.Main:
         thenHave(∃(f, f ::~ (G, *) -> (H, ∘))) by RightExists
         thenHave(thesis) by Tautology.fromLastStep(groupIsomorphic.definition)
     }
+
+    val FITisomorphism = Lemma(
+        (group(G)(*), group(H)(∘), f ::: (G, *) -> (H, ∘))
+        |- { (x, cosetRep(G)(ker(f))(*)(x)) | x ∈ (G / ker(f)) } ::~ (G / ker(f), cosetOperation(G)(*)) -> (im(f), ∘)
+    ) {
+        assume(group(G)(*), group(H)(∘), f ::: (G, *) -> (H, ∘))
+        val f0 = { (x, cosetRep(G)(ker(f))(*)(x)) | x ∈ (G / ker(f)) }
+        val GK = G / ker(f)
+
+        val _1 = have(functionOn(f0)(GK) /\ ∀(x ∈ GK, app(f0)(x) === cosetRep(G)(ker(f))(*)(x))) by Tautology.from(
+            functionBuilder of (f := f0, A := GK, F := cosetRep(G)(ker(f))(*))
+        )
+        val _2 = have(function(f0) /\ (dom(f0) === GK)) by Tautology.from(_1, functionOnIffFunctionWithDomain of (f := f0, A := GK))
+        
+        val _2a = have(range(f0) === range(f)) subproof {
+            sorry
+        }
+        
+        have(f0 :: GK -> range(f0)) by Tautology.from(_1, functionOnIsFunctionBetweenRange of (f := f0, A := GK))
+        thenHave(f0 :: GK -> range(f)) by Substitute(_2a)
+        val _2b = thenHave(f0 :: GK -> im(f)) by Substitute(im.definition)
+        
+        val ** = cosetOperation(G)(*)
+        have(ker(f) ◁ G) by Tautology.from(kerIsNormalSubgroup)
+        val _3 = thenHave(group(G / ker(f))(**)) by Tautology.fromLastStep(
+            quotientGroupIsGroup2 of (H := ker(f))
+        )
+
+        val _4 = have(group(im(f))(∘)) by Tautology.from(imIsGroup)
+
+        have((x ∈ GK, y ∈ GK) |- f0(op(x, **, y)) === op(f0(x), ∘, f0(y))) subproof {
+            sorry
+        }
+
+        thenHave(x ∈ GK |- y ∈ GK ==> (f0(op(x, **, y)) === op(f0(x), ∘, f0(y)))) by Restate
+        thenHave(x ∈ GK |- ∀(y ∈ GK, (f0(op(x, **, y)) === op(f0(x), ∘, f0(y))))) by RightForall
+        thenHave(x ∈ GK ==> ∀(y ∈ GK, (f0(op(x, **, y)) === op(f0(x), ∘, f0(y))))) by Restate
+        thenHave(∀(x ∈ GK, ∀(y ∈ GK, (f0(op(x, **, y)) === op(f0(x), ∘, f0(y)))))) by RightForall
+        val _5 = thenHave(f0 ::: (GK, **) -> (im(f), ∘)) by Tautology.fromLastStep(
+            _3, _4, _2b,
+            groupHomomorphism.definition of (f := f0, G := GK, * := **, H := im(f), ∘ := ∘)
+        )
+
+        have(range(f0) === im(f)) by Substitute(im.definition)(_2a)
+        val _6 = thenHave(surjective(f0)(im(f))) by Substitute(surjective.definition of (f := f0, B := im(f)))
+        
+        have((x ∈ GK, y ∈ GK, f0(x) === f0(y)) |- x === y) subproof {
+            sorry
+        }
+        thenHave(x ∈ GK |- y ∈ GK ==> ((f0(x) === f0(y)) ==> (x === y))) by Restate
+        thenHave(x ∈ GK |- ∀(y ∈ GK, (f0(x) === f0(y)) ==> (x === y))) by RightForall
+        thenHave(x ∈ GK ==> ∀(y ∈ GK, (f0(x) === f0(y)) ==> (x === y))) by Restate
+        thenHave(∀(x ∈ GK, ∀(y ∈ GK, (f0(x) === f0(y)) ==> (x === y)))) by RightForall
+        val _7 = thenHave(injective(f0)(GK)) by Tautology.fromLastStep(
+            injective.definition of (f := f0, A := GK)
+        )
+
+        val _8 = have(bijective(f0)(GK)(im(f))) by Tautology.from(
+            _2b, _6, _7, bijective.definition of (f := f0, A := GK, B := im(f))
+        )
+        
+        have(f0 ::~ (GK, **) -> (im(f), ∘)) by Tautology.from(
+            _5, _8, groupIsomorphism.definition of (f := f0, G := GK, * := **, H := im(f), ∘ := ∘)
+        )
+    }
     
     val firstIsomorphismTheorem = Theorem(
-        (group(G)(*), group(H)(*), f ::: (G, *) -> (H, ∘))
+        (group(G)(*), group(H)(∘), f ::: (G, *) -> (H, ∘))
         |- (G / ker(f), cosetOperation(G)(*)) ≅ (im(f), ∘)
     ) {
-        sorry
+        assume(group(G)(*), group(H)(∘), f ::: (G, *) -> (H, ∘))
+        val f0 = { (x, cosetRep(G)(ker(f))(*)(x)) | x ∈ (G / ker(f)) }
+        have(f0 ::~ (G / ker(f), cosetOperation(G)(*)) -> (im(f), ∘)) by Tautology.from(FITisomorphism)
+        thenHave(∃(g, g ::~ (G / ker(f), cosetOperation(G)(*)) -> (im(f), ∘))) by RightExists
+        thenHave(thesis) by Tautology.fromLastStep(
+            groupIsomorphic.definition of (
+                G := G / ker(f), 
+                * := cosetOperation(G)(*), 
+                H := im(f), 
+                ∘ := ∘, 
+                f := g
+            )
+        )
     }
