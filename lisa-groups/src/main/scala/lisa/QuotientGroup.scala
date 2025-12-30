@@ -715,46 +715,6 @@ object QuotientGroup extends lisa.Main:
     thenHave(thesis) by Tautology.fromLastStep(quotientGroupIsGroup of (** := ***))
   }
 
-  val cosetRepExistance = Theorem(
-      (group(G)(*), normalSubgroup(H)(G)(*), x ∈ (G/H)) |-
-      ∃( y, (y ∈ G) /\ (x === leftCoset(y)(*)(H)) )  
-  ) {
-      assume(group(G)(*), normalSubgroup(H)(G)(*), x ∈ (G/H))
-      
-      val G_H = (G / H)
-      val auxF = lambda(x, leftCoset(x)(*)(H))
-      val G_Hdef = { leftCoset(x)(*)(H) | x ∈ G }
-      
-      val _1 = have(G_H === G_Hdef) by Tautology.from(
-          quotientGroup.definition of (g := x)
-      )
-      
-      val _2 = have((x ∈ G_Hdef) ==> ∃(y ∈ G, leftCoset(y)(*)(H) === x)) by Tautology.from(
-          Replacement.membership of (x := y, y := x, A := G, F := auxF)
-      )
-      
-      val _3 = have(G_H === G_Hdef |- (x ∈ G_H) ==> ∃(y ∈ G, leftCoset(y)(*)(H) === x)) by Substitution.Apply(G_H === G_Hdef)(_2)
-      
-      val _4 = have(∃(y ∈ G, leftCoset(y)(*)(H) === x)) by Tautology.from(_1, _3)
-  }
-
-  // so clients dont need to use epsilon exists.
-  val cosetRepDef = Theorem(
-    (group(G)(*), normalSubgroup(H)(G)(*), x ∈ (G/H)) |-
-    (cosetRep(G)(H)(*)(x) ∈ G) /\ (x === leftCoset((cosetRep(G)(H)(*)(x)))(*)(H))
-    ) {
-      assume(group(G)(*), normalSubgroup(H)(G)(*), x ∈ (G/H))
-      val aux = lambda(y, (y ∈ G) /\ (x === leftCoset(y)(*)(H)))
-      val gRep = cosetRep(G)(H)(*)(x)
-      val _1 = have(gRep === ε(y, aux(y) ) ) by Tautology.from(
-          cosetRep.definition of (G := G, H := H, * := *, x := x)
-      )
-      val existance = have(∃(g, aux(g))) by Tautology.from(cosetRepExistance)
-      val _2a = have(aux(ε(y, aux(y) ))) by Tautology.from(cosetRep.definition, Quantifiers.existsEpsilon of (x:=y, P:=aux), existance)
-      val _2 = have( gRep === ε(y, aux(y)) |- aux(gRep)) by Substitution.Apply(gRep === ε(y, aux(y) ))(_2a)
-      val _3 = have(aux(gRep)) by Tautology.from(_2, _1)
-    }
-
   // for a coset gH
   // there must exist an h ∈ H
   // s.t. rep(gH) === g * h
@@ -767,7 +727,7 @@ object QuotientGroup extends lisa.Main:
       val gH = leftCoset(g)(*)(H)
       val gRep = cosetRep(G)(H)(*)(gH)
       val _1a_prep = have(gH ∈(G/H)) by Tautology.from(quotientGroupMembershipTest of (x:=gH, y:=g))
-      val _1a = have( (gRep ∈ G) /\ (gH === leftCoset(gRep)(*)(H)) ) by Tautology.from(cosetRepDef of (x:=gH), _1a_prep)
+      val _1a = have( (gRep ∈ G) /\ (gH === leftCoset(gRep)(*)(H)) ) by Tautology.from(quotientGroupMembership of (x:=gH), _1a_prep)
       val _1b = have(gRep ∈ leftCoset(g)(*)(H)) by Tautology.from(leftCosetEqualityImpliesMembership of (x:=g, y:=gRep), normalSubgroup.definition, _1a)
       val _2 = have(∃(h ∈ H, gRep === op(g, *, h))) by Tautology.from(_1b, leftCosetMembership of (a:=gRep, b:=g), normalSubgroup.definition)
     }

@@ -44,6 +44,7 @@ import lisa.maths.GroupTheory.Homomorphisms.groupHomomorphism
 import lisa.maths.GroupTheory.Utils.functionBuilder
 import lisa.maths.GroupTheory.Homomorphisms.homomorphismProperty
 import lisa.maths.GroupTheory.Homomorphisms.kerIsNormalSubgroup
+import lisa.maths.GroupTheory.QuotientGroup.quotientGroupMembership
 
 object Isomorphisms extends lisa.Main:
     extension (f: Expr[Ind]) {
@@ -165,10 +166,9 @@ object Isomorphisms extends lisa.Main:
           assume(x ∈ G)
           val gK = leftCoset(x)(*)(K)
           val gRep = cosetRep(G)(K)(*)(gK)
-          val gkThm = have(gK ∈ GK) by Sorry // easy
+          val gkThm = have(gK ∈ GK) by Tautology.from(quotientGroupMembershipTest of (x := gK, y := x, H := K))
 
-          val _g1_prep = have(gK ∈ (GK)) by Sorry
-          val _g1 = have((gRep ∈ G) /\ (gK === leftCoset(gRep)(*)(K))) by Tautology.from(cosetRepDef of (H:=K, x:=gK), _g1_prep, kerIsNormalSubgroup)
+          val _g1 = have((gRep ∈ G) /\ (gK === leftCoset(gRep)(*)(K))) by Tautology.from(quotientGroupMembership of (H:=K, x:=gK),gkThm, kerIsNormalSubgroup)
           val goal1 = have(f(gRep) === f(x)) by Tautology.from(cosetRepWithKernelIsUniqueAfterF)
 
           val _s1a = have(∀(x, (x ∈ GK) ==> (app(f0)(x) === f(cosetRep(G)(ker(f))(*)(x))))) by Tautology.from(_1)
@@ -178,6 +178,20 @@ object Isomorphisms extends lisa.Main:
           val _s4 = have((gK ∈ GK) /\ (f0(gK) === f(x))) by Tautology.from(_s3, gkThm)
           val _s5 = thenHave(∃(y,(y ∈ GK) /\ (f0(y) === f(x)))) by RightExists
           have(∃(y ∈ GK,  (f0(y) === f(x)))) by Tautology.from(_s5)
+        }
+
+        val _2a_2 = have(y ∈ GK |- ∃(x ∈ G, f(x) === f0(y))) subproof {
+          assume(y ∈ GK)
+          val _s1a = have(∀(y, (y ∈ GK) ==> (app(f0)(y) === f(cosetRep(G)(ker(f))(*)(y))))) by Tautology.from(_1)
+          // val _s1b = thenHave( (gK ∈ GK) ==> (app(f0)(gK) === f(gRep))) by InstantiateForall(gK)
+          // val _1 = have(f0(y) === f(cosetRep(G)(K)(*)(y)))
+          // val gK = leftCoset(x)(*)(K)
+          // val gRep = cosetRep(G)(K)(*)(gK)
+          // val gkThm = have(gK ∈ GK) by Tautology.from(quotientGroupMembershipTest of (x := gK, y := x, H := K))
+          // val _g1 = have((gRep ∈ G) /\ (gK === leftCoset(gRep)(*)(K))) by Tautology.from(cosetRepDef of (H:=K, x:=gK),gkThm, kerIsNormalSubgroup)
+          // val goal1 = have(f(gRep) === f(x)) by Tautology.from(cosetRepWithKernelIsUniqueAfterF)
+
+          sorry
         }
 
         val _2a = have(range(f0) === range(f)) subproof {
