@@ -45,6 +45,7 @@ import lisa.maths.GroupTheory.Utils.functionBuilder
 import lisa.maths.GroupTheory.Homomorphisms.homomorphismProperty
 import lisa.maths.GroupTheory.Homomorphisms.kerIsNormalSubgroup
 import lisa.maths.GroupTheory.QuotientGroup.quotientGroupMembership
+import lisa.utils.prooflib.SimpleDeducedSteps.InstantiateForall
 
 object Isomorphisms extends lisa.Main:
     extension (f: Expr[Ind]) {
@@ -183,7 +184,15 @@ object Isomorphisms extends lisa.Main:
         val _2a_2 = have(y ∈ GK |- ∃(x ∈ G, f(x) === f0(y))) subproof {
           assume(y ∈ GK)
           val _s1a = have(∀(y, (y ∈ GK) ==> (app(f0)(y) === f(cosetRep(G)(ker(f))(*)(y))))) by Tautology.from(_1)
-          sorry
+          val _s2 = thenHave((y ∈ GK) ==> (app(f0)(y) === f(cosetRep(G)(ker(f))(*)(y)))) by InstantiateForall(y)
+
+          val gRep = cosetRep(G)(ker(f))(*)(y)
+          val _gRepThm = have((gRep ∈ G) /\ (y === leftCoset(gRep)(*)(K))) by Tautology.from(quotientGroupMembership of (H:=K, x:=y), kerIsNormalSubgroup)
+
+          val _s3 = have(f0(y) === f(gRep)) by Tautology.from(_s2)
+          val _s4 = have( (gRep ∈ G) /\  (f0(y) === f(gRep)) ) by Tautology.from(_s3, _gRepThm)
+          val _s5 = thenHave(∃(x, (x ∈ G) /\  (f0(y) === f(x)))) by RightExists
+          have(thesis) by Tautology.from(_s5)
         }
 
         val _2a = have(range(f0) === range(f)) subproof {
@@ -199,7 +208,9 @@ object Isomorphisms extends lisa.Main:
             imageInclusion of (f := f, g := f0)
           )
           
-          val goal2 = have(∀ (y ∈ GK, ∃ (x ∈ G, f(x) === f0(y)))) by Sorry
+          val goal2a = have( (y ∈ GK) ==> ∃(x ∈ G, f(x) === f0(y))) by Tautology.from(_2a_2)
+          val goal2b = thenHave(∀(y, (y ∈ GK) ==> ∃(x ∈ G, f(x) === f0(y)))) by RightForall
+          val goal2 = have(∀ (y ∈ GK, ∃ (x ∈ G, f(x) === f0(y)))) by Tautology.from(goal2b)
           val _4 = thenHave(∀ (y ∈ dom(f0), ∃ (x ∈ G, f(x) === f0(y)))) by Substitute(_1_2)
           val _5 = thenHave(∀ (y ∈ dom(f0), ∃ (x ∈ dom(f), f(x) === f0(y)))) by Substitute(_1)
   
@@ -207,8 +218,10 @@ object Isomorphisms extends lisa.Main:
             _2, fIsAFunction, _5, _2, fDomainStep,
             imageInclusion of (f := f0, g := f)
           )
-          
-          sorry
+          have(thesis) by Tautology.from(
+            inclusion1, inclusion2,
+            doubleInclusion of (x := range(f), y := range(f0))
+          )
         }
         
         have(f0 :: GK -> range(f0)) by Tautology.from(_1, functionOnIsFunctionBetweenRange of (f := f0, A := GK))
