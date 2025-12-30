@@ -712,3 +712,22 @@ object QuotientGroup extends lisa.Main:
     have(isCosetOperation(G)(H)(*)(***)) by Tautology.from(normalSubgroup.definition, cosetOperationIsCosetOperation)
     thenHave(thesis) by Tautology.fromLastStep(quotientGroupIsGroup of (** := ***))
   }
+
+  // so clients dont need to use epsilon exists.
+  val cosetRepDef = Theorem(
+    () |-
+    (cosetRep(G)(H)(*)(x) ∈ G) /\ (x === leftCoset((cosetRep(G)(H)(*)(x)))(*)(H))
+    ) {
+      sorry // epsilon exists
+    }
+
+  // for a coset gH
+  // there must exist an h ∈ H
+  // s.t. rep(gH) === g * h
+  // (this is true since e must be ∈ H)
+  val cosetRepIdentityChoice = Theorem(
+    (group(G)(*), normalSubgroup(H)(G)(*), g ∈ G) |-
+      ∃ (h ∈ H, cosetRep(G)(H)(*)(leftCoset(g)(*)(H)) === op(g, *, h) )
+    ) {
+      sorry
+    }

@@ -5,6 +5,7 @@ import lisa.maths.SetTheory.Functions.Function.{bijective, surjective, injective
 
 object Symbols extends lisa.Main:
   val e = variable[Ind]
+  val k = variable[Ind]
 
   val G = variable[Ind]
   val Pr = variable[Ind]
@@ -15,5 +16,6 @@ object Symbols extends lisa.Main:
   val ∘ = variable[Ind]
 
   inline def op(x: Expr[Ind], * : Expr[Ind], y: Expr[Ind]) = app(*)((x, y))
+
 
   val op2 = variable[Ind >>: Ind >>: Ind]

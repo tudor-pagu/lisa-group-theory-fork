@@ -39,6 +39,11 @@ import lisa.maths.SetTheory.Base.CartesianProduct
 import lisa.maths.SetTheory.Base.Pair
 // import lisa.maths.SetTheory.Relations.Predef.{_, given}
 import lisa.maths.Quantifiers.∃!
+import lisa.utils.unification.UnificationUtils.Substitution
+import lisa.maths.GroupTheory.Homomorphisms.groupHomomorphism
+import lisa.maths.GroupTheory.Utils.functionBuilder
+import lisa.maths.GroupTheory.Homomorphisms.homomorphismProperty
+import lisa.maths.GroupTheory.Homomorphisms.kerIsNormalSubgroup
 
 object Isomorphisms extends lisa.Main:
     extension (f: Expr[Ind]) {
@@ -96,6 +101,34 @@ object Isomorphisms extends lisa.Main:
         )
     }
 
+    // f(gRep) === f(g) where gRep is a rep of the g*K coset, K being the kernel
+    val cosetRepWithKernelIsUniqueAfterF= Theorem(
+      ((x ∈ G), f ::: (G, *) -> (H, ∘), group(G)(*), group(H)(∘)) |- 
+      f(cosetRep(G)(ker(f))(*)(leftCoset(x)(*)(ker(f)))) === f(x)
+      ) {
+        assume(x ∈ G, f ::: (G, *) -> (H, ∘), group(G)(*), group(H)(∘))
+        val K = ker(f)
+        val gK = leftCoset(x)(*)(K)
+        val gRep = cosetRep(G)(K)(*)(gK)
+        val _1 = have(∃(k ∈ K, gRep === op(x, * , k) )) by Tautology.from(
+          cosetRepIdentityChoice of (H:=K, g:= x), kerIsNormalSubgroup
+          )
+        val kAux = lambda(k, (k ∈ K) /\ (gRep === op(x, * , k)))
+        val k0 = ε(k, kAux(k))
+        val k0Thm = have(kAux(k0)) by Tautology.from(Quantifiers.existsEpsilon of (x := k, P:=kAux), _1)
+
+        val _2 = have(gRep === (op(x, *, k0))) by Tautology.from(k0Thm)
+
+        have(f(gRep) === f(gRep)) by Tautology
+        val _3 = thenHave(f(gRep) === f(op(x, *, k0))) by Substitute(_2)
+        val _4a = have(k0 ∈ G) by Tautology.from(k0Thm, kerProperty of (x := k0))
+        val _4 = have( f(op(x, *, k0)) === op(f(x),∘,f(k0)) ) by Tautology.from(homomorphismProperty of (y:=k0), _3, _4a)
+        val _5 = have(isIdentityElement(H)(∘)(f(k0))) by Tautology.from(kerProperty of (x := k0), k0Thm)
+        val _6a = have(f(x) ∈ H) by Tautology.from(homomorphismAppTyping)
+        val _6 = have(op(f(x),∘, f(k0)) === f(x)) by Tautology.from(_5, identityProperty of (e:=f(k0), G:=H, * := ∘,x:=f(x)), _6a)
+        have(f(gRep) === f(x)) by Congruence.from(_3,_4,_5,_6)
+      }
+
     val isomorphismExists = Theorem(
         (f ::~ (G, *) -> (H, ∘))
         |- (G, *) ≅ (H, ∘)
@@ -112,15 +145,63 @@ object Isomorphisms extends lisa.Main:
     ) {
         assume(group(G)(*), group(H)(∘), f ::: (G, *) -> (H, ∘))
         val f0 = { (x, f(cosetRep(G)(ker(f))(*)(x))) | x ∈ (G / ker(f)) }
+
+        val K = ker(f)
         val GK = G / ker(f)
+
+        val kRep = cosetRep(G)(ker(f))(*)(x)
+        val kRepInKernel = have(kRep ∈ K) by Sorry
 
         val _1 = have(functionOn(f0)(GK) /\ ∀(x ∈ GK, app(f0)(x) === f(cosetRep(G)(ker(f))(*)(x)))) by Tautology.from(
             functionBuilder of (f := f0, A := GK, F := lambda(x, f(cosetRep(G)(ker(f))(*)(x))))
         )
         val _2 = have(function(f0) /\ (dom(f0) === GK)) by Tautology.from(_1, functionOnIffFunctionWithDomain of (f := f0, A := GK))
-        
+
+        val fDomainStep = have(dom(f) === G) by Tautology.from(groupHomomorphism.definition, functionBetweenDomain of (A := G, B := H))
+        val fIsAFunction = have(function(f)) by Sorry
+        val f0IsAFunction = have(function(f0)) by Sorry
+
+        val _2a_1 = have( x ∈ G |- ∃(y ∈ GK, f(x) === f0(y))) subproof {
+          assume(x ∈ G)
+          val gK = leftCoset(x)(*)(K)
+          val gRep = cosetRep(G)(K)(*)(gK)
+          val gkThm = have(gK ∈ GK) by Sorry // easy
+
+          val _g1 = have((gRep ∈ G) /\ (gK === leftCoset(gRep)(*)(K))) by Tautology.from(cosetRepDef of (H:=K, x:=gK))
+          val goal1 = have(f(gRep) === f(x)) by Tautology.from(cosetRepWithKernelIsUniqueAfterF)
+
+          val _s1a = have(∀(x, (x ∈ GK) ==> (app(f0)(x) === f(cosetRep(G)(ker(f))(*)(x))))) by Tautology.from(_1)
+          val _s1b = thenHave( (gK ∈ GK) ==> (app(f0)(gK) === f(gRep))) by InstantiateForall(gK)
+          val _s2 = have(f0(gK) === f(gRep)) by Tautology.from(_s1b, gkThm)
+          val _s3 = have(f0(gK) === f(x)) by Congruence.from(_s2, goal1)
+          val _s4 = have((gK ∈ GK) /\ (f0(gK) === f(x))) by Tautology.from(_s3, gkThm)
+          val _s5 = thenHave(∃(y,(y ∈ GK) /\ (f0(y) === f(x)))) by RightExists
+          have(∃(y ∈ GK,  (f0(y) === f(x)))) by Tautology.from(_s5)
+        }
+
         val _2a = have(range(f0) === range(f)) subproof {
-            sorry
+          val _1 = have(dom(f) === G) by Tautology.from(fDomainStep)
+          val _1_2 = have(dom(f0) === GK) by Tautology.from(_2)
+          val goal1a = have((x ∈ G) ==> ∃(y ∈ GK, f(x) === f0(y))) by Tautology.from(_2a_1)
+          val goal1 = thenHave(∀ (x, (x ∈ G) ==> ∃(y ∈ GK, f(x) === f0(y)))) by RightForall
+          val _2_ = thenHave(∀(x ∈ dom(f), ∃(y ∈ GK, f(x) === f0(y)))) by Substitute(_1)
+          val _3 = thenHave(∀(x ∈ dom(f), ∃(y ∈ dom(f0), f(x) === f0(y)))) by Substitute(_1_2)
+
+          val inclusion1 = have(range(f) ⊆ range(f0)) by Tautology.from(
+            fIsAFunction, f0IsAFunction, _3, fDomainStep, _2,
+            imageInclusion of (f := f, g := f0)
+          )
+          
+          val goal2 = have(∀ (y ∈ GK, ∃ (x ∈ G, f(x) === f0(y)))) by Sorry
+          val _4 = thenHave(∀ (y ∈ dom(f0), ∃ (x ∈ G, f(x) === f0(y)))) by Substitute(_1_2)
+          val _5 = thenHave(∀ (y ∈ dom(f0), ∃ (x ∈ dom(f), f(x) === f0(y)))) by Substitute(_1)
+  
+          val inclusion2 = have(range(f0) ⊆ range(f)) by Tautology.from(
+            f0IsAFunction, fIsAFunction, _5, _2, fDomainStep,
+            imageInclusion of (f := f0, g := f)
+          )
+          
+          sorry
         }
         
         have(f0 :: GK -> range(f0)) by Tautology.from(_1, functionOnIsFunctionBetweenRange of (f := f0, A := GK))
