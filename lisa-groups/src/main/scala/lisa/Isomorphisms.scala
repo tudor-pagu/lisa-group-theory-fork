@@ -150,17 +150,17 @@ object Isomorphisms extends lisa.Main:
         val K = ker(f)
         val GK = G / ker(f)
 
-        val kRep = cosetRep(G)(ker(f))(*)(x)
-        val kRepInKernel = have(kRep ∈ K) by Sorry
-
         val _1 = have(functionOn(f0)(GK) /\ ∀(x ∈ GK, app(f0)(x) === f(cosetRep(G)(ker(f))(*)(x)))) by Tautology.from(
             functionBuilder of (f := f0, A := GK, F := lambda(x, f(cosetRep(G)(ker(f))(*)(x))))
         )
         val _2 = have(function(f0) /\ (dom(f0) === GK)) by Tautology.from(_1, functionOnIffFunctionWithDomain of (f := f0, A := GK))
 
         val fDomainStep = have(dom(f) === G) by Tautology.from(groupHomomorphism.definition, functionBetweenDomain of (A := G, B := H))
-        val fIsAFunction = have(function(f)) by Sorry
-        val f0IsAFunction = have(function(f0)) by Sorry
+
+        val fIsAFunction = have(function(f)) by Tautology.from(
+            groupHomomorphism.definition, 
+            functionBetweenIsFunction of (A := G, B := H)
+        )
 
         val _2a_1 = have( x ∈ G |- ∃(y ∈ GK, f(x) === f0(y))) subproof {
           assume(x ∈ G)
@@ -183,14 +183,6 @@ object Isomorphisms extends lisa.Main:
         val _2a_2 = have(y ∈ GK |- ∃(x ∈ G, f(x) === f0(y))) subproof {
           assume(y ∈ GK)
           val _s1a = have(∀(y, (y ∈ GK) ==> (app(f0)(y) === f(cosetRep(G)(ker(f))(*)(y))))) by Tautology.from(_1)
-          // val _s1b = thenHave( (gK ∈ GK) ==> (app(f0)(gK) === f(gRep))) by InstantiateForall(gK)
-          // val _1 = have(f0(y) === f(cosetRep(G)(K)(*)(y)))
-          // val gK = leftCoset(x)(*)(K)
-          // val gRep = cosetRep(G)(K)(*)(gK)
-          // val gkThm = have(gK ∈ GK) by Tautology.from(quotientGroupMembershipTest of (x := gK, y := x, H := K))
-          // val _g1 = have((gRep ∈ G) /\ (gK === leftCoset(gRep)(*)(K))) by Tautology.from(cosetRepDef of (H:=K, x:=gK),gkThm, kerIsNormalSubgroup)
-          // val goal1 = have(f(gRep) === f(x)) by Tautology.from(cosetRepWithKernelIsUniqueAfterF)
-
           sorry
         }
 
@@ -203,7 +195,7 @@ object Isomorphisms extends lisa.Main:
           val _3 = thenHave(∀(x ∈ dom(f), ∃(y ∈ dom(f0), f(x) === f0(y)))) by Substitute(_1_2)
 
           val inclusion1 = have(range(f) ⊆ range(f0)) by Tautology.from(
-            fIsAFunction, f0IsAFunction, _3, fDomainStep, _2,
+            fIsAFunction, _2, _3, fDomainStep, _2,
             imageInclusion of (f := f, g := f0)
           )
           
@@ -212,7 +204,7 @@ object Isomorphisms extends lisa.Main:
           val _5 = thenHave(∀ (y ∈ dom(f0), ∃ (x ∈ dom(f), f(x) === f0(y)))) by Substitute(_1)
   
           val inclusion2 = have(range(f0) ⊆ range(f)) by Tautology.from(
-            f0IsAFunction, fIsAFunction, _5, _2, fDomainStep,
+            _2, fIsAFunction, _5, _2, fDomainStep,
             imageInclusion of (f := f0, g := f)
           )
           
