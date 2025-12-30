@@ -878,3 +878,10 @@ object Cosets extends lisa.Main:
       forallEquiv
     )
   }
+
+  val leftCosetEqualityImpliesMembership = Theorem(
+    (group(G)(*), subgroup(H)(G)(*), x ∈ G, y ∈ G, leftCoset(x)(*)(H) === leftCoset(y)(*)(H) ) |-
+      ( x ∈ leftCoset(y)(*)(H) ) /\ ( y ∈ leftCoset(x)(*)(H) )
+    ) {
+      sorry
+    }

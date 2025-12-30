@@ -167,7 +167,8 @@ object Isomorphisms extends lisa.Main:
           val gRep = cosetRep(G)(K)(*)(gK)
           val gkThm = have(gK ∈ GK) by Sorry // easy
 
-          val _g1 = have((gRep ∈ G) /\ (gK === leftCoset(gRep)(*)(K))) by Tautology.from(cosetRepDef of (H:=K, x:=gK))
+          val _g1_prep = have(gK ∈ (GK)) by Sorry
+          val _g1 = have((gRep ∈ G) /\ (gK === leftCoset(gRep)(*)(K))) by Tautology.from(cosetRepDef of (H:=K, x:=gK), _g1_prep, kerIsNormalSubgroup)
           val goal1 = have(f(gRep) === f(x)) by Tautology.from(cosetRepWithKernelIsUniqueAfterF)
 
           val _s1a = have(∀(x, (x ∈ GK) ==> (app(f0)(x) === f(cosetRep(G)(ker(f))(*)(x))))) by Tautology.from(_1)
