@@ -751,9 +751,86 @@ object Utils extends lisa.Main:
     sorry
   }
 
+  val functionIsBetweenDomAndRange = Theorem(
+    function(f) |- f :: dom(f) -> range(f)
+    ) {
+      assume(function(f))
+      val _1 = have(range(f) ⊆ range(f)) by Tautology.from(Subset.reflexivity of (x := range(f)))
+      have(f :: dom(f) -> range(f)) by Tautology.from(
+        functionBetweenTest of (A := dom(f), B := range(f)),
+        _1,
+        )
+    }
+
   val alternativeRangeDefinition = Theorem(
     function(f) |- range(f) === { f(x) | x ∈ dom(f) }
   ) {
-    sorry
+    assume(function(f))
+    val D = dom(f)
+    val I = range(f)
+    val _1 = have(f :: D -> I) by Tautology.from(functionIsBetweenDomAndRange)
+    val _2 = have(relationBetween(f)(D)(I) /\ ∀(x ∈ D, ∃!(y, (x, y) ∈ f))) by Tautology.from(functionBetween.definition of (A := D, B := I), _1)
+
+    val _3 = have( I === {snd(z) | z ∈ f}) by Tautology.from(range.definition of (Relation.R := f))
+
+    val outputSet = { f(x) | x ∈ dom(f) }
+
+    val _dir1 = have(x ∈ range(f) |- x ∈ outputSet) subproof {
+      assume(x ∈ range(f))
+      val _s1 = have(x ∈ range(f)) by Restate
+      val _s2 = thenHave(x ∈ {snd(z) | z ∈ f}) by Substitute(_3)
+      val _s3 = have(∃(g ∈ f, snd(g) === x)) by Tautology.from(Replacement.membership of (y:=x,A:=f, F:=lambda(z, snd(z))), _s2)
+
+      val pAux = lambda(g, (g ∈ f) /\ (snd(g) === x))
+      val p0 = ε(g, pAux(g))
+      val p0Thm = have(pAux(p0)) by Tautology.from(Quantifiers.existsEpsilon of (P:=pAux), _s3)
+      val _s4 = have(p0 === (fst(p0), snd(p0))) by Tautology.from(inversion of (z := p0), p0Thm)
+
+      have(p0 ∈ f) by Tautology.from(p0Thm)
+      val _s5 = thenHave( (fst(p0), snd(p0)) ∈  f) by Substitute(_s4)
+      val _s6 = have(fst(p0) ∈ dom(f)) by Tautology.from(_s5, domainMembership of (x:=fst(p0), y:=snd(p0)))
+
+      val _s7a = have(snd(p0) === x) by Tautology.from(p0Thm)
+      val _s7 = have(f(fst(p0)) === snd(p0)) by Tautology.from(
+        _s6,           // fst(p0) ∈ dom(f)
+        _s4,           // p0 ∈ f (which gives us (fst(p0), snd(p0)) ∈ f after using inversion)
+        _s5,           // p0 === (fst(p0), snd(p0))
+        appDefinition of (x := fst(p0), y := snd(p0))
+      )
+      val _s8 = thenHave(f(fst(p0)) === x) by Substitute(_s7a)
+      val _s9 = have( (fst(p0) ∈ dom(f)) /\ (f(fst(p0)) === x) ) by Tautology.from(_s8 , _s6)
+      val _s10 = thenHave(∃ (y, (y ∈ dom(f)) /\ (f(y) === x) )) by RightExists
+
+      val _g1 = have(∃ (y ∈ dom(f) , f(y) === x)) by Tautology.from(_s10)
+      have(thesis) by Tautology.from(_g1 , Replacement.membership of (y:= x, A:=dom(f), F:=lambda(z,f(z))))
+    }
+
+    val _dir2 = have(x ∈ outputSet |- x ∈ range(f)) subproof {
+      assume(x ∈ outputSet)
+      val _s1 = have(∃(y ∈ dom(f), f(y) === x)) by Tautology.from(
+        Replacement.membership of (y := x, A := dom(f), F := lambda(z, f(z)))
+      )
+
+      val x0Aux = lambda(y, (y ∈ dom(f)) /\ (f(y) === x))
+      val x0 = ε(y, x0Aux(y))
+      val x0Thm = have(x0Aux(x0)) by Tautology.from(
+        Quantifiers.existsEpsilon of (x := y, P := x0Aux),
+        _s1
+      )
+      val _s2 = have((x0, f(x0)) ∈ f) by Tautology.from(
+        x0Thm,  // gives you x0 ∈ dom(f) and f(x0) === x
+        appDefinition of (x := x0, y := f(x0))
+      )
+
+      val _s3a = have(f(x0) === x) by Tautology.from(x0Thm)
+
+      val _s3 = have(f(x0) ∈ range(f)) by Tautology.from(
+        _s2,
+        rangeMembership of (x := x0, y := f(x0))
+      )
+      thenHave(x ∈ range(f)) by Substitute(_s3a)
+    }
+    have(x ∈ range(f) <=> x ∈ outputSet) by Tautology.from(_dir1, _dir2)
+    thenHave(thesis) by Extensionality
   }
 
