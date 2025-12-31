@@ -237,7 +237,59 @@ object Isomorphisms extends lisa.Main:
         val _4 = have(group(im(f))(∘)) by Tautology.from(imIsGroup)
 
         have((x ∈ GK, y ∈ GK) |- f0(op(x, **, y)) === op(f0(x), ∘, f0(y))) subproof {
-            sorry
+            assume(x ∈ GK, y ∈ GK)
+            
+            val xRep = cosetRep(G)(ker(f))(*)(x)
+            val yRep = cosetRep(G)(ker(f))(*)(y)
+            val xQuotientGroupMemb = have(xRep ∈ G /\ (x === leftCoset(xRep)(*)(ker(f)))) by Tautology.from(quotientGroupMembership of (H := ker(f)))
+            val xEqLeftCoset = thenHave(x === leftCoset(xRep)(*)(ker(f))) by Tautology
+            val yQuotientGroupMemb = have(yRep ∈ G /\ (y === leftCoset(yRep)(*)(ker(f)))) by Tautology.from(quotientGroupMembership of (H := ker(f), x := y))
+            val yEqLeftCoset = thenHave(y === leftCoset(yRep)(*)(ker(f))) by Tautology
+
+            have(∀(x ∈ GK, app(f0)(x) === f(cosetRep(G)(ker(f))(*)(x)))) by Tautology.from(_1)
+            val f0xfxRep = thenHave(f0(x) === f(xRep)) by InstantiateForall(x)
+            have(∀(x ∈ GK, app(f0)(x) === f(cosetRep(G)(ker(f))(*)(x)))) by Tautology.from(_1)
+            val f0yfyRep = thenHave(f0(y) === f(yRep)) by InstantiateForall(y)
+
+            val xRepyRep = op(xRep, *, yRep)
+            val xRepyRepInG = have(xRepyRep ∈ G) by Tautology.from(xQuotientGroupMemb, yQuotientGroupMemb, group.definition, binaryOperationThm of (x := xRep, y := yRep))
+            have(op(leftCoset(xRep)(*)(ker(f)), **, leftCoset(yRep)(*)(ker(f))) === leftCoset(xRepyRep)(*)(ker(f))) by Tautology.from(
+                cosetOperationProperty of (H := ker(f), a := xRep, b := yRep, Symbols.** := **),
+                kerIsNormalSubgroup, 
+                xQuotientGroupMemb, 
+                yQuotientGroupMemb,
+                cosetOperationIsCosetOperation of (H := ker(f)),
+                kerIsSubgroup
+            )
+            thenHave(op(x, **, leftCoset(yRep)(*)(ker(f))) === leftCoset(xRepyRep)(*)(ker(f))) by Substitute(xEqLeftCoset)
+            val cosetOperationPropertyRestate = thenHave((op(x, **, y)) === leftCoset(xRepyRep)(*)(ker(f))) by Substitute(yEqLeftCoset)
+
+            val f0opxRepyRep = have(f0(op(x, **, y)) === f(xRepyRep)) subproof {
+                val opInGK = have(op(x, **, y) ∈ GK) by Tautology.from(
+                    quotientGroupMembershipTest of (x := op(x, **, y), y := xRepyRep, H := ker(f)),
+                    cosetOperationPropertyRestate, xRepyRepInG
+                )
+
+                have(∀(x ∈ GK, app(f0)(x) === f(cosetRep(G)(ker(f))(*)(x)))) by Tautology.from(_1)
+                val _1Inst = thenHave(x ∈ GK ==> (app(f0)(x) === f(cosetRep(G)(ker(f))(*)(x)))) by InstantiateForall(x)
+
+                val step1 = have(f0(op(x, **, y)) === f(cosetRep(G)(ker(f))(*)(op(x, **, y)))) by Tautology.from(_1Inst of (x := op(x, **, y)), opInGK)
+                
+                have(f(cosetRep(G)(ker(f))(*)(leftCoset(xRepyRep)(*)(ker(f)))) === f(xRepyRep)) by Tautology.from(
+                    cosetRepWithKernelIsUniqueAfterF of (x := xRepyRep),
+                    xRepyRepInG
+                )
+                val step2 = thenHave(f(cosetRep(G)(ker(f))(*)(op(x, **, y))) === f(xRepyRep)) by Substitute(cosetOperationPropertyRestate)
+                have(thesis) by Congruence.from(step1, step2)
+            }
+
+            val homomorphismRestate = have(f(xRepyRep) === op(f(xRep), ∘, f(yRep))) by Tautology.from(
+                homomorphismProperty of (x := xRep, y := yRep), 
+                xQuotientGroupMemb, 
+                yQuotientGroupMemb
+            )
+
+            have(thesis) by Congruence.from(f0opxRepyRep, homomorphismRestate, f0xfxRep, f0yfyRep)
         }
 
         thenHave(x ∈ GK |- y ∈ GK ==> (f0(op(x, **, y)) === op(f0(x), ∘, f0(y)))) by Restate
@@ -253,7 +305,81 @@ object Isomorphisms extends lisa.Main:
         val _6 = thenHave(surjective(f0)(im(f))) by Substitute(surjective.definition of (f := f0, B := im(f)))
         
         have((x ∈ GK, y ∈ GK, f0(x) === f0(y)) |- x === y) subproof {
-            sorry
+            assume(x ∈ GK, y ∈ GK, f0(x) === f0(y))
+            
+            val xRep = cosetRep(G)(ker(f))(*)(x)
+            val yRep = cosetRep(G)(ker(f))(*)(y)
+            val xQuotientGroupMemb = have(xRep ∈ G /\ (x === leftCoset(xRep)(*)(ker(f)))) by Tautology.from(quotientGroupMembership of (H := ker(f)))
+            val xEqLeftCoset = thenHave(x === leftCoset(xRep)(*)(ker(f))) by Tautology
+            val yQuotientGroupMemb = have(yRep ∈ G /\ (y === leftCoset(yRep)(*)(ker(f)))) by Tautology.from(quotientGroupMembership of (H := ker(f), x := y))
+            val yEqLeftCoset = thenHave(y === leftCoset(yRep)(*)(ker(f))) by Tautology
+
+            have(∀(x ∈ GK, app(f0)(x) === f(cosetRep(G)(ker(f))(*)(x)))) by Tautology.from(_1)
+            val f0xfxRep = thenHave(f0(x) === f(xRep)) by InstantiateForall(x)
+            have(∀(x ∈ GK, app(f0)(x) === f(cosetRep(G)(ker(f))(*)(x)))) by Tautology.from(_1)
+            val f0yfyRep = thenHave(f0(y) === f(yRep)) by InstantiateForall(y)
+
+            val fxRepfyRep = have(f(xRep) === f(yRep)) by Congruence.from(f0xfxRep, f0yfyRep)
+
+            val yRepInv = inverseOf(G)(*)(yRep)
+            val yRepInvxRep = op(yRepInv, *, xRep)
+            
+            val yRepInvInG = have(yRepInv ∈ G) by Tautology.from(inverseStaysInGroup of (x := yRep), yQuotientGroupMemb)
+            val yRepInvxRepInG = have(yRepInvxRep ∈ G) by Tautology.from(
+                binaryOperationThm of (x := yRepInv, y := xRep), 
+                yRepInvInG, 
+                xQuotientGroupMemb, 
+                group.definition
+            )
+
+            val fyRepInvxRep = have(f(yRepInvxRep) === op(f(yRepInv), ∘, f(xRep))) by Tautology.from(
+                homomorphismProperty of (x := yRepInv, y := xRep),
+                yRepInvInG, 
+                xQuotientGroupMemb
+            )
+
+            val fInvY = have(f(yRepInv) === inverseOf(H)(∘)(f(yRep))) by Tautology.from(
+                homomorphismAppInverse of (x := yRep), 
+                yQuotientGroupMemb
+            )
+
+            val fyRepInvxRepIdentityOf = have(f(yRepInvxRep) === identityOf(H)(∘)) subproof {
+                have(f(yRepInvxRep) === op(inverseOf(H)(∘)(f(yRep)), ∘, f(xRep))) by Congruence.from(fyRepInvxRep, fInvY)
+                val eqSubs = thenHave(f(yRepInvxRep) === op(inverseOf(H)(∘)(f(yRep)), ∘, f(yRep))) by Substitute(fxRepfyRep)
+                
+                val fyRepInH = have(f(yRep) ∈ H) by Tautology.from(
+                    homomorphismAppTyping of (x := yRep), 
+                    yQuotientGroupMemb)
+                
+                val invPropRestate = have(op(inverseOf(H)(∘)(f(yRep)), ∘, f(yRep)) === identityOf(H)(∘)) by Tautology.from(
+                   inverseProperty of (G := H, * := ∘, x := f(yRep)),
+                   fyRepInH,
+                   identityUniqueness of (G := H, * := ∘, x := op(inverseOf(H)(∘)(f(yRep)), ∘, f(yRep)))
+                )
+                
+                have(thesis) by Congruence.from(eqSubs, invPropRestate)
+            }
+
+            have(isIdentityElement(H)(∘)(identityOf(H)(∘))) by Tautology.from(identityOfIsIdentity of (G := H, Symbols.* := ∘))
+
+            val fyRepInvxRepIsIdentity = thenHave(isIdentityElement(H)(∘)(f(yRepInvxRep))) by Substitute(fyRepInvxRepIdentityOf)
+
+            val yRepInvxRepInKer = have(yRepInvxRep ∈ ker(f)) by Tautology.from(
+                fyRepInvxRepIsIdentity, 
+                yRepInvxRepInG,
+                kerMembershipTest of (x := yRepInvxRep),
+                fyRepInvxRepIsIdentity
+            )
+
+            val xRepyRepcosetsEqual = have(leftCoset(xRep)(*)(ker(f)) === leftCoset(yRep)(*)(ker(f))) by Tautology.from(
+                leftCosetEqualityCondition of (H := ker(f), a := xRep, b := yRep),
+                yRepInvxRepInKer,
+                xQuotientGroupMemb, 
+                yQuotientGroupMemb,
+                kerIsSubgroup
+            )
+
+            have(thesis) by Congruence.from(xRepyRepcosetsEqual, xEqLeftCoset, yEqLeftCoset)
         }
         thenHave(x ∈ GK |- y ∈ GK ==> ((f0(x) === f0(y)) ==> (x === y))) by Restate
         thenHave(x ∈ GK |- ∀(y ∈ GK, (f0(x) === f0(y)) ==> (x === y))) by RightForall
