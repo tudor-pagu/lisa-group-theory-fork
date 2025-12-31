@@ -738,11 +738,6 @@ object Utils extends lisa.Main:
     have(thesis) by Tautology.from(`<==`, `==>`)
   }
 
-  val functionOnIsFunctionBetweenRange = Theorem(
-    functionOn(f)(A) |- f :: A -> range(f)
-  ) {
-    sorry
-  }
 
   val functionIsBetweenDomAndRange = Theorem(
     function(f) |- f :: dom(f) -> range(f)
@@ -754,6 +749,17 @@ object Utils extends lisa.Main:
         _1,
         )
     }
+
+  val functionOnIsFunctionBetweenRange = Theorem(
+    functionOn(f)(A) |- f :: A -> range(f)
+  ) {
+    assume(functionOn(f)(A))
+    val _1 = have(function(f)) by Tautology.from(functionOnIsFunction)
+    val _2 = have(dom(f) === A) by Tautology.from(functionOnDomain)
+    val _3 = have(f :: dom(f) -> range(f)) by Tautology.from(functionIsBetweenDomAndRange, _1)
+    val _4 = thenHave(f :: A -> range(f)) by Substitute(_2)
+  }
+
 
   val alternativeRangeDefinition = Theorem(
     function(f) |- range(f) === { f(x) | x ∈ dom(f) }
