@@ -883,5 +883,22 @@ object Cosets extends lisa.Main:
     (group(G)(*), subgroup(H)(G)(*), x ∈ G, y ∈ G, leftCoset(x)(*)(H) === leftCoset(y)(*)(H) ) |-
       ( x ∈ leftCoset(y)(*)(H) ) /\ ( y ∈ leftCoset(x)(*)(H) )
     ) {
-      sorry
+      assume(group(G)(*), subgroup(H)(G)(*), x ∈ G, y ∈ G, leftCoset(x)(*)(H) === leftCoset(y)(*)(H))
+      val _1a = have(leftCoset(x)(*)(H) === leftCoset(y)(*)(H)) by Restate
+      val _1 = have(x ∈ leftCoset(x)(*)(H)) by Tautology.from(cosetContainsRepresentative)
+      val goal1 = thenHave(x ∈ leftCoset(y)(*)(H) ) by Substitute(_1a)
+      val goal1_2 = have( y ∈ leftCoset(x)(*)(H) ) by Tautology.from(goal1, leftCosetMembershipEquivalence of (a := x, b:= y))
+      have(thesis) by Tautology.from(goal1, goal1_2)
+    }
+
+  val rightCosetEqualityImpliesMembership = Theorem(
+    (group(G)(*), subgroup(H)(G)(*), x ∈ G, y ∈ G, rightCoset(H)(*)(x) === rightCoset(H)(*)(y) ) |-
+      ( x ∈ rightCoset(H)(*)(y) ) /\ ( y ∈ rightCoset(H)(*)(x) )
+    ) {
+      assume(group(G)(*), subgroup(H)(G)(*), x ∈ G, y ∈ G, rightCoset(H)(*)(x) === rightCoset(H)(*)(y))
+      val _1a = have(rightCoset(H)(*)(x) === rightCoset(H)(*)(y)) by Restate
+      val _1 = have(x ∈ rightCoset(H)(*)(x)) by Tautology.from(cosetContainsRepresentative)
+      val goal1 = thenHave(x ∈ rightCoset(H)(*)(y)) by Substitute(_1a)
+      val goal1_2 = have(y ∈ rightCoset(H)(*)(x)) by Tautology.from(goal1, rightCosetMembershipEquivalence of (a := x, b := y))
+      have(thesis) by Tautology.from(goal1, goal1_2)
     }
