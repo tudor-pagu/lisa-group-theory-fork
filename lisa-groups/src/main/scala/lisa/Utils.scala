@@ -744,13 +744,6 @@ object Utils extends lisa.Main:
     sorry
   }
 
-  val imageInclusion = Theorem(
-    (function(f), function(g), ∀(x ∈ dom(f), ∃(y ∈ dom(g), f(x) === g(y))))
-      |- range(f) ⊆ range(g)
-  ) {
-    sorry
-  }
-
   val functionIsBetweenDomAndRange = Theorem(
     function(f) |- f :: dom(f) -> range(f)
     ) {
@@ -832,5 +825,46 @@ object Utils extends lisa.Main:
     }
     have(x ∈ range(f) <=> x ∈ outputSet) by Tautology.from(_dir1, _dir2)
     thenHave(thesis) by Extensionality
+  }
+
+  val imageInclusion = Theorem(
+    (function(f), function(g), ∀(x ∈ dom(f), ∃(y ∈ dom(g), f(x) === g(y))))
+      |- range(f) ⊆ range(g)
+  ) {
+    assume(function(f), function(g), ∀(x ∈ dom(f), ∃(y ∈ dom(g), f(x) === g(y))))
+    val _sub1 = have(z ∈ range(f) |- z ∈ range(g)) subproof {
+      assume(z ∈ range(f))
+      val _1a = have(range(f) === { f(g) | g ∈ dom(f) }) by Tautology.from(alternativeRangeDefinition)
+      val _1b = have(z ∈ range(f)) by Restate
+      val _1 = thenHave(z ∈ { f(g) | g ∈ dom(f) }) by Substitute(_1a)
+
+      val _2 = have(∃(g ∈ dom(f), f(g) === z)) by Tautology.from(
+        Replacement.membership of (y := z, A := dom(f), F := lambda(g, f(g))),
+        _1
+      )
+      val g0Aux = lambda(g, (g ∈ dom(f)) /\ (f(g) === z))
+      val g0 = ε(g, g0Aux(g))
+      val g0Thm = have(g0Aux(g0)) by Tautology.from(
+        Quantifiers.existsEpsilon of (x := g, P := g0Aux),
+        _2)
+
+      val _3 = have(∀(x ∈ dom(f), ∃(y ∈ dom(g), f(x) === g(y)))) by Restate
+      val _4 = have(∀(x, (x ∈ dom(f) ) ==> ∃(y ∈ dom(g), f(x) === g(y)))) by Tautology.from(_3)
+      val _5 = thenHave( (g0 ∈ dom(f) ) ==> ∃(y ∈ dom(g), f(g0) === g(y))) by InstantiateForall(g0)
+      val _6 = have(∃(y ∈ dom(g), f(g0) === g(y))) by Tautology.from(_5, g0Thm)
+
+      val _7a = have({ g(y) | y ∈ dom(g) } === range(g)) by Tautology.from(alternativeRangeDefinition of (f := g))
+      val _7b = have(f(g0) ∈ { g(y) | y ∈ dom(g) }) by Tautology.from(
+        _6, 
+        Replacement.membership of (y := f(g0), A := dom(g), F := lambda(y, g(y)))
+      )
+      val _7 = thenHave(f(g0) ∈ range(g)) by Substitute(_7a)
+      val _7c = have(f(g0) === z) by Tautology.from(g0Thm)
+      val _8 = have(f(g0) === z |- z ∈ range(g)) by Substitution.Apply(f(g0) === z)(_7)
+      have(thesis) by Tautology.from(_8, _7c)
+    }
+    thenHave(z ∈ range(f) ==> z ∈ range(g)) by Restate
+    thenHave(∀(z, z ∈ range(f) ==> z ∈ range(g))) by RightForall
+    thenHave(thesis) by Substitute(subsetAxiom of (x := range(f), y := range(g)))
   }
 
