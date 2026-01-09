@@ -62,11 +62,7 @@ object Homomorphisms extends lisa.Main:
     extension (f: Expr[Ind]) {
         infix def :::(fType: ((Expr[Ind], Expr[Ind]), (Expr[Ind], Expr[Ind]))): Expr[Prop] = {
             val (g1, g2) = fType
-            val G0 = g1._1
-            val opG = g1._2
-            val H0 = g2._1
-            val opH = g2._2
-            groupHomomorphism(f)(G0)(opG)(H0)(opH)
+            groupHomomorphism(f)(g1._1)(g1._2)(g2._1)(g2._2)
         }
     }
 
