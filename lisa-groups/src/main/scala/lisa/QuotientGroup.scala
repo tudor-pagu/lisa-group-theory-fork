@@ -264,10 +264,10 @@ object QuotientGroup extends lisa.Main:
   }
 
   val cosetOperationProperty = Theorem(
-    (group(G)(*), normalSubgroup(H)(G)(*), isCosetOperation(G)(H)(*)(**), a ∈ G, b ∈ G)
+    (group(G)(*), H ◁ G, isCosetOperation(G)(H)(*)(**), a ∈ G, b ∈ G)
     |- op(leftCoset(a)(*)(H), **, leftCoset(b)(*)(H)) === leftCoset(op(a, *, b))(*)(H)
   ) {
-    assume(group(G)(*), normalSubgroup(H)(G)(*), isCosetOperation(G)(H)(*)(**), a ∈ G, b ∈ G)
+    assume(group(G)(*), H ◁ G, isCosetOperation(G)(H)(*)(**), a ∈ G, b ∈ G)
     val aH = leftCoset(a)(*)(H)
     val bH = leftCoset(b)(*)(H)
     val G_H = (G / H)
@@ -442,10 +442,10 @@ object QuotientGroup extends lisa.Main:
   }
 
   val cosetOperationIsWellDefined = Theorem(
-    (group(G)(*), normalSubgroup(H)(G)(*), isCosetOperation(G)(H)(*)(**))
+    (group(G)(*), H ◁ G, isCosetOperation(G)(H)(*)(**))
     |- binaryOperation((G / H))(**)
   ) {
-    assume(group(G)(*), normalSubgroup(H)(G)(*), isCosetOperation(G)(H)(*)(**))
+    assume(group(G)(*), H ◁ G, isCosetOperation(G)(H)(*)(**))
     val G_H = (G / H)
     
     val x0 = cosetRep(G)(H)(*)(x)
@@ -475,10 +475,10 @@ object QuotientGroup extends lisa.Main:
   }
 
   val cosetOperationIsAssociative = Theorem(
-    (group(G)(*), normalSubgroup(H)(G)(*), isCosetOperation(G)(H)(*)(**))
+    (group(G)(*), H ◁ G, isCosetOperation(G)(H)(*)(**))
     |- associativity((G / H))(**)
   ) {
-    assume(group(G)(*), normalSubgroup(H)(G)(*), isCosetOperation(G)(H)(*)(**))
+    assume(group(G)(*), H ◁ G, isCosetOperation(G)(H)(*)(**))
     val G_H = (G / H)
     val assoc = have((x ∈ G_H, y ∈ G_H, z ∈ G_H) |- op(x, **, op(y, **, z)) === op(op(x, **, y), **, z)) subproof {
         assume(x ∈ G_H, y ∈ G_H, z ∈ G_H)
@@ -531,10 +531,10 @@ object QuotientGroup extends lisa.Main:
   }
 
   val cosetOperationIdentityElement = Theorem(
-    (group(G)(*), normalSubgroup(H)(G)(*), isCosetOperation(G)(H)(*)(**))
+    (group(G)(*), H ◁ G, isCosetOperation(G)(H)(*)(**))
     |- isIdentityElement((G / H))(**)(H)
   ) {
-    assume(group(G)(*), normalSubgroup(H)(G)(*), isCosetOperation(G)(H)(*)(**))
+    assume(group(G)(*), H ◁ G, isCosetOperation(G)(H)(*)(**))
     val e = identityOf(G)(*)
     val eIsIdentity = have(isIdentityElement(G)(*)(e)) by Tautology.from(identityOfIsIdentity)
 
@@ -622,10 +622,10 @@ object QuotientGroup extends lisa.Main:
   }
 
   val cosetOperationHasIdentityElement = Theorem(
-    (group(G)(*), normalSubgroup(H)(G)(*), isCosetOperation(G)(H)(*)(**))
+    (group(G)(*), H ◁ G, isCosetOperation(G)(H)(*)(**))
     |- identityElement((G / H))(**)
   ) {
-    assume(group(G)(*), normalSubgroup(H)(G)(*), isCosetOperation(G)(H)(*)(**))
+    assume(group(G)(*), H ◁ G, isCosetOperation(G)(H)(*)(**))
     val identityIsH = have(isIdentityElement((G / H))(**)(H)) by Restate.from(cosetOperationIdentityElement)
 
     val identityExistence = thenHave(∃(x, isIdentityElement((G / H))(**)(x))) by RightExists.withParameters(H)
@@ -639,10 +639,10 @@ object QuotientGroup extends lisa.Main:
   }
 
   val cosetOperationInverseElement = Theorem(
-    (group(G)(*), normalSubgroup(H)(G)(*), isCosetOperation(G)(H)(*)(**), x ∈ G)
+    (group(G)(*), H ◁ G, isCosetOperation(G)(H)(*)(**), x ∈ G)
     |- isIdentityElement((G / H))(**)(op(leftCoset(x)(*)(H), **, leftCoset(inverseOf(G)(*)(x))(*)(H)))
   ) {
-    assume(group(G)(*), normalSubgroup(H)(G)(*), isCosetOperation(G)(H)(*)(**), x ∈ G)
+    assume(group(G)(*), H ◁ G, isCosetOperation(G)(H)(*)(**), x ∈ G)
     val G_H = (G / H)
     val xH = leftCoset(x)(*)(H)
     val xi = inverseOf(G)(*)(x)
@@ -664,10 +664,10 @@ object QuotientGroup extends lisa.Main:
   }
 
   val cosetOperationHasInverseElement = Theorem(
-    (group(G)(*), normalSubgroup(H)(G)(*), isCosetOperation(G)(H)(*)(**))
+    (group(G)(*), H ◁ G, isCosetOperation(G)(H)(*)(**))
     |- inverseElement((G / H))(**)
   ) {
-    assume(group(G)(*), normalSubgroup(H)(G)(*), isCosetOperation(G)(H)(*)(**))
+    assume(group(G)(*), H ◁ G, isCosetOperation(G)(H)(*)(**))
     val G_H = (G / H)
     val x0 = cosetRep(G)(H)(*)(x)
     val x0H = leftCoset(x0)(*)(H)
@@ -693,7 +693,7 @@ object QuotientGroup extends lisa.Main:
   }
 
   val quotientGroupIsGroup = Theorem(
-    (group(G)(*), normalSubgroup(H)(G)(*), isCosetOperation(G)(H)(*)(**))
+    (group(G)(*), H ◁ G, isCosetOperation(G)(H)(*)(**))
     |- group((G / H))(**)
   ) {
     have(thesis) by Tautology.from(
@@ -706,10 +706,10 @@ object QuotientGroup extends lisa.Main:
   }
 
   val quotientGroupIsGroup2 = Theorem(
-    (group(G)(*), normalSubgroup(H)(G)(*))
+    (group(G)(*), H ◁ G)
     |- group((G / H))(cosetOperation(G)(*))
   ) {
-    assume(group(G)(*), normalSubgroup(H)(G)(*))
+    assume(group(G)(*), H ◁ G)
     val *** = cosetOperation(G)(*)
     have(isCosetOperation(G)(H)(*)(***)) by Tautology.from(normalSubgroup.definition, cosetOperationIsCosetOperation)
     thenHave(thesis) by Tautology.fromLastStep(quotientGroupIsGroup of (** := ***))
@@ -720,10 +720,10 @@ object QuotientGroup extends lisa.Main:
   // s.t. rep(gH) === g * h
   // (this is true since e must be ∈ H)
   val cosetRepIdentityChoice = Theorem(
-    (group(G)(*), normalSubgroup(H)(G)(*), g ∈ G) |-
+    (group(G)(*), H ◁ G, g ∈ G) |-
       ∃ (h ∈ H, cosetRep(G)(H)(*)(leftCoset(g)(*)(H)) === op(g, *, h) )
     ) {
-      assume(group(G)(*), normalSubgroup(H)(G)(*), g ∈ G)
+      assume(group(G)(*), H ◁ G, g ∈ G)
       val gH = leftCoset(g)(*)(H)
       val gRep = cosetRep(G)(H)(*)(gH)
       val _1a_prep = have(gH ∈(G/H)) by Tautology.from(quotientGroupMembershipTest of (x:=gH, y:=g))
